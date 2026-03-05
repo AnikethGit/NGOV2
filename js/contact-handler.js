@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 async function loadCSRFToken() {
     try {
-        const response = await fetch('/api/csrf-token.php');
+        const response = await fetch('api/csrf-token.php');
         const data = await response.json();
         
         if (data.success && data.csrf_token) {
@@ -108,7 +108,7 @@ async function handleContactSubmit(e) {
         // Log form data for debugging
         console.log('Submitting form with CSRF token:', csrfInput.value);
         
-        const response = await fetch('/api/contact.php', {
+        const response = await fetch('api/contact.php', {
             method: 'POST',
             body: formData
         });
@@ -261,7 +261,7 @@ document.head.appendChild(style);
  */
 async function loadCSRFToken() {
     try {
-        const response = await fetch('/api/csrf-token.php');
+        const response = await fetch('api/csrf-token.php');
         const data = await response.json();
         
         if (data.success && data.csrf_token) {

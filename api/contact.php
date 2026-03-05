@@ -10,6 +10,7 @@ header('Content-Type: application/json');
 
 require_once '../includes/config.php';
 require_once '../includes/database.php';
+require_once '../includes/security.php';
 
 try {
     
@@ -20,25 +21,9 @@ try {
     // Get CSRF token from POST
     $csrfToken = $_POST['csrf_token'] ?? '';
     
-    if (empty($csrfToken)) {
-        throw new Exception('Security token is missing');
-    }
-    
-    // Validate CSRF token (simple file-based check)
-    $tokenDir = sys_get_temp_dir() . '/csrf_tokens/';
-    $tokenFile = $tokenDir . session_id() . '.token';
-    
-    if (!file_exists($tokenFile)) {
+    if (!Security::validateCSRFToken($csrfToken)) {
         throw new Exception('Invalid security token. Please refresh the page and try again.');
     }
-    
-    $storedToken = trim(file_get_contents($tokenFile));
-    if (!hash_equals($storedToken, $csrfToken)) {
-        throw new Exception('Invalid security token. Please refresh the page and try again.');
-    }
-    
-    // Delete used token
-    @unlink($tokenFile);
     
     // Get form fields
     $firstName = isset($_POST['first_name']) ? trim($_POST['first_name']) : '';
