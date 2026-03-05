@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login (Debug Mode) - Sai Seva Foundation</title>
+    <meta name="description" content="Login to your Sai Seva Foundation account to access your dashboard and track your contributions.">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/login.css">
+    <link rel="stylesheet" href="css/theme-compatibility.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <meta name="csrf-token" content="">
+    
+    <style>
+        .debug-banner {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #fbbf24;
+            color: #92400e;
+            text-align: center;
+            padding: 0.5rem;
+            font-weight: 600;
+            font-size: 0.875rem;
+            z-index: 10000;
+        }
+        
+        body {
+            padding-top: 50px;
+        }
+    </style>
+</head>
+<body class="auth-body">
+    <!-- Debug Banner -->
+    <div class="debug-banner">
+        🛠️ DEBUG MODE ACTIVE - Enhanced logging and test credentials available
+    </div>
+
+    <!-- Auth Container -->
+    <div class="auth-container">
+        <!-- Left Side - Form -->
+        <div class="auth-form-section">
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <img src="images/LogoNGO.png" alt="Sai Seva Foundation" class="logo-img">
+                    <span class="logo-text">Sai Seva Foundation</span>
+                </div>
+                <a href="index.html" class="back-home">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Home
+                </a>
+            </div>
+
+            <div class="auth-content">
+                <div class="auth-tabs">
+                    <button type="button" class="tab-btn active" data-tab="login">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Login
+                    </button>
+                    <button type="button" class="tab-btn" data-tab="register">
+                        <i class="fas fa-user-plus"></i>
+                        Register
+                    </button>
+                </div>
+
+                <!-- Login Form -->
+                <div id="login-tab" class="tab-content active">
+                    <div class="form-header">
+                        <h1>Welcome Back</h1>
+                        <p>Login to access your dashboard and track your impact</p>
+                    </div>
+
+                    <form id="loginForm" class="auth-form">
+                        <div class="form-group">
+                            <label for="login_email">Email Address</label>
+                            <div class="input-group">
+                                <i class="fas fa-envelope"></i>
+                                <input type="email" id="login_email" name="email" required autocomplete="email" placeholder="Enter your email">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="login_password">Password</label>
+                            <div class="input-group">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" id="login_password" name="password" required autocomplete="current-password" placeholder="Enter your password">
+                                <button type="button" class="password-toggle">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="user_type">Account Type</label>
+                            <div class="input-group">
+                                <i class="fas fa-user-tag"></i>
+                                <select id="user_type" name="user_type" required>
+                                    <option value="">Select Account Type</option>
+                                    <option value="user">Donor/Supporter</option>
+                                    <option value="volunteer">Volunteer</option>
+                                    <option value="admin">Administrator</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-options">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="remember_me" value="1">
+                                <span class="checkmark"></span>
+                                Remember me
+                            </label>
+                            <a href="#" class="forgot-link">Forgot Password?</a>
+                        </div>
+
+                        <input type="hidden" name="csrf_token" id="login_csrf_token" value="">
+
+                        <button type="submit" class="btn btn-primary btn-large auth-submit">
+                            <i class="fas fa-sign-in-alt"></i>
+                            Login to Dashboard
+                        </button>
+                    </form>
+                    
+                    <div class="debug-info" style="margin-top: 1rem; padding: 1rem; background: rgba(59, 130, 246, 0.1); border-radius: 8px; font-size: 0.875rem;">
+                        <h4 style="margin: 0 0 0.5rem 0; color: #2563eb;">DEBUG INFO:</h4>
+                        <p>Check browser console for detailed logs</p>
+                        <p>Use test accounts from bottom-right corner</p>
+                    </div>
+                </div>
+
+                <!-- Register Form -->
+                <div id="register-tab" class="tab-content">
+                    <div class="form-header">
+                        <h1>Join Our Mission</h1>
+                        <p>Create an account to start making a difference</p>
+                    </div>
+
+                    <form id="registerForm" class="auth-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="register_name">Full Name</label>
+                                <div class="input-group">
+                                    <i class="fas fa-user"></i>
+                                    <input type="text" id="register_name" name="name" required autocomplete="name" placeholder="Enter your full name">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="register_email">Email Address</label>
+                                <div class="input-group">
+                                    <i class="fas fa-envelope"></i>
+                                    <input type="email" id="register_email" name="email" required autocomplete="email" placeholder="Enter your email">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="register_phone">Phone Number</label>
+                                <div class="input-group">
+                                    <i class="fas fa-phone"></i>
+                                    <input type="tel" id="register_phone" name="phone" maxlength="10" autocomplete="tel" placeholder="10-digit mobile">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="register_user_type">Account Type</label>
+                                <div class="input-group">
+                                    <i class="fas fa-user-tag"></i>
+                                    <select id="register_user_type" name="user_type" required>
+                                        <option value="">Select Type</option>
+                                        <option value="user">Donor/Supporter</option>
+                                        <option value="volunteer">Volunteer</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="register_password">Password</label>
+                            <div class="input-group">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" id="register_password" name="password" required autocomplete="new-password" placeholder="Create a strong password">
+                                <button type="button" class="password-toggle">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="password-strength">
+                                <div class="strength-bar">
+                                    <div class="strength-fill"></div>
+                                </div>
+                                <div class="strength-text">Password strength: <span id="strength-level">Weak</span></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="confirm_password">Confirm Password</label>
+                            <div class="input-group">
+                                <i class="fas fa-lock"></i>
+                                <input type="password" id="confirm_password" name="confirm_password" required autocomplete="new-password" placeholder="Confirm your password">
+                                <div class="password-match">
+                                    <i class="fas fa-check" style="display: none;"></i>
+                                    <i class="fas fa-times" style="display: none;"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="terms-section">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="terms_agreement" required>
+                                    <span class="checkmark"></span>
+                                    I agree to the <a href="#terms" target="_blank">Terms of Service</a> and <a href="#privacy" target="_blank">Privacy Policy</a>
+                                </label>
+
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="newsletter_signup" name="newsletter" value="1">
+                                    <span class="checkmark"></span>
+                                    Subscribe to newsletters and updates
+                                </label>
+                            </div>
+                        </div>
+
+                        <input type="hidden" name="csrf_token" id="register_csrf_token" value="">
+
+                        <button type="submit" class="btn btn-primary btn-large auth-submit">
+                            <i class="fas fa-user-plus"></i>
+                            Create Account
+                        </button>
+                    </form>
+                    
+                    <div class="debug-info" style="margin-top: 1rem; padding: 1rem; background: rgba(34, 197, 94, 0.1); border-radius: 8px; font-size: 0.875rem;">
+                        <h4 style="margin: 0 0 0.5rem 0; color: #059669;">REGISTRATION TEST:</h4>
+                        <p>Use any email not in the test accounts list</p>
+                        <p>Password must be at least 6 characters</p>
+                    </div>
+                </div>
+
+                <!-- Account Type Info -->
+                <div class="account-info">
+                    <div class="info-section">
+                        <h4><i class="fas fa-info-circle"></i> Account Types</h4>
+                        <div class="account-types">
+                            <div class="account-type">
+                                <div class="type-icon"><i class="fas fa-heart"></i></div>
+                                <div class="type-content">
+                                    <strong>Donor/Supporter</strong>
+                                    <p>Make donations, track contributions, receive receipts</p>
+                                </div>
+                            </div>
+                            <div class="account-type">
+                                <div class="type-icon"><i class="fas fa-hands-helping"></i></div>
+                                <div class="type-content">
+                                    <strong>Volunteer</strong>
+                                    <p>Manage schedules, track hours, access training materials</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side - Info -->
+        <div class="auth-info-section">
+            <div class="info-content">
+                <div class="info-header">
+                    <h2>Transform Lives Through Service</h2>
+                    <p>Join thousands making a real difference across India</p>
+                </div>
+
+                <div class="info-stats">
+                    <div class="stat-item">
+                        <div class="stat-number">50,000+</div>
+                        <div class="stat-label">Lives Touched</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">500+</div>
+                        <div class="stat-label">Active Volunteers</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">25+</div>
+                        <div class="stat-label">Communities Served</div>
+                    </div>
+                </div>
+
+                <div class="info-features">
+                    <div class="feature">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Secure & Private</span>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Track Impact</span>
+                    </div>
+                    <div class="feature">
+                        <i class="fas fa-mobile-alt"></i>
+                        <span>Mobile Friendly</span>
+                    </div>
+                </div>
+                
+                <div class="debug-panel" style="margin-top: 2rem; padding: 1rem; background: rgba(0, 0, 0, 0.1); border-radius: 8px;">
+                    <h4 style="color: #fbbf24; margin: 0 0 0.5rem 0;">🔍 Debug Information</h4>
+                    <p style="font-size: 0.8rem; margin: 0;">Open browser console (F12) to see detailed authentication logs</p>
+                    <button onclick="window.authDebugStatus?.()" style="margin-top: 0.5rem; padding: 0.5rem; background: #1f2937; color: white; border: none; border-radius: 4px; cursor: pointer;">Show Debug Status</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgotPasswordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Reset Password</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Enter your email to receive reset instructions.</p>
+                <form id="forgotPasswordForm">
+                    <div class="form-group">
+                        <label for="forgot_email">Email Address</label>
+                        <input type="email" id="forgot_email" name="email" required>
+                    </div>
+                    <input type="hidden" name="csrf_token" id="forgot_csrf_token" value="">
+                    <button type="submit" class="btn btn-primary">Send Reset Link</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/main.js"></script>
+    <script src="js/auth-debug.js"></script>
+    <script src="js/theme-switcher.js"></script>
+    
+    <!-- Debug helpers -->
+    <script>
+        // Debug helper functions
+        window.addEventListener('load', () => {
+            console.log('%c🔧 DEBUG MODE ACTIVE', 'font-size: 16px; font-weight: bold; color: #f59e0b;');
+            console.log('%c📋 Available test accounts:', 'font-weight: bold; color: #3b82f6;');
+            console.log('👑 Admin: admin@sadgurubharadwaja.org / admin123');
+            console.log('🤝 Volunteer: volunteer@sadgurubharadwaja.org / volunteer123');
+            console.log('❤️ Donor: donor@sadgurubharadwaja.org / donor123');
+            console.log('%c💡 Use authDebugStatus() to check system status', 'color: #10b981;');
+        });
+        
+        // Add password toggle functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.password-toggle').forEach(toggle => {
+                toggle.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const input = toggle.parentElement.querySelector('input');
+                    const icon = toggle.querySelector('i');
+                    
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    } else {
+                        input.type = 'password';
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

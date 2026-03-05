@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Sri Dutta Sai Manga Bharadwaja</title>
+    <meta name="description" content="Admin dashboard for managing NGO operations, donations, volunteers, and programs.">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/theme-compatibility.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <meta name="csrf-token" content="">
+    
+    <style>
+        /* Enhanced Admin Dashboard Styles */
+        .filters-section {
+            background: var(--color-surface);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--color-border);
+        }
+        
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            align-items: end;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .filter-group label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--color-text);
+        }
+        
+        .filter-group input,
+        .filter-group select {
+            padding: 0.75rem;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            background: var(--color-surface);
+            color: var(--color-text);
+            font-size: 0.875rem;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .action-buttons .btn {
+            padding: 0.375rem 0.5rem;
+        }
+        
+        .status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: capitalize;
+        }
+        
+        .status-success {
+            background: rgba(var(--color-success-rgb), 0.1);
+            color: var(--color-success);
+            border: 1px solid rgba(var(--color-success-rgb), 0.2);
+        }
+        
+        .status-warning {
+            background: rgba(var(--color-warning-rgb), 0.1);
+            color: var(--color-warning);
+            border: 1px solid rgba(var(--color-warning-rgb), 0.2);
+        }
+        
+        .status-error {
+            background: rgba(var(--color-error-rgb), 0.1);
+            color: var(--color-error);
+            border: 1px solid rgba(var(--color-error-rgb), 0.2);
+        }
+        
+        .donor-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .donor-info strong {
+            font-weight: 500;
+            color: var(--color-text);
+        }
+        
+        .donor-info small {
+            color: var(--color-text-secondary);
+            font-size: 0.75rem;
+        }
+        
+        .amount {
+            font-weight: 600;
+            color: var(--color-primary);
+        }
+        
+        .table-container {
+            background: var(--color-surface);
+            border-radius: 8px;
+            border: 1px solid var(--color-border);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--color-border);
+        }
+        
+        .data-table th {
+            background: var(--color-secondary);
+            font-weight: 600;
+            color: var(--color-text);
+        }
+        
+        .data-table tbody tr:hover {
+            background: var(--color-secondary);
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 3rem 1rem;
+        }
+        
+        .no-data-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .no-data-content i {
+            font-size: 3rem;
+            color: var(--color-text-secondary);
+        }
+        
+        .loading-spinner {
+            text-align: center;
+            padding: 2rem;
+            color: var(--color-text-secondary);
+        }
+        
+        .loading-spinner i {
+            margin-right: 0.5rem;
+        }
+        
+        .pagination {
+            margin-top: 1.5rem;
+        }
+        
+        .pagination-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--color-surface);
+            border-radius: 8px;
+            border: 1px solid var(--color-border);
+        }
+        
+        .pagination-info {
+            color: var(--color-text-secondary);
+            font-size: 0.875rem;
+        }
+        
+        .pagination-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .pagination-buttons .btn {
+            min-width: 40px;
+            height: 36px;
+            padding: 0.375rem 0.75rem;
+        }
+        
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .filters {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+            
+            .action-buttons .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .pagination-controls {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .table-container {
+                overflow-x: auto;
+            }
+            
+            .data-table {
+                min-width: 600px;
+            }
+        }
+    </style>
+</head>
+<body class="dashboard-body">
+    <!-- Dashboard Container -->
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <img src="images/LogoNGO.png" alt="Sai Seva Foundation" class="logo-img">
+                    <span class="logo-text">Sri Dutta Sai Manga Bharadwaja Trust</span>
+                </div>
+                <button class="sidebar-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a href="#dashboard" class="nav-link active" data-tab="dashboard">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#donations" class="nav-link" data-tab="donations">
+                            <i class="fas fa-heart"></i>
+                            <span>Donations</span>
+                            <span class="nav-badge">12</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#volunteers" class="nav-link" data-tab="volunteers">
+                            <i class="fas fa-hands-helping"></i>
+                            <span>Volunteers</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#projects" class="nav-link" data-tab="projects">
+                            <i class="fas fa-project-diagram"></i>
+                            <span>Projects</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#events" class="nav-link" data-tab="events">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>Events</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#reports" class="nav-link" data-tab="reports">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Reports</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#users" class="nav-link" data-tab="users">
+                            <i class="fas fa-users"></i>
+                            <span>Users</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="#settings" class="nav-link" data-tab="settings">
+                            <i class="fas fa-cog"></i>
+                            <span>Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar">
+                        <div class="avatar-placeholder">A</div>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name">Admin User</div>
+                        <div class="user-role">Administrator</div>
+                    </div>
+                    <div class="user-menu">
+                        <button class="user-menu-toggle">
+                            <i class="fas fa-chevron-up"></i>
+                        </button>
+                        <div class="user-dropdown">
+                            <a href="#profile" class="dropdown-item">
+                                <i class="fas fa-user"></i>
+                                Profile
+                            </a>
+                            <a href="#logout" class="dropdown-item" id="logoutBtn">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Logout
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <div class="top-bar-left">
+                    <button class="mobile-sidebar-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <div class="breadcrumb">
+                        <span id="current-section">Dashboard</span>
+                    </div>
+                </div>
+
+                <div class="top-bar-right">
+                    <div class="search-box">
+                        <input type="text" placeholder="Search donations, volunteers, users..." class="search-input">
+                        <button class="search-btn">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+
+                    <div class="notifications">
+                        <button class="notification-btn">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-count">3</span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Dashboard Tab -->
+                <div id="dashboard-content" class="tab-content active">
+                    <!-- Stats Overview -->
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-heart"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-number" data-target="150000">0</div>
+                                <div class="stat-label">Total Donations (₹)</div>
+                                <div class="stat-change positive">
+                                    <i class="fas fa-arrow-up"></i>
+                                    12% this month
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-number" data-target="500">0</div>
+                                <div class="stat-label">Active Volunteers</div>
+                                <div class="stat-change positive">
+                                    <i class="fas fa-arrow-up"></i>
+                                    8% this month
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-project-diagram"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-number" data-target="25">0</div>
+                                <div class="stat-label">Active Projects</div>
+                                <div class="stat-change neutral">
+                                    <i class="fas fa-minus"></i>
+                                    No change
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-hand-holding-heart"></i>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-number" data-target="50000">0</div>
+                                <div class="stat-label">Lives Impacted</div>
+                                <div class="stat-change positive">
+                                    <i class="fas fa-arrow-up"></i>
+                                    15% this month
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="dashboard-grid">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3>Recent Donations</h3>
+                                <a href="#" class="view-all-link" data-tab="donations">View All</a>
+                            </div>
+                            <div class="card-content">
+                                <div class="activity-list">
+                                    <div class="activity-item">
+                                        <div class="activity-avatar">
+                                            <i class="fas fa-heart"></i>
+                                        </div>
+                                        <div class="activity-info">
+                                            <div class="activity-title">Rajesh Kumar</div>
+                                            <div class="activity-meta">₹5,000 • 2 hours ago</div>
+                                        </div>
+                                        <div class="activity-status success">Completed</div>
+                                    </div>
+
+                                    <div class="activity-item">
+                                        <div class="activity-avatar">
+                                            <i class="fas fa-heart"></i>
+                                        </div>
+                                        <div class="activity-info">
+                                            <div class="activity-title">Priya Sharma</div>
+                                            <div class="activity-meta">₹2,000 • 4 hours ago</div>
+                                        </div>
+                                        <div class="activity-status success">Completed</div>
+                                    </div>
+
+                                    <div class="activity-item">
+                                        <div class="activity-avatar">
+                                            <i class="fas fa-heart"></i>
+                                        </div>
+                                        <div class="activity-info">
+                                            <div class="activity-title">Anonymous</div>
+                                            <div class="activity-meta">₹10,000 • 6 hours ago</div>
+                                        </div>
+                                        <div class="activity-status success">Completed</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3>Quick Actions</h3>
+                            </div>
+                            <div class="card-content">
+                                <div class="quick-actions">
+                                    <button class="quick-action-btn" data-action="add-donation">
+                                        <i class="fas fa-plus"></i>
+                                        <span>Add Donation</span>
+                                    </button>
+                                    <button class="quick-action-btn" data-action="add-volunteer">
+                                        <i class="fas fa-user-plus"></i>
+                                        <span>Add Volunteer</span>
+                                    </button>
+                                    <button class="quick-action-btn" data-action="create-event">
+                                        <i class="fas fa-calendar-plus"></i>
+                                        <span>Create Event</span>
+                                    </button>
+                                    <button class="quick-action-btn" data-action="generate-report">
+                                        <i class="fas fa-file-alt"></i>
+                                        <span>Generate Report</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Donations Tab -->
+                <div id="donations-content" class="tab-content">
+                    <div class="content-header">
+                        <div class="header-title">
+                            <h2>Donations Management</h2>
+                            <p>Manage and track all donations received</p>
+                        </div>
+                        <div class="header-actions">
+                            <button class="btn btn-outline" id="exportDonations">
+                                <i class="fas fa-download"></i>
+                                Export
+                            </button>
+                            <button class="btn btn-primary" id="addDonation">
+                                <i class="fas fa-plus"></i>
+                                Add Donation
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Enhanced Filters Section -->
+                    <div class="filters-section">
+                        <div class="filters">
+                            <div class="filter-group">
+                                <label>Status</label>
+                                <select id="donationStatusFilter">
+                                    <option value="">All Status</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="failed">Failed</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Cause</label>
+                                <select id="donationCauseFilter">
+                                    <option value="">All Causes</option>
+                                    <option value="general">General Fund</option>
+                                    <option value="poor-feeding">Poor Feeding</option>
+                                    <option value="education">Education</option>
+                                    <option value="medical">Medical</option>
+                                    <option value="disaster">Disaster Relief</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Amount Range</label>
+                                <select id="donationAmountFilter">
+                                    <option value="">All Amounts</option>
+                                    <option value="0-1000">₹0 - ₹1,000</option>
+                                    <option value="1000-5000">₹1,000 - ₹5,000</option>
+                                    <option value="5000-10000">₹5,000 - ₹10,000</option>
+                                    <option value="10000+">₹10,000+</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Date From</label>
+                                <input type="date" id="donationDateFrom">
+                            </div>
+                            <div class="filter-group">
+                                <label>Date To</label>
+                                <input type="date" id="donationDateTo">
+                            </div>
+                            <div class="filter-group">
+                                <label>&nbsp;</label>
+                                <button class="btn btn-outline" id="clearFilters">Clear Filters</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table" id="donationsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Donor Details</th>
+                                    <th>Amount</th>
+                                    <th>Cause</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="donationsTableBody">
+                                <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="pagination" id="donationsPagination">
+                        <!-- Pagination will be rendered here -->
+                    </div>
+                </div>
+
+                <!-- Volunteers Tab -->
+                <div id="volunteers-content" class="tab-content">
+                    <div class="content-header">
+                        <div class="header-title">
+                            <h2>Volunteer Management</h2>
+                            <p>Manage volunteer registrations and schedules</p>
+                        </div>
+                        <div class="header-actions">
+                            <button class="btn btn-outline" id="exportVolunteers">
+                                <i class="fas fa-download"></i>
+                                Export
+                            </button>
+                            <button class="btn btn-primary" id="addVolunteer">
+                                <i class="fas fa-user-plus"></i>
+                                Add Volunteer
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Volunteer Filters -->
+                    <div class="filters-section">
+                        <div class="filters">
+                            <div class="filter-group">
+                                <label>Status</label>
+                                <select id="volunteerStatusFilter">
+                                    <option value="">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="pending">Pending Approval</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Skills</label>
+                                <select id="volunteerSkillsFilter">
+                                    <option value="">All Skills</option>
+                                    <option value="teaching">Teaching</option>
+                                    <option value="medical">Medical</option>
+                                    <option value="cooking">Cooking</option>
+                                    <option value="admin">Administration</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Join Date From</label>
+                                <input type="date" id="volunteerDateFrom">
+                            </div>
+                            <div class="filter-group">
+                                <label>Join Date To</label>
+                                <input type="date" id="volunteerDateTo">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Contact</th>
+                                    <th>Skills</th>
+                                    <th>Status</th>
+                                    <th>Join Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="volunteersTableBody">
+                                <tr><td colspan="7" class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading volunteers...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Users Tab -->
+                <div id="users-content" class="tab-content">
+                    <div class="content-header">
+                        <div class="header-title">
+                            <h2>User Management</h2>
+                            <p>Manage user accounts and permissions</p>
+                        </div>
+                        <div class="header-actions">
+                            <button class="btn btn-primary" id="createUser">
+                                <i class="fas fa-user-plus"></i>
+                                Add User
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- User Filters -->
+                    <div class="filters-section">
+                        <div class="filters">
+                            <div class="filter-group">
+                                <label>User Type</label>
+                                <select id="userTypeFilter">
+                                    <option value="">All Types</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="volunteer">Volunteer</option>
+                                    <option value="user">Donor/User</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Status</label>
+                                <select id="userStatusFilter">
+                                    <option value="">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="suspended">Suspended</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Registration From</label>
+                                <input type="date" id="userRegDateFrom">
+                            </div>
+                            <div class="filter-group">
+                                <label>Registration To</label>
+                                <input type="date" id="userRegDateTo">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Last Login</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr><td colspan="7" class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading users...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Other tabs remain the same but with placeholder content -->
+                <div id="projects-content" class="tab-content">
+                    <div class="content-header">
+                        <div class="header-title">
+                            <h2>Project Management</h2>
+                            <p>Manage ongoing and completed projects</p>
+                        </div>
+                    </div>
+                    <div class="placeholder-content">
+                        <i class="fas fa-project-diagram"></i>
+                        <h3>Project Management</h3>
+                        <p>Project management features will be implemented here</p>
+                    </div>
+                </div>
+
+                <div id="events-content" class="tab-content">
+                    <div class="content-header">
+                        <div class="header-title">
+                            <h2>Event Management</h2>
+                            <p>Organize and manage events and activities</p>
+                        </div>
+                    </div>
+                    <div class="placeholder-content">
+                        <i class="fas fa-calendar-alt"></i>
+                        <h3>Event Management</h3>
+                        <p>Event management features will be implemented here</p>
+                    </div>
+                </div>
+
+                <div id="reports-content" class="tab-content">
+                    <div class="content-header">
+                        <div class="header-title">
+                            <h2>Reports & Analytics</h2>
+                            <p>Generate detailed reports and view analytics</p>
+                        </div>
+                    </div>
+                    <div class="placeholder-content">
+                        <i class="fas fa-chart-bar"></i>
+                        <h3>Reports & Analytics</h3>
+                        <p>Comprehensive reporting features will be implemented here</p>
+                    </div>
+                </div>
+
+                <div id="settings-content" class="tab-content">
+                    <div class="content-header">
+                        <div class="header-title">
+                            <h2>Settings</h2>
+                            <p>Configure system settings and preferences</p>
+                        </div>
+                    </div>
+                    <div class="placeholder-content">
+                        <i class="fas fa-cog"></i>
+                        <h3>System Settings</h3>
+                        <p>Configuration panel will be implemented here</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/main.js"></script>
+    <script src="js/admin-enhanced.js"></script>
+    <script src="js/theme-switcher.js"></script>
+</body>
+</html>

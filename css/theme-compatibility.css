@@ -1,0 +1,439 @@
+/**
+ * THEME COMPATIBILITY SYSTEM - Sri Dutta Sai Manga Bharadwaja Trust
+ * Comprehensive light/dark mode compatibility with manual theme switching
+ * 
+ * @version 1.0.0
+ * @priority CRITICAL - Fixes readability issues
+ */
+
+/* =================================================================
+   LIGHT MODE FORCED COMPATIBILITY
+   ================================================================= */
+
+/* Override dark theme for light mode systems */
+@media (prefers-color-scheme: light) {
+    :root {
+        /* Force light mode colors */
+        --color-background: #fcfcf9 !important;
+        --color-surface: #ffffff !important;
+        --color-text: #133c3b !important;
+        --color-text-secondary: #626c6c !important;
+        --color-border: rgba(94, 82, 64, 0.2) !important;
+        --color-primary: #21808d !important;
+        --color-primary-hover: #1d7480 !important;
+        --color-primary-active: #1a6670 !important;
+        
+        /* Update RGB versions */
+        --color-text-rgb: 19, 52, 59;
+        --color-primary-rgb: 33, 128, 141;
+        --color-surface-rgb: 255, 255, 255;
+    }
+    
+    /* Ensure all critical text elements are readable */
+    body, 
+    h1, h2, h3, h4, h5, h6, 
+    p, span, div, a, li, td, th,
+    .nav-link, .footer-links a,
+    .section-title, .section-subtitle {
+        color: var(--color-text) !important;
+    }
+    
+    /* Form elements readability */
+    input, select, textarea {
+        background: var(--color-surface) !important;
+        color: var(--color-text) !important;
+        border-color: var(--color-border) !important;
+    }
+    
+    input::placeholder {
+        color: var(--color-text-secondary) !important;
+    }
+    
+    /* Button fixes */
+    .btn-outline {
+        color: var(--color-primary) !important;
+        border-color: var(--color-primary) !important;
+    }
+    
+    .btn-outline:hover {
+        background: var(--color-primary) !important;
+        color: var(--color-surface) !important;
+    }
+    
+    /* Navigation specific fixes */
+    .header, .navbar {
+        background: var(--color-surface) !important;
+        border-bottom: 1px solid var(--color-border) !important;
+    }
+    
+    .nav-link {
+        color: var(--color-text) !important;
+    }
+    
+    .nav-link:hover, .nav-link.active {
+        color: var(--color-primary) !important;
+    }
+    
+    /* Card and surface fixes */
+    .card, .dashboard-card, .service-card {
+        background: var(--color-surface) !important;
+        border-color: var(--color-border) !important;
+    }
+    
+    /* Footer remains dark for contrast */
+    .footer {
+        background: #1f3433 !important;
+        color: #a7a9a9 !important;
+    }
+    
+    .footer h3 {
+        color: #fcfcf9 !important;
+    }
+    
+    .footer-links a {
+        color: #a7a9a9 !important;
+    }
+    
+    .footer-links a:hover {
+        color: var(--color-primary) !important;
+    }
+}
+
+/* =================================================================
+   DARK MODE ENHANCEMENTS
+   ================================================================= */
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        /* Enhanced dark mode colors */
+        --color-background: #1f2121 !important;
+        --color-surface: #262828 !important;
+        --color-text: #f5f5f5 !important;
+        --color-text-secondary: rgba(167, 169, 169, 0.8) !important;
+        --color-border: rgba(119, 124, 124, 0.3) !important;
+        --color-primary: #32b8c6 !important;
+        --color-primary-hover: #2da6b2 !important;
+        --color-primary-active: #28949f !important;
+    }
+    
+    /* Better contrast for dark mode */
+    .btn-primary {
+        background: var(--color-primary) !important;
+        color: #1f2121 !important;
+    }
+    
+    .btn-outline {
+        border-color: var(--color-border) !important;
+        color: var(--color-text) !important;
+    }
+    
+    .btn-outline:hover {
+        background: var(--color-secondary) !important;
+        color: var(--color-text) !important;
+    }
+}
+
+/* =================================================================
+   MANUAL THEME SWITCHING SYSTEM
+   ================================================================= */
+
+/* Theme toggle button */
+.theme-toggle {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 1000;
+    background: var(--color-surface);
+    border: 2px solid var(--color-border);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.theme-toggle i {
+    font-size: 1.2rem;
+    color: var(--color-text);
+    transition: transform 0.3s ease;
+}
+
+.theme-toggle:hover i {
+    transform: rotate(180deg);
+}
+
+/* Manual theme overrides */
+[data-theme="light"] {
+    --color-background: #fcfcf9;
+    --color-surface: #ffffff;
+    --color-text: #133c3b;
+    --color-text-secondary: #626c6c;
+    --color-border: rgba(94, 82, 64, 0.2);
+    --color-primary: #21808d;
+    --color-primary-hover: #1d7480;
+    --color-primary-active: #1a6670;
+}
+
+[data-theme="dark"] {
+    --color-background: #1f2121;
+    --color-surface: #262828;
+    --color-text: #f5f5f5;
+    --color-text-secondary: rgba(167, 169, 169, 0.8);
+    --color-border: rgba(119, 124, 124, 0.3);
+    --color-primary: #32b8c6;
+    --color-primary-hover: #2da6b2;
+    --color-primary-active: #28949f;
+}
+
+/* Force theme colors regardless of system preference */
+[data-theme="light"] body,
+[data-theme="light"] h1, [data-theme="light"] h2, [data-theme="light"] h3,
+[data-theme="light"] h4, [data-theme="light"] h5, [data-theme="light"] h6,
+[data-theme="light"] p, [data-theme="light"] span, [data-theme="light"] div,
+[data-theme="light"] a, [data-theme="light"] li {
+    color: var(--color-text) !important;
+}
+
+[data-theme="dark"] body,
+[data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3,
+[data-theme="dark"] h4, [data-theme="dark"] h5, [data-theme="dark"] h6,
+[data-theme="dark"] p, [data-theme="dark"] span, [data-theme="dark"] div,
+[data-theme="dark"] a, [data-theme="dark"] li {
+    color: var(--color-text) !important;
+}
+
+/* =================================================================
+   MOBILE RESPONSIVE IMPROVEMENTS
+   ================================================================= */
+
+@media (max-width: 768px) {
+    .theme-toggle {
+        top: 10px;
+        right: 10px;
+        width: 40px;
+        height: 40px;
+    }
+    
+    .theme-toggle i {
+        font-size: 1rem;
+    }
+    
+    /* Mobile navigation improvements */
+    .hamburger {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+    }
+    
+    .hamburger span {
+        width: 100%;
+        height: 3px;
+        background: var(--color-text);
+        margin: 2px 0;
+        transition: all 0.3s ease;
+        border-radius: 2px;
+    }
+    
+    .hamburger.active span:nth-child(1) {
+        transform: rotate(45deg) translate(6px, 6px);
+    }
+    
+    .hamburger.active span:nth-child(2) {
+        opacity: 0;
+    }
+    
+    .hamburger.active span:nth-child(3) {
+        transform: rotate(-45deg) translate(6px, -6px);
+    }
+    
+    /* Mobile menu enhancements */
+    .nav-menu {
+        position: fixed;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--color-surface);
+        flex-direction: column;
+        padding: 1rem;
+        gap: 1rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        transform: translateY(-100vh);
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        border-top: 1px solid var(--color-border);
+        max-height: calc(100vh - 80px);
+        overflow-y: auto;
+    }
+    
+    .nav-menu.active {
+        transform: translateY(0);
+        opacity: 1;
+        visibility: visible;
+    }
+    
+    .nav-actions {
+        margin-left: 0;
+        flex-direction: column;
+        width: 100%;
+        gap: 0.75rem;
+    }
+    
+    .nav-actions .btn {
+        width: 100%;
+        text-align: center;
+        justify-content: center;
+        padding: 0.75rem 1rem;
+        min-height: 44px; /* Touch target */
+    }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+    .logo-text {
+        font-size: 0.8rem;
+        max-width: 120px;
+        line-height: 1.2;
+    }
+    
+    .logo-img {
+        width: 30px;
+        height: 30px;
+    }
+    
+    .container {
+        padding: 0 0.5rem;
+    }
+    
+    /* Form improvements */
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        font-size: 16px; /* Prevent zoom on iOS */
+        padding: 0.75rem;
+    }
+    
+    .btn {
+        min-height: 44px;
+        padding: 0.75rem 1rem;
+    }
+    
+    .btn-large {
+        min-height: 48px;
+        padding: 1rem 1.25rem;
+    }
+}
+
+/* =================================================================
+   ACCESSIBILITY ENHANCEMENTS
+   ================================================================= */
+
+/* Focus improvements */
+*:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.btn:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb, 33, 128, 141), 0.3);
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    :root {
+        --color-border: currentColor;
+    }
+    
+    .btn-outline {
+        border-width: 2px;
+    }
+    
+    input, select, textarea {
+        border-width: 2px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .theme-toggle:hover i {
+        transform: none;
+    }
+}
+
+/* =================================================================
+   PRINT STYLES
+   ================================================================= */
+
+@media print {
+    .theme-toggle,
+    .hamburger {
+        display: none !important;
+    }
+    
+    body {
+        background: white !important;
+        color: black !important;
+    }
+    
+    * {
+        color: black !important;
+        background: white !important;
+    }
+}
+
+/* =================================================================
+   UTILITY CLASSES
+   ================================================================= */
+
+.force-readable {
+    color: var(--color-text) !important;
+    background: var(--color-surface) !important;
+}
+
+.theme-transition {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Mobile utilities */
+@media (max-width: 768px) {
+    .mobile-stack {
+        flex-direction: column !important;
+    }
+    
+    .mobile-full-width {
+        width: 100% !important;
+    }
+    
+    .mobile-hidden {
+        display: none !important;
+    }
+    
+    .mobile-text-center {
+        text-align: center !important;
+    }
+}

@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volunteer Dashboard - Sai Seva Foundation</title>
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/volunteer-dashboard.css">
+    <link rel="stylesheet" href="css/theme-compatibility.css">
+<link rel="stylesheet" href="css/mobile-responsive.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
+    
+    <!-- Meta Tags for SEO -->
+    <meta name="description" content="Volunteer Dashboard - Manage your volunteer activities with Sai Seva Foundation">
+    <meta name="keywords" content="volunteer, dashboard, NGO, Sai Seva Foundation, community service">
+    <meta name="robots" content="noindex, nofollow">
+</head>
+<body>
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="images/LogoNGO.png" alt="Sai Seva Foundation Logo">
+                <span>Sai Seva Foundation</span>
+            </div>
+            
+            <nav class="header-nav">
+                <a href="index.html" class="nav-link">
+                    <i class="fas fa-home"></i>
+                    Home
+                </a>
+                <a href="about.html" class="nav-link">
+                    <i class="fas fa-info-circle"></i>
+                    About
+                </a>
+                <a href="services.html" class="nav-link">
+                    <i class="fas fa-hands-helping"></i>
+                    Services
+                </a>
+            </nav>
+            
+            <div class="user-profile">
+                <div class="profile-info">
+                    <img src="images/default-avatar.png" alt="Profile" class="profile-avatar" id="profileAvatar">
+                    <div class="profile-details">
+                        <span class="profile-name" id="volunteerName">Loading...</span>
+                        <span class="profile-role">Volunteer</span>
+                    </div>
+                </div>
+                <div class="profile-dropdown">
+                    <button class="dropdown-toggle" aria-label="Profile menu">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="dropdown-menu">
+                        <a href="#profile" class="dropdown-item">
+                            <i class="fas fa-user"></i>
+                            My Profile
+                        </a>
+                        <a href="#settings" class="dropdown-item">
+                            <i class="fas fa-cog"></i>
+                            Settings
+                        </a>
+                        <hr class="dropdown-divider">
+                        <button class="dropdown-item logout-btn">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <a href="#dashboard" class="nav-item active" data-section="dashboard">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#activities" class="nav-item" data-section="activities">
+                    <i class="fas fa-tasks"></i>
+                    <span>My Activities</span>
+                </a>
+                <a href="#events" class="nav-item" data-section="events">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>Events</span>
+                </a>
+                <a href="#schedule" class="nav-item" data-section="schedule">
+                    <i class="fas fa-clock"></i>
+                    <span>Schedule</span>
+                </a>
+                <a href="#training" class="nav-item" data-section="training">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>Training</span>
+                </a>
+                <a href="#hours" class="nav-item" data-section="hours">
+                    <i class="fas fa-hourglass-half"></i>
+                    <span>Volunteer Hours</span>
+                </a>
+                <a href="#certificates" class="nav-item" data-section="certificates">
+                    <i class="fas fa-certificate"></i>
+                    <span>Certificates</span>
+                </a>
+                <a href="#profile" class="nav-item" data-section="profile">
+                    <i class="fas fa-user-edit"></i>
+                    <span>Profile</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Overview -->
+            <section id="dashboard-section" class="content-section active">
+                <div class="section-header">
+                    <h1>Volunteer Dashboard</h1>
+                    <p>Welcome back! Here's your volunteer activity overview.</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-hourglass-half"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalHours">0</h3>
+                            <p>Total Hours</p>
+                            <span class="stat-change positive">+5 this month</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="eventsAttended">0</h3>
+                            <p>Events Attended</p>
+                            <span class="stat-change positive">+2 this month</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="peopleHelped">0</h3>
+                            <p>People Helped</p>
+                            <span class="stat-change positive">+25 this month</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-medal"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="achievements">0</h3>
+                            <p>Achievements</p>
+                            <span class="stat-change neutral">No change</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <h2>Quick Actions</h2>
+                    <div class="actions-grid">
+                        <button class="action-btn" data-action="register-event">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>Register for Event</span>
+                        </button>
+                        <button class="action-btn" data-action="log-hours">
+                            <i class="fas fa-clock"></i>
+                            <span>Log Hours</span>
+                        </button>
+                        <button class="action-btn" data-action="update-availability">
+                            <i class="fas fa-calendar"></i>
+                            <span>Update Availability</span>
+                        </button>
+                        <button class="action-btn" data-action="view-training">
+                            <i class="fas fa-play"></i>
+                            <span>Start Training</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Activities -->
+                <div class="recent-activities">
+                    <h2>Recent Activities</h2>
+                    <div class="activity-list" id="recentActivities">
+                        <!-- Activities will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Upcoming Events -->
+                <div class="upcoming-events">
+                    <h2>Upcoming Events</h2>
+                    <div class="event-list" id="upcomingEvents">
+                        <!-- Events will be loaded here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- My Activities Section -->
+            <section id="activities-section" class="content-section">
+                <div class="section-header">
+                    <h1>My Activities</h1>
+                    <button class="btn btn-primary" id="logNewActivity">
+                        <i class="fas fa-plus"></i>
+                        Log New Activity
+                    </button>
+                </div>
+
+                <div class="filters">
+                    <select id="activityFilter" class="filter-select">
+                        <option value="all">All Activities</option>
+                        <option value="completed">Completed</option>
+                        <option value="ongoing">Ongoing</option>
+                        <option value="upcoming">Upcoming</option>
+                    </select>
+                    <input type="date" id="dateFilter" class="filter-input">
+                    <button class="btn btn-secondary" id="clearFilters">Clear Filters</button>
+                </div>
+
+                <div class="activities-table-container">
+                    <table class="activities-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Activity</th>
+                                <th>Hours</th>
+                                <th>Status</th>
+                                <th>Location</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activitiesTableBody">
+                            <!-- Activities will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Events Section -->
+            <section id="events-section" class="content-section">
+                <div class="section-header">
+                    <h1>Events</h1>
+                    <div class="header-actions">
+                        <select id="eventStatusFilter" class="filter-select">
+                            <option value="all">All Events</option>
+                            <option value="registered">Registered</option>
+                            <option value="available">Available</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="events-grid" id="eventsGrid">
+                    <!-- Events will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Schedule Section -->
+            <section id="schedule-section" class="content-section">
+                <div class="section-header">
+                    <h1>My Schedule</h1>
+                    <button class="btn btn-primary" id="updateAvailability">
+                        <i class="fas fa-edit"></i>
+                        Update Availability
+                    </button>
+                </div>
+
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <button class="btn btn-secondary" id="prevMonth">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <h2 id="currentMonth">Loading...</h2>
+                        <button class="btn btn-secondary" id="nextMonth">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="calendar-grid" id="calendar">
+                        <!-- Calendar will be generated here -->
+                    </div>
+                </div>
+
+                <div class="availability-settings">
+                    <h3>Availability Settings</h3>
+                    <form id="availabilityForm">
+                        <div class="time-slots">
+                            <div class="day-slot">
+                                <label>
+                                    <input type="checkbox" name="monday" value="monday">
+                                    Monday
+                                </label>
+                                <select name="monday_start">
+                                    <option value="09:00">9:00 AM</option>
+                                    <option value="10:00">10:00 AM</option>
+                                    <option value="11:00">11:00 AM</option>
+                                    <option value="14:00">2:00 PM</option>
+                                    <option value="15:00">3:00 PM</option>
+                                    <option value="16:00">4:00 PM</option>
+                                </select>
+                                <select name="monday_end">
+                                    <option value="12:00">12:00 PM</option>
+                                    <option value="13:00">1:00 PM</option>
+                                    <option value="17:00">5:00 PM</option>
+                                    <option value="18:00">6:00 PM</option>
+                                </select>
+                            </div>
+                            <!-- Similar structure for other days -->
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Availability</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Training Section -->
+            <section id="training-section" class="content-section">
+                <div class="section-header">
+                    <h1>Training Programs</h1>
+                    <p>Complete training modules to enhance your volunteering skills</p>
+                </div>
+
+                <div class="training-progress">
+                    <h3>Overall Progress</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%;" id="overallProgress"></div>
+                    </div>
+                    <span class="progress-text">0% Complete</span>
+                </div>
+
+                <div class="training-modules" id="trainingModules">
+                    <!-- Training modules will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Volunteer Hours Section -->
+            <section id="hours-section" class="content-section">
+                <div class="section-header">
+                    <h1>Volunteer Hours</h1>
+                    <button class="btn btn-primary" id="exportHours">
+                        <i class="fas fa-download"></i>
+                        Export Report
+                    </button>
+                </div>
+
+                <div class="hours-summary">
+                    <div class="summary-cards">
+                        <div class="summary-card">
+                            <h3>This Month</h3>
+                            <span class="hours-count" id="thisMonthHours">0</span>
+                            <span class="hours-label">hours</span>
+                        </div>
+                        <div class="summary-card">
+                            <h3>This Year</h3>
+                            <span class="hours-count" id="thisYearHours">0</span>
+                            <span class="hours-label">hours</span>
+                        </div>
+                        <div class="summary-card">
+                            <h3>Total</h3>
+                            <span class="hours-count" id="totalHoursCount">0</span>
+                            <span class="hours-label">hours</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hours-chart">
+                    <canvas id="hoursChart" width="400" height="200"></canvas>
+                </div>
+
+                <div class="hours-log">
+                    <h3>Hours Log</h3>
+                    <div class="log-filters">
+                        <input type="month" id="monthFilter" class="filter-input">
+                        <select id="activityTypeFilter" class="filter-select">
+                            <option value="all">All Types</option>
+                            <option value="event">Events</option>
+                            <option value="community">Community Service</option>
+                            <option value="education">Education</option>
+                            <option value="healthcare">Healthcare</option>
+                        </select>
+                    </div>
+                    <div class="hours-table" id="hoursTable">
+                        <!-- Hours log will be displayed here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Certificates Section -->
+            <section id="certificates-section" class="content-section">
+                <div class="section-header">
+                    <h1>Certificates & Achievements</h1>
+                    <p>Your volunteer achievements and certifications</p>
+                </div>
+
+                <div class="certificates-grid" id="certificatesGrid">
+                    <!-- Certificates will be loaded here -->
+                </div>
+
+                <div class="achievements">
+                    <h3>Achievements</h3>
+                    <div class="achievements-list" id="achievementsList">
+                        <!-- Achievements will be loaded here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Profile Section -->
+            <section id="profile-section" class="content-section">
+                <div class="section-header">
+                    <h1>My Profile</h1>
+                    <p>Update your volunteer profile information</p>
+                </div>
+
+                <div class="profile-form-container">
+                    <form id="profileForm" class="profile-form">
+                        <div class="form-group">
+                            <label for="fullName">Full Name *</label>
+                            <input type="text" id="fullName" name="full_name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email Address *</label>
+                            <input type="email" id="email" name="email" required readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phone">Phone Number</label>
+                            <input type="tel" id="phone" name="phone">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="address">Address</label>
+                            <textarea id="address" name="address" rows="3"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="skills">Skills & Interests</label>
+                            <textarea id="skills" name="skills" placeholder="E.g., Teaching, Healthcare, Event Management, Technology" rows="3"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="availability">General Availability</label>
+                            <select id="availability" name="availability">
+                                <option value="weekends">Weekends Only</option>
+                                <option value="weekdays">Weekdays Only</option>
+                                <option value="flexible">Flexible</option>
+                                <option value="limited">Limited Availability</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="experience">Previous Volunteer Experience</label>
+                            <textarea id="experience" name="experience" rows="4"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="emergencyContact">Emergency Contact</label>
+                            <input type="text" id="emergencyContact" name="emergency_contact" placeholder="Name and Phone Number">
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i>
+                                Update Profile
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="cancelEdit">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="logActivityModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Log Volunteer Activity</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="logActivityForm" class="modal-form">
+                <div class="form-group">
+                    <label for="activityDate">Date *</label>
+                    <input type="date" id="activityDate" name="activity_date" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="activityType">Activity Type *</label>
+                    <select id="activityType" name="activity_type" required>
+                        <option value="">Select Activity Type</option>
+                        <option value="event">Event Participation</option>
+                        <option value="community">Community Service</option>
+                        <option value="education">Educational Support</option>
+                        <option value="healthcare">Healthcare Assistance</option>
+                        <option value="administration">Administrative Work</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="activityDescription">Description *</label>
+                    <textarea id="activityDescription" name="description" required rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="hoursSpent">Hours Spent *</label>
+                    <input type="number" id="hoursSpent" name="hours" min="0.5" step="0.5" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="activityLocation">Location</label>
+                    <input type="text" id="activityLocation" name="location">
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Log Activity</button>
+                    <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p>Loading...</p>
+        </div>
+    </div>
+
+    <!-- JavaScript Files -->
+    <script src="js/main.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/volunteer-dashboard.js"></script>
+    <script src="js/theme-switcher.js"></script>
+</body>
+</html>

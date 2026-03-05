@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Sai Seva Foundation</title>
+    
+    <!-- Add your CSS files -->
+    <link rel="stylesheet" href="./css/common.css">
+    <link rel="stylesheet" href="./css/login.css">
+    
+    <style>
+        /* Essential CSS for login page functionality */
+        .auth-container {
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .auth-tabs {
+            display: flex;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 12px 16px;
+            text-align: center;
+            background: #f9fafb;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .tab.active {
+            background: #21808d;
+            color: white;
+            border-bottom: 2px solid #21808d;
+        }
+        
+        .auth-form {
+            display: none;
+        }
+        
+        .auth-form.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #21808d;
+            box-shadow: 0 0 0 3px rgba(33, 128, 141, 0.1);
+        }
+        
+        .form-input.error {
+            border-color: #dc2626;
+            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+        }
+        
+        .error-message {
+            color: #dc2626;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #21808d, #1d7480);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(33, 128, 141, 0.3);
+        }
+        
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .login-message {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-weight: 500;
+            text-align: center;
+        }
+        
+        .login-message--success {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .login-message--error {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <nav class="navbar">
+                <div class="nav-brand">
+                    <img src="./assets/logo.png" alt="Sai Seva Foundation" class="logo">
+                    <div class="brand-text">
+                        <h1>Sai Seva Foundation</h1>
+                        <p>Serving with devotion and compassion</p>
+                    </div>
+                </div>
+                
+                <ul class="nav-menu">
+                    <li><a href="./index.html" class="nav-link">Home</a></li>
+                    <li><a href="./about.html" class="nav-link">About</a></li>
+                    <li><a href="./services.html" class="nav-link">Services</a></li>
+                    <li><a href="./contact.html" class="nav-link">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Login Container -->
+    <main class="main-content">
+        <div class="container">
+            <div class="auth-container">
+                <!-- Tab Navigation -->
+                <div class="auth-tabs">
+                    <button class="tab login-tab active" data-tab="login">Login</button>
+                    <button class="tab register-tab" data-tab="register">Register</button>
+                </div>
+
+                <!-- Login Form -->
+                <div class="auth-form login-form active" data-form="login">
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label class="form-label" for="loginEmail">Email Address</label>
+                            <input type="email" class="form-input" id="loginEmail" name="email" required 
+                                   placeholder="Enter your email address">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="loginPassword">Password</label>
+                            <input type="password" class="form-input" id="loginPassword" name="password" required 
+                                   placeholder="Enter your password">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="userType">Login As</label>
+                            <select class="form-input" id="userType" name="user_type">
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                                <option value="volunteer">Volunteer</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="submit-btn">Sign In</button>
+                    </form>
+                </div>
+
+                <!-- Register Form -->
+                <div class="auth-form register-form" data-form="register">
+                    <form id="registerForm">
+                        <div class="form-group">
+                            <label class="form-label" for="registerName">Full Name</label>
+                            <input type="text" class="form-input" id="registerName" name="name" required 
+                                   placeholder="Enter your full name">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="registerEmail">Email Address</label>
+                            <input type="email" class="form-input" id="registerEmail" name="email" required 
+                                   placeholder="Enter your email address">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="registerPassword">Password</label>
+                            <input type="password" class="form-input" id="registerPassword" name="password" required 
+                                   placeholder="Enter your password" minlength="6">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="confirmPassword">Confirm Password</label>
+                            <input type="password" class="form-input" id="confirmPassword" name="confirm_password" required 
+                                   placeholder="Confirm your password">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label" for="registerUserType">Register As</label>
+                            <select class="form-input" id="registerUserType" name="user_type">
+                                <option value="user">User</option>
+                                <option value="volunteer">Volunteer</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="submit-btn">Create Account</button>
+                    </form>
+                </div>
+
+                <!-- Additional Links -->
+                <div style="text-align: center; margin-top: 20px;">
+                    <p><a href="./forgot-password.html" style="color: #21808d;">Forgot Password?</a></p>
+                    <p><a href="./index.html" style="color: #6b7280;">← Back to Home</a></p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Sai Seva Foundation. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Files -->
+    <!-- Make sure to include the login fix BEFORE other JS files -->
+    <script src="./js/login-page-fix.js"></script>
+    <script src="./js/main.js"></script>
+
+    <!-- Debug Script -->
+    <script>
+        // Debug helper - remove in production
+        console.log('Login page loaded');
+        console.log('Available elements:', {
+            loginTab: document.querySelector('.login-tab'),
+            registerTab: document.querySelector('.register-tab'),
+            loginForm: document.querySelector('#loginForm'),
+            registerForm: document.querySelector('#registerForm')
+        });
+        
+        // Test API endpoint
+        fetch('./api/auth.php?action=csrf_token')
+            .then(response => response.json())
+            .then(data => console.log('API Test:', data))
+            .catch(error => console.error('API Test Failed:', error));
+    </script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!-- SVG Logo Placeholder -->
+<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ff6b35;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4ecdc4;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="90" fill="url(#logoGradient)" stroke="white" stroke-width="4"/>
+  
+  <!-- Heart symbol for charity -->
+  <path d="M100 150 C80 130, 50 100, 50 80 C50 60, 70 50, 100 70 C130 50, 150 60, 150 80 C150 100, 120 130, 100 150 Z" 
+        fill="white" opacity="0.9"/>
+  
+  <!-- Helping hands -->
+  <path d="M60 90 Q65 85, 70 90 Q75 85, 80 90 L80 100 Q75 105, 70 100 Q65 105, 60 100 Z" 
+        fill="white" opacity="0.7"/>
+  <path d="M120 90 Q125 85, 130 90 Q135 85, 140 90 L140 100 Q135 105, 130 100 Q125 105, 120 100 Z" 
+        fill="white" opacity="0.7"/>
+  
+  <!-- Text -->
+  <text x="100" y="180" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#333">
+    Sai Seva Foundation
+  </text>
+</svg>

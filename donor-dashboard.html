@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Dashboard - Sai Seva Foundation</title>
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/donor-dashboard.css">
+    <link rel="stylesheet" href="css/theme-compatibility.css">
+<link rel="stylesheet" href="css/mobile-responsive.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
+    
+    <!-- Meta Tags for SEO -->
+    <meta name="description" content="Donor Dashboard - Track your donations and impact with Sai Seva Foundation">
+    <meta name="keywords" content="donor, dashboard, donations, NGO, Sai Seva Foundation, charity">
+    <meta name="robots" content="noindex, nofollow">
+</head>
+<body>
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="images/LogoNGO.png" alt="Sai Seva Foundation Logo">
+                <span>Sai Seva Foundation</span>
+            </div>
+            
+            <nav class="header-nav">
+                <a href="index.html" class="nav-link">
+                    <i class="fas fa-home"></i>
+                    Home
+                </a>
+                <a href="about.html" class="nav-link">
+                    <i class="fas fa-info-circle"></i>
+                    About
+                </a>
+                <a href="donate.html" class="nav-link">
+                    <i class="fas fa-heart"></i>
+                    Donate
+                </a>
+                <a href="services.html" class="nav-link">
+                    <i class="fas fa-hands-helping"></i>
+                    Services
+                </a>
+            </nav>
+            
+            <div class="user-profile">
+                <div class="profile-info">
+                    <img src="images/default-avatar.png" alt="Profile" class="profile-avatar" id="profileAvatar">
+                    <div class="profile-details">
+                        <span class="profile-name" id="donorName">Loading...</span>
+                        <span class="profile-role">Donor</span>
+                    </div>
+                </div>
+                <div class="profile-dropdown">
+                    <button class="dropdown-toggle" aria-label="Profile menu">
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="dropdown-menu">
+                        <a href="#profile" class="dropdown-item">
+                            <i class="fas fa-user"></i>
+                            My Profile
+                        </a>
+                        <a href="#settings" class="dropdown-item">
+                            <i class="fas fa-cog"></i>
+                            Settings
+                        </a>
+                        <hr class="dropdown-divider">
+                        <button class="dropdown-item logout-btn">
+                            <i class="fas fa-sign-out-alt"></i>
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav class="sidebar-nav">
+                <a href="#dashboard" class="nav-item active" data-section="dashboard">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#donations" class="nav-item" data-section="donations">
+                    <i class="fas fa-heart"></i>
+                    <span>My Donations</span>
+                </a>
+                <a href="#impact" class="nav-item" data-section="impact">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Impact Report</span>
+                </a>
+                <a href="#receipts" class="nav-item" data-section="receipts">
+                    <i class="fas fa-receipt"></i>
+                    <span>Tax Receipts</span>
+                </a>
+                <a href="#recurring" class="nav-item" data-section="recurring">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>Recurring Donations</span>
+                </a>
+                <a href="#updates" class="nav-item" data-section="updates">
+                    <i class="fas fa-newspaper"></i>
+                    <span>Project Updates</span>
+                </a>
+                <a href="#recognition" class="nav-item" data-section="recognition">
+                    <i class="fas fa-award"></i>
+                    <span>Recognition</span>
+                </a>
+                <a href="#profile" class="nav-item" data-section="profile">
+                    <i class="fas fa-user-edit"></i>
+                    <span>Profile</span>
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Overview -->
+            <section id="dashboard-section" class="content-section active">
+                <div class="section-header">
+                    <h1>Donor Dashboard</h1>
+                    <p>Welcome back! Thank you for your continued support of our mission.</p>
+                </div>
+
+                <!-- Donation Summary Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card primary">
+                        <div class="stat-icon">
+                            <i class="fas fa-rupee-sign"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalDonated">₹0</h3>
+                            <p>Total Donated</p>
+                            <span class="stat-change positive">+₹2,000 this month</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card success">
+                        <div class="stat-icon">
+                            <i class="fas fa-hands-helping"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="donationCount">0</h3>
+                            <p>Donations Made</p>
+                            <span class="stat-change positive">+2 this month</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card info">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="livesImpacted">0</h3>
+                            <p>Lives Impacted</p>
+                            <span class="stat-change positive">+50 this month</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card warning">
+                        <div class="stat-icon">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="taxSavings">₹0</h3>
+                            <p>Tax Savings (80G)</p>
+                            <span class="stat-change neutral">Current year</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <h2>Quick Actions</h2>
+                    <div class="actions-grid">
+                        <a href="donate.html" class="action-btn">
+                            <i class="fas fa-heart"></i>
+                            <span>Make Donation</span>
+                        </a>
+                        <button class="action-btn" data-action="download-receipt">
+                            <i class="fas fa-download"></i>
+                            <span>Download Receipt</span>
+                        </button>
+                        <button class="action-btn" data-action="update-profile">
+                            <i class="fas fa-user-edit"></i>
+                            <span>Update Profile</span>
+                        </button>
+                        <button class="action-btn" data-action="view-impact">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>View Impact</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Donations -->
+                <div class="recent-donations">
+                    <div class="section-title">
+                        <h2>Recent Donations</h2>
+                        <a href="#donations" class="view-all-link">View All</a>
+                    </div>
+                    <div class="donations-list" id="recentDonations">
+                        <!-- Recent donations will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Impact Highlights -->
+                <div class="impact-highlights">
+                    <h2>Your Impact This Month</h2>
+                    <div class="impact-grid">
+                        <div class="impact-item">
+                            <div class="impact-icon">
+                                <i class="fas fa-utensils"></i>
+                            </div>
+                            <div class="impact-info">
+                                <h3 id="mealsProvided">0</h3>
+                                <p>Meals Provided</p>
+                            </div>
+                        </div>
+                        <div class="impact-item">
+                            <div class="impact-icon">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
+                            <div class="impact-info">
+                                <h3 id="studentsSupported">0</h3>
+                                <p>Students Supported</p>
+                            </div>
+                        </div>
+                        <div class="impact-item">
+                            <div class="impact-icon">
+                                <i class="fas fa-medical-kit"></i>
+                            </div>
+                            <div class="impact-info">
+                                <h3 id="medicalAid">0</h3>
+                                <p>Medical Treatments</p>
+                            </div>
+                        </div>
+                        <div class="impact-item">
+                            <div class="impact-icon">
+                                <i class="fas fa-home"></i>
+                            </div>
+                            <div class="impact-info">
+                                <h3 id="familiesHelped">0</h3>
+                                <p>Families Helped</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- My Donations Section -->
+            <section id="donations-section" class="content-section">
+                <div class="section-header">
+                    <h1>My Donations</h1>
+                    <div class="header-actions">
+                        <a href="donate.html" class="btn btn-primary">
+                            <i class="fas fa-plus"></i>
+                            New Donation
+                        </a>
+                        <button class="btn btn-secondary" id="exportDonations">
+                            <i class="fas fa-download"></i>
+                            Export
+                        </button>
+                    </div>
+                </div>
+
+                <div class="filters">
+                    <select id="yearFilter" class="filter-select">
+                        <option value="2025">2025</option>
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                        <option value="all">All Years</option>
+                    </select>
+                    <select id="statusFilter" class="filter-select">
+                        <option value="all">All Status</option>
+                        <option value="completed">Completed</option>
+                        <option value="pending">Pending</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                    <select id="causeFilter" class="filter-select">
+                        <option value="all">All Causes</option>
+                        <option value="general">General Fund</option>
+                        <option value="poor-feeding">Poor Feeding</option>
+                        <option value="education">Education</option>
+                        <option value="medical">Medical</option>
+                        <option value="disaster">Disaster Relief</option>
+                    </select>
+                </div>
+
+                <div class="donations-table-container">
+                    <table class="donations-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Amount</th>
+                                <th>Cause</th>
+                                <th>Status</th>
+                                <th>Receipt</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="donationsTableBody">
+                            <!-- Donations will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Impact Report Section -->
+            <section id="impact-section" class="content-section">
+                <div class="section-header">
+                    <h1>Impact Report</h1>
+                    <p>See how your donations are making a difference</p>
+                </div>
+
+                <div class="impact-summary">
+                    <div class="summary-card">
+                        <h3>Total Impact Value</h3>
+                        <div class="impact-value">₹<span id="totalImpactValue">0</span></div>
+                        <p>Worth of services provided through your donations</p>
+                    </div>
+                </div>
+
+                <div class="impact-charts">
+                    <div class="chart-container">
+                        <h3>Donation Distribution by Cause</h3>
+                        <canvas id="causeChart" width="400" height="300"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Monthly Donation Trend</h3>
+                        <canvas id="trendChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+
+                <div class="impact-stories">
+                    <h3>Impact Stories</h3>
+                    <div class="stories-grid" id="impactStories">
+                        <!-- Impact stories will be loaded here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tax Receipts Section -->
+            <section id="receipts-section" class="content-section">
+                <div class="section-header">
+                    <h1>Tax Receipts</h1>
+                    <p>Download your 80G tax exemption certificates</p>
+                </div>
+
+                <div class="tax-summary">
+                    <div class="tax-cards">
+                        <div class="tax-card">
+                            <h3>Current Year (2025)</h3>
+                            <div class="tax-amount">₹<span id="currentYearTax">0</span></div>
+                            <p>Eligible for 100% deduction under 80G</p>
+                            <button class="btn btn-primary" data-year="2025">Download Certificate</button>
+                        </div>
+                        <div class="tax-card">
+                            <h3>Previous Year (2024)</h3>
+                            <div class="tax-amount">₹<span id="previousYearTax">0</span></div>
+                            <p>Eligible for 100% deduction under 80G</p>
+                            <button class="btn btn-secondary" data-year="2024">Download Certificate</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="receipts-list">
+                    <h3>Individual Receipts</h3>
+                    <div class="receipts-table" id="receiptsTable">
+                        <!-- Receipts will be loaded here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Recurring Donations Section -->
+            <section id="recurring-section" class="content-section">
+                <div class="section-header">
+                    <h1>Recurring Donations</h1>
+                    <button class="btn btn-primary" id="setupRecurring">
+                        <i class="fas fa-plus"></i>
+                        Setup Recurring Donation
+                    </button>
+                </div>
+
+                <div class="recurring-donations-list" id="recurringDonationsList">
+                    <!-- Recurring donations will be loaded here -->
+                </div>
+
+                <div class="recurring-info">
+                    <h3>Benefits of Recurring Donations</h3>
+                    <ul>
+                        <li>Sustained impact on our programs</li>
+                        <li>Convenient automatic payments</li>
+                        <li>Cancel or modify anytime</li>
+                        <li>Priority updates on project progress</li>
+                        <li>Special recognition as a sustaining donor</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- Project Updates Section -->
+            <section id="updates-section" class="content-section">
+                <div class="section-header">
+                    <h1>Project Updates</h1>
+                    <p>Stay updated on the projects you've supported</p>
+                </div>
+
+                <div class="updates-feed" id="updatesFeed">
+                    <!-- Project updates will be loaded here -->
+                </div>
+            </section>
+
+            <!-- Recognition Section -->
+            <section id="recognition-section" class="content-section">
+                <div class="section-header">
+                    <h1>Recognition & Achievements</h1>
+                    <p>Your generosity has earned you these recognitions</p>
+                </div>
+
+                <div class="badges-section">
+                    <h3>Donor Badges</h3>
+                    <div class="badges-grid" id="donorBadges">
+                        <!-- Badges will be loaded here -->
+                    </div>
+                </div>
+
+                <div class="milestones-section">
+                    <h3>Donation Milestones</h3>
+                    <div class="milestones-list" id="donationMilestones">
+                        <!-- Milestones will be loaded here -->
+                    </div>
+                </div>
+
+                <div class="leaderboard-section">
+                    <h3>Community Impact Leaderboard</h3>
+                    <p>Top donors this month (anonymous rankings)</p>
+                    <div class="leaderboard" id="donorLeaderboard">
+                        <!-- Leaderboard will be loaded here -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Profile Section -->
+            <section id="profile-section" class="content-section">
+                <div class="section-header">
+                    <h1>My Profile</h1>
+                    <p>Update your donor profile information</p>
+                </div>
+
+                <div class="profile-form-container">
+                    <form id="profileForm" class="profile-form">
+                        <div class="form-group">
+                            <label for="fullName">Full Name *</label>
+                            <input type="text" id="fullName" name="full_name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email Address *</label>
+                            <input type="email" id="email" name="email" required readonly>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phone">Phone Number</label>
+                            <input type="tel" id="phone" name="phone">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="address">Address</label>
+                            <textarea id="address" name="address" rows="3"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="panNumber">PAN Number (for 80G certificates)</label>
+                            <input type="text" id="panNumber" name="pan_number" placeholder="ABCDE1234F">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="preferredCauses">Preferred Causes</label>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" name="causes[]" value="education"> Education</label>
+                                <label><input type="checkbox" name="causes[]" value="healthcare"> Healthcare</label>
+                                <label><input type="checkbox" name="causes[]" value="poverty"> Poverty Alleviation</label>
+                                <label><input type="checkbox" name="causes[]" value="disaster"> Disaster Relief</label>
+                                <label><input type="checkbox" name="causes[]" value="environment"> Environment</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="communicationPrefs">Communication Preferences</label>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" name="communication[]" value="email"> Email Updates</label>
+                                <label><input type="checkbox" name="communication[]" value="sms"> SMS Notifications</label>
+                                <label><input type="checkbox" name="communication[]" value="newsletter"> Monthly Newsletter</label>
+                                <label><input type="checkbox" name="communication[]" value="reports"> Impact Reports</label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" name="anonymous_donations" id="anonymousDonations">
+                                Make my donations anonymous by default
+                            </label>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i>
+                                Update Profile
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="cancelEdit">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="donationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Donation Details</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body" id="donationModalBody">
+                <!-- Donation details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <div id="recurringModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Setup Recurring Donation</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <form id="recurringForm" class="modal-form">
+                <div class="form-group">
+                    <label for="recurringAmount">Monthly Amount *</label>
+                    <input type="number" id="recurringAmount" name="amount" min="100" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="recurringCause">Cause *</label>
+                    <select id="recurringCause" name="cause" required>
+                        <option value="general">General Fund</option>
+                        <option value="education">Education</option>
+                        <option value="healthcare">Healthcare</option>
+                        <option value="poverty">Poverty Alleviation</option>
+                        <option value="disaster">Disaster Relief</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="startDate">Start Date *</label>
+                    <input type="date" id="startDate" name="start_date" required>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Setup Recurring Donation</button>
+                    <button type="button" class="btn btn-secondary modal-close">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p>Loading...</p>
+        </div>
+    </div>
+
+    <!-- JavaScript Files -->
+    <script src="js/main.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/donor-dashboard.js"></script>
+    <script src="js/theme-switcher.js"></script>
+</body>
+</html>

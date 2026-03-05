@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sri Dutta Sai Manga Bharadwaja</title>
+    <meta name="description" content="Join Sai Seva Foundation in our mission to serve humanity through poor feeding programs, education support, medical camps, and disaster relief across India.">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/hero-carousel-styles.css">
+    <!-- THEME COMPATIBILITY - NEW -->
+    <link rel="stylesheet" href="css/theme-compatibility.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <meta name="csrf-token" content="">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-logo">
+                    <img src="images/LogoNGO.png" alt="Sai Seva Foundation" class="logo-img">
+                    <span class="logo-text">Sri Dutta Sai Manga Bharadwaja Trust</span>
+                </div>
+                
+                <div class="nav-menu">
+                    <a href="index.html" class="nav-link active">Home</a>
+                    <a href="about.html" class="nav-link">About</a>
+                    <a href="services.html" class="nav-link">Services</a>
+                    <a href="projects.html" class="nav-link">Projects</a>
+                    <a href="events.html" class="nav-link">Events</a>
+                    <a href="contact.html" class="nav-link">Contact</a>
+                    <div class="nav-actions">
+                        <a href="donate.html" class="btn btn-primary">Donate Now</a>
+                        <a href="login.html" class="btn btn-outline">Login</a>
+                    </div>
+                </div>
+                
+                <div class="hamburger">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-carousel" aria-label="Hero carousel showcasing our mission">
+        <div class="slide-overlay"></div>
+                <div class="slide-content">
+                    <div class="container">
+                        <div class="slide-text">
+                            <h1 class="slide-title">
+                                <span class="title-line">Transforming Lives</span>
+                                <span class="title-line">Through <span class="highlight">Compassionate Service</span></span>
+                            </h1>
+                            <p class="slide-description">
+                                Join us in our mission to uplift communities through education, healthcare, and sustainable development programs that create lasting positive impact.
+                            </p>
+                            <div class="slide-actions">
+                                <a href="./donate.html" class="btn btn--primary btn--large">
+                                    <i class="fas fa-heart" aria-hidden="true"></i>
+                                    Donate Now
+                                </a>
+                                <a href="./about.html" class="btn btn--secondary btn--large">
+                                    <i class="fas fa-info-circle" aria-hidden="true"></i>
+                                    Learn More
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        <!-- Carousel Slides -->
+        <div class="carousel-slides" id="carousel-slides">
+            <!-- Slide 1: Main Mission -->
+            <div class="carousel-slide active" data-slide="0">
+                <div class="slide-background">
+                    <img src="./images/hero-01.jpg" alt="Volunteers helping children in education program" loading="eager">
+                </div>
+            </div>
+
+            <!-- Slide 2: Education Focus -->
+            <div class="carousel-slide" data-slide="1">
+                <div class="slide-background">
+                    <img src="./images/hero-2.jpg" alt="Children studying in our education center" loading="lazy">
+                </div>
+            </div>
+
+            <!-- Slide 3: Healthcare Focus -->
+            <div class="carousel-slide" data-slide="2">
+                <div class="slide-background">
+                    <img src="./images/hero-3.jpg" alt="Medical camp providing free healthcare" loading="lazy">
+                </div>
+            </div>
+
+            <!-- Slide 4: Volunteer Call to Action -->
+            <div class="carousel-slide" data-slide="3">
+                <div class="slide-background">
+                    <img src="./images/hero-4.jpg" alt="Happy volunteers working together in community service" loading="lazy">
+                </div>
+            </div>
+        </div>
+        
+            <!-- Slide 5: Volunteer Call to Action -->
+            <div class="carousel-slide" data-slide="4">
+                <div class="slide-background">
+                    <img src="./images/hero-5.jpg" alt="Happy volunteers working together in community service" loading="lazy">
+                </div>
+            </div>
+
+        <!-- Carousel Navigation -->
+        <div class="carousel-navigation">
+            <!-- Previous/Next Buttons -->
+            <button class="carousel-btn carousel-btn--prev" aria-label="Previous slide" id="prevBtn">
+                <i class="fas fa-chevron-left" aria-hidden="true"></i>
+            </button>
+            <button class="carousel-btn carousel-btn--next" aria-label="Next slide" id="nextBtn">
+                <i class="fas fa-chevron-right" aria-hidden="true"></i>
+            </button>
+
+            <!-- Slide Indicators -->
+            <div class="carousel-indicators" role="tablist" aria-label="Carousel slide indicators">
+                <button class="indicator active" aria-label="Go to slide 1" data-slide="0" role="tab" aria-selected="true"></button>
+                <button class="indicator" aria-label="Go to slide 2" data-slide="1" role="tab" aria-selected="false"></button>
+                <button class="indicator" aria-label="Go to slide 3" data-slide="2" role="tab" aria-selected="false"></button>
+                <button class="indicator" aria-label="Go to slide 4" data-slide="3" role="tab" aria-selected="false"></button>
+            </div>
+        </div>
+
+        <!-- Carousel Progress Bar -->
+        <div class="carousel-progress">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+
+        <!-- Auto-play Control -->
+        <button class="carousel-play-pause" aria-label="Pause auto-play" id="playPauseBtn">
+            <i class="fas fa-pause" aria-hidden="true"></i>
+        </button>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">About Our Mission</h2>
+                <p class="section-subtitle">
+                    Dedicated to serving humanity with compassion and commitment
+                </p>
+            </div>
+            
+            <div class="about-content">
+                <div class="about-text">
+                    <div class="about-item">
+                        <div class="about-icon">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <div class="about-info">
+                            <h3>Our Vision</h3>
+                            <p>A world where every soul recognizes their inherent divinity and lives in harmony with universal principles of love, truth, and compassion—transcending religious boundaries to embrace spiritual unity.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="about-item">
+                        <div class="about-icon">
+                            <i class="fas fa-hands-helping"></i>
+                        </div>
+                        <div class="about-info">
+                            <h3>Our Mission</h3>
+                            <p>To guide seekers on the path of spiritual enlightenment through the timeless teachings of Pujya Sri Ekkirala Bharadwaja, while serving humanity with compassion and unity across all faiths.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="about-item">
+                        <div class="about-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="about-info">
+                            <h3>Our Values</h3>
+                            <p>We are guided by Divine Unity that honors all spiritual paths, Compassionate Service through selfless action, and Universal Love that transcends all boundaries. Our foundation rests on Truthful Living, Guru Devotion, and the sharing of Sacred Wisdom for humanity's spiritual awakening.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="about-video">
+                    <div class="video-placeholder">
+                        <i class="fas fa-play"></i>
+                        <p>Watch Our Impact Story</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="services">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Our Core Services</h2>
+                <p class="section-subtitle">
+                    Comprehensive programs designed to create lasting change
+                </p>
+            </div>
+
+            <div class="services-grid">
+                <div class="service-card">
+                    <div class="service-icon">
+                        <img src="images/shirdi3.jpg" alt="Poor Feeding" class="service-image">
+                        <div class="service-overlay">
+                            <i class="fas fa-utensils"></i>
+                        </div>
+                    </div>
+                    <div class="service-content">
+                        <h3>Shirdi Annadaanam</h3>
+                        <p>Providing nutritious meals Shirdi, ensuring no one goes hungry.</p>
+                        <ul class="service-features">
+                            <li><i class="fas fa-check"></i> Daily meal programs</li>
+                            <li><i class="fas fa-check"></i> Nutritious food distribution</li>
+                            <li><i class="fas fa-check"></i> Community kitchens</li>
+                        </ul>
+                        <a href="services.html#feeding" class="btn btn-outline">Learn More</a>
+                    </div>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-icon">
+                        <img src="images/education.jpg" alt="Education" class="service-image">
+                        <div class="service-overlay">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                    </div>
+                    <div class="service-content">
+                        <h3>Educational Assistance</h3>
+                        <p>Supporting education through scholarships, books, and learning materials to empower the next generation.</p>
+                        <ul class="service-features">
+                            <li><i class="fas fa-check"></i> Scholarship programs</li>
+                            <li><i class="fas fa-check"></i> Books & supplies</li>
+                            <li><i class="fas fa-check"></i> Learning centers</li>
+                        </ul>
+                        <a href="services.html#education" class="btn btn-outline">Learn More</a>
+                    </div>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-icon">
+                        <img src="images/ganagapur1.jpg" alt="Medical Camp" class="service-image">
+                        <div class="service-overlay">
+                            <i class="fas fa-stethoscope"></i>
+                        </div>
+                    </div>
+                    <div class="service-content">
+                        <h3>Ganagapur Annadaanam</h3>
+                        <p>Providing nutritious meals Ganagapur, ensuring no one goes hungry.</p>
+                        <ul class="service-features">
+                            <li><i class="fas fa-check"></i> Daily meal programs</li>
+                            <li><i class="fas fa-check"></i> Nutritious food distribution</li>
+                            <li><i class="fas fa-check"></i> Community kitchens</li>
+                        </ul>
+                        <a href="services.html#medical" class="btn btn-outline">Learn More</a>
+                    </div>
+                </div>
+
+                <div class="service-card">
+                    <div class="service-icon">
+                        <img src="images/disaster1.jpg" alt="Disaster Relief" class="service-image">
+                        <div class="service-overlay">
+                            <i class="fas fa-hand-holding-heart"></i>
+                        </div>
+                    </div>
+                    <div class="service-content">
+                        <h3>Disaster Relief</h3>
+                        <p>Immediate assistance during natural calamities and emergency situations to help communities recover.</p>
+                        <ul class="service-features">
+                            <li><i class="fas fa-check"></i> Emergency response</li>
+                            <li><i class="fas fa-check"></i> Relief materials</li>
+                            <li><i class="fas fa-check"></i> Rehabilitation support</li>
+                        </ul>
+                        <a href="services.html#disaster" class="btn btn-outline">Learn More</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Projects Section -->
+    <section id="projects" class="projects">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Our Active Projects</h2>
+                <p class="section-subtitle">
+                    Current initiatives making a difference in communities
+                </p>
+            </div>
+
+            <div class="projects-grid">
+                <div class="project-card">
+                    <div class="project-progress">
+                        <div class="progress-circle" data-progress="75">
+                            <div class="progress-fill"></div>
+                            <div class="progress-text">75%</div>
+                        </div>
+                    </div>
+                    <div class="project-content">
+                        <h3>Shirdi Annadaanam</h3>
+                        <p>Daily meal program for underprivileged children and families in the Shirdi region.</p>
+                        <div class="project-stats">
+                            <div class="stat">
+                                <span class="stat-value">₹5,00,000</span>
+                                <span class="stat-label">Goal</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value">₹3,75,000</span>
+                                <span class="stat-label">Raised</span>
+                            </div>
+                        </div>
+                        <a href="donate.html?project=shirdi-feeding" class="btn btn-primary">Support This Project</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-progress">
+                        <div class="progress-circle" data-progress="50">
+                            <div class="progress-fill"></div>
+                            <div class="progress-text">50%</div>
+                        </div>
+                    </div>
+                    <div class="project-content">
+                        <h3>Educational Support Initiative</h3>
+                        <p>Providing books, uniforms, and learning materials to students in need.</p>
+                        <div class="project-stats">
+                            <div class="stat">
+                                <span class="stat-value">₹2,00,000</span>
+                                <span class="stat-label">Goal</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value">₹1,00,000</span>
+                                <span class="stat-label">Raised</span>
+                            </div>
+                        </div>
+                        <a href="donate.html?project=education" class="btn btn-primary">Support This Project</a>
+                    </div>
+                </div>
+
+                <div class="project-card">
+                    <div class="project-progress">
+                        <div class="progress-circle" data-progress="60">
+                            <div class="progress-fill"></div>
+                            <div class="progress-text">60%</div>
+                        </div>
+                    </div>
+                    <div class="project-content">
+                        <h3>Ganagapur Annadaanam</h3>
+                        <p>Daily meal program for underprivileged children and families in the Ganagapur region.</p>
+                        <div class="project-stats">
+                            <div class="stat">
+                                <span class="stat-value">₹3,00,000</span>
+                                <span class="stat-label">Goal</span>
+                            </div>
+                            <div class="stat">
+                                <span class="stat-value">₹1,80,000</span>
+                                <span class="stat-label">Raised</span>
+                            </div>
+                        </div>
+                        <a href="donate.html?project=medical" class="btn btn-primary">Support This Project</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Events Section -->
+    <section id="events" class="events">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Upcoming Events</h2>
+                <p class="section-subtitle">
+                    Join us in making a difference through community events
+                </p>
+            </div>
+
+            <div class="events-grid">
+                <div class="event-card">
+                    <div class="event-date">
+                        <div class="event-day">15</div>
+                        <div class="event-month">Sep</div>
+                    </div>
+                    <div class="event-content">
+                        <h3>Free Medical Camp</h3>
+                        <p>Comprehensive health checkup and medicine distribution for the community.</p>
+                        <div class="event-details">
+                            <div class="event-detail">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>Ghanagapur Community Center</span>
+                            </div>
+                            <div class="event-detail">
+                                <i class="fas fa-clock"></i>
+                                <span>9:00 AM - 5:00 PM</span>
+                            </div>
+                            <div class="event-detail">
+                                <i class="fas fa-users"></i>
+                                <span>200 attendees expected</span>
+                            </div>
+                        </div>
+                        <a href="#" class="btn btn-outline">Register Now</a>
+                    </div>
+                </div>
+
+                <div class="event-card">
+                    <div class="event-date">
+                        <div class="event-day">20</div>
+                        <div class="event-month">Sep</div>
+                    </div>
+                    <div class="event-content">
+                        <h3>Educational Seminar</h3>
+                        <p>Values and ethics seminar for youth development and character building.</p>
+                        <div class="event-details">
+                            <div class="event-detail">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>Shirdi Hall</span>
+                            </div>
+                            <div class="event-detail">
+                                <i class="fas fa-clock"></i>
+                                <span>2:00 PM - 6:00 PM</span>
+                            </div>
+                            <div class="event-detail">
+                                <i class="fas fa-users"></i>
+                                <span>100 attendees expected</span>
+                            </div>
+                        </div>
+                        <a href="#" class="btn btn-outline">Register Now</a>
+                    </div>
+                </div>
+
+                <div class="event-card">
+                    <div class="event-date">
+                        <div class="event-day">25</div>
+                        <div class="event-month">Sep</div>
+                    </div>
+                    <div class="event-content">
+                        <h3>Disaster Relief Training</h3>
+                        <p>Training volunteers for emergency response and disaster management.</p>
+                        <div class="event-details">
+                            <div class="event-detail">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>Training Center</span>
+                            </div>
+                            <div class="event-detail">
+                                <i class="fas fa-clock"></i>
+                                <span>10:00 AM - 4:00 PM</span>
+                            </div>
+                            <div class="event-detail">
+                                <i class="fas fa-users"></i>
+                                <span>50 volunteers needed</span>
+                            </div>
+                        </div>
+                        <a href="#" class="btn btn-outline">Join Training</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <div class="cta-content">
+                <div class="cta-text">
+                    <h2>Make a Difference Today</h2>
+                    <p>Your contribution can transform lives and bring hope to those who need it most. Join us in our mission to create a better world.</p>
+                </div>
+                <div class="cta-actions">
+                    <a href="donate.html" class="btn btn-primary btn-large">
+                        <i class="fas fa-heart"></i>
+                        Donate Now
+                    </a>
+                    <a href="#" class="btn btn-outline btn-large volunteer-btn">
+                        <i class="fas fa-hands-helping"></i>
+                        Become a Volunteer
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-logo">
+                        <img src="images/LogoNGO.png" alt="Sai Seva Foundation" class="logo-img">
+                        <span class="logo-text">Sri Dutta Sai Manga Bharadwaja Trust</span>
+                    </div>
+                    <p class="footer-description">
+                        Dedicated to serving humanity with compassion and commitment. Together, we can build a better tomorrow for those who need it most.
+                    </p>
+                    <div class="social-links">
+                        <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-link"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+
+                <div class="footer-section">
+                    <h3>Quick Links</h3>
+                    <ul class="footer-links">
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="about.html">About Us</a></li>
+                        <li><a href="services.html">Our Services</a></li>
+                        <li><a href="#projects">Projects</a></li>
+                        <li><a href="#events">Events</a></li>
+                        <li><a href="contact.html">Contact</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h3>Our Services</h3>
+                    <ul class="footer-links">
+                        <li><a href="services.html#feeding">Poor Feeding</a></li>
+                        <li><a href="services.html#education">Education Support</a></li>
+                        <li><a href="services.html#medical">Medical Camps</a></li>
+                        <li><a href="services.html#disaster">Disaster Relief</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h3>Get Involved</h3>
+                    <ul class="footer-links">
+                        <li><a href="donate.html">Make a Donation</a></li>
+                        <li><a href="#volunteer">Volunteer</a></li>
+                        <li><a href="#events">Join Events</a></li>
+                        <li><a href="#partnership">Partnership</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h3>Contact Info</h3>
+                    <div class="contact-info">
+                        <div class="contact-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Shirdi, Maharashtra, India</span><br>
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>Ganagapur, Karnataka, India</span>
+                            
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-phone"></i>
+                            <span>+91 7893601789, +91 9491062255,</span><br>
+                            <span>+91 9440916031, +91 9398557142</span>
+                        </div>
+                        <div class="contact-item">
+                            <i class="fas fa-envelope"></i>
+                            <span>info@saisevafoundation.org</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <div class="footer-bottom-content">
+                    <p>&copy; 2025 Sri Dutta Sai Manga Bharadwaja Trust. All rights reserved.</p>
+                    <div class="footer-bottom-links">
+                        <a href="policy.html">Privacy Policy</a>
+                        <a href="terms.html">Terms of Service</a>
+                        <a href="#transparency">Transparency</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="js/main.js"></script>
+    <script src="js/hero-carousel-script.js"></script>
+    <!-- THEME SWITCHER - NEW -->
+    <script src="js/theme-switcher.js"></script>
+    <script>
+        // Initialize CSRF token
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                const response = await fetch('/api/auth.php?action=csrf_token');
+                const data = await response.json();
+                document.querySelector('meta[name="csrf-token"]').setAttribute('content', data.csrf_token);
+            } catch (error) {
+                console.error('Failed to initialize CSRF token:', error);
+            }
+            
+            // Initialize mobile menu
+            const hamburger = document.querySelector('.hamburger');
+            const navMenu = document.querySelector('.nav-menu');
+            
+            if (hamburger && navMenu) {
+                hamburger.addEventListener('click', () => {
+                    hamburger.classList.toggle('active');
+                    navMenu.classList.toggle('active');
+                });
+                
+                // Close menu when clicking on links
+                navMenu.querySelectorAll('a').forEach(link => {
+                    link.addEventListener('click', () => {
+                        hamburger.classList.remove('active');
+                        navMenu.classList.remove('active');
+                    });
+                });
+            }
+        });
+    </script>
+</body>
+</html>
