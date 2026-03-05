@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 async function loadCSRFToken() {
     try {
-        const response = await fetch('/api/csrf-token.php');
+        const response = await fetch('api/csrf-token.php');
         const data = await response.json();
         
         if (data.success && data.csrf_token) {
@@ -128,7 +128,7 @@ async function handleDonationSubmit(e) {
     try {
         const formData = new FormData(form);
         
-        const response = await fetch('/api/donations.php', {
+        const response = await fetch('api/donations.php', {
             method: 'POST',
             body: formData
         });
