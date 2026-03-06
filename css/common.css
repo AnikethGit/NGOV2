@@ -876,6 +876,7 @@ a:hover {
     gap: var(--space-8);
     text-decoration: none;
     color: var(--color-text);
+    z-index: 1021;
 }
 
 .logo-img {
@@ -945,6 +946,7 @@ a:hover {
     border: none;
     cursor: pointer;
     padding: var(--space-8);
+    z-index: 1021;
 }
 
 .hamburger span {
@@ -975,38 +977,67 @@ a:hover {
     
     .nav-menu {
         position: fixed;
-        top: 100%;
+        top: 73px;
         left: 0;
         right: 0;
+        bottom: 0;
         background: var(--color-surface);
         flex-direction: column;
-        padding: var(--space-32);
-        gap: var(--space-32);
+        align-items: flex-start;
+        padding: var(--space-24) var(--space-16);
+        gap: var(--space-24);
         box-shadow: var(--shadow-lg);
-        transform: translateY(-100vh);
+        transform: translateX(100%);
         opacity: 0;
         visibility: hidden;
         transition: all var(--duration-normal) var(--ease-standard);
         border-top: 1px solid var(--color-border);
+        overflow-y: auto;
+        z-index: 1019;
     }
     
     .nav-menu.active {
-        transform: translateY(0);
+        transform: translateX(0);
         opacity: 1;
         visibility: visible;
+    }
+
+    .nav-link {
+        width: 100%;
+        padding: var(--space-12) 0;
+        font-size: var(--font-size-lg);
     }
     
     .nav-actions {
         margin-left: 0;
         flex-direction: column;
         width: 100%;
-        gap: var(--space-16);
+        gap: var(--space-12);
+        padding-top: var(--space-16);
+        border-top: 1px solid var(--color-border);
     }
     
     .nav-actions .btn {
         width: 100%;
         text-align: center;
         justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .nav-menu {
+        padding: var(--space-20) var(--space-16);
+        gap: var(--space-20);
+    }
+
+    .nav-link {
+        padding: var(--space-10) 0;
+        font-size: var(--font-size-md);
+    }
+
+    .nav-actions {
+        gap: var(--space-10);
+        padding-top: var(--space-12);
     }
 }
 
@@ -1438,11 +1469,11 @@ section {
 
 @media (max-width: 480px) {
     .nav-container {
-        padding: 0 var(--space-8);
+        padding: 0 var(--space-12);
     }
     
     .container {
-        padding: 0 var(--space-8);
+        padding: 0 var(--space-12);
     }
     
     .page-header {
@@ -1482,12 +1513,12 @@ section {
     }
     
     .nav-menu {
-        padding: var(--space-20);
-        gap: var(--space-20);
+        padding: var(--space-16);
+        gap: var(--space-16);
     }
     
     .nav-actions {
-        gap: var(--space-12);
+        gap: var(--space-8);
     }
     
     .form-group input,
