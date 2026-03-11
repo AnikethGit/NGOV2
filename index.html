@@ -564,52 +564,19 @@
 
             <div class="footer-bottom">
                 <div class="footer-bottom-content">
-                    <p>&copy; 2025 Sri Dutta Sai Manga Bharadwaja Trust. All rights reserved.</p>
+                    <p>&copy; 2024 Sri Dutta Sai Manga Bharadwaja Trust. All rights reserved.</p>
                     <div class="footer-bottom-links">
-                        <a href="policy.html">Privacy Policy</a>
-                        <a href="terms.html">Terms of Service</a>
-                        <a href="#transparency">Transparency</a>
+                        <a href="#">Privacy Policy</a>
+                        <a href="#">Terms of Service</a>
+                        <a href="#">Cookie Policy</a>
                     </div>
                 </div>
             </div>
         </div>
     </footer>
 
-    <!-- Scripts -->
+    <!-- JavaScript Files - CRITICAL: Load before closing body tag -->
     <script src="js/main.js"></script>
     <script src="js/hero-carousel-script.js"></script>
-    <!-- THEME SWITCHER - NEW -->
-    <script src="js/theme-switcher.js"></script>
-    <script>
-        // Initialize CSRF token
-        document.addEventListener('DOMContentLoaded', async function() {
-            try {
-                const response = await fetch('/api/auth.php?action=csrf_token');
-                const data = await response.json();
-                document.querySelector('meta[name="csrf-token"]').setAttribute('content', data.csrf_token);
-            } catch (error) {
-                console.error('Failed to initialize CSRF token:', error);
-            }
-            
-            // Initialize mobile menu
-            const hamburger = document.querySelector('.hamburger');
-            const navMenu = document.querySelector('.nav-menu');
-            
-            if (hamburger && navMenu) {
-                hamburger.addEventListener('click', () => {
-                    hamburger.classList.toggle('active');
-                    navMenu.classList.toggle('active');
-                });
-                
-                // Close menu when clicking on links
-                navMenu.querySelectorAll('a').forEach(link => {
-                    link.addEventListener('click', () => {
-                        hamburger.classList.remove('active');
-                        navMenu.classList.remove('active');
-                    });
-                });
-            }
-        });
-    </script>
 </body>
 </html>
