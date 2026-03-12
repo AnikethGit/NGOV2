@@ -156,11 +156,11 @@ CREATE INDEX idx_logs_created ON activity_logs(created_at);
 -- =====================================================
 
 -- Insert sample admin user
--- Password: Admin@123 (hashed with bcrypt)
+-- Password: ------ (hashed with bcrypt)
 INSERT INTO users (email, password_hash, full_name, role, status, email_verified) 
 VALUES (
     'admin@ngov2.org',
-    '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi',
+    '------',
     'Admin User',
     'admin',
     'active',
