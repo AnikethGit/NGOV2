@@ -8,9 +8,9 @@ class Config {
     // Database Configuration
     private static $db_config = [
         'host' => 'localhost',
-        'name' => 'u701659873_ngo_management', // Update this
-        'user' => 'u701659873_admin',   // Update this  
-        'pass' => '*Mb6&mtt',   // Update this
+        'name' => '', // Update this
+        'user' => '',   // Update this  
+        'pass' => '',   // Update this
         'port' => 3306,
         'charset' => 'utf8mb4'
     ];
