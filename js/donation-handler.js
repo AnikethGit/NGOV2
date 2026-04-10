@@ -1,291 +1,217 @@
 /**
- * Enhanced Donation Form Handler
- * Handles form submission with validation and payment processing
+ * Donation Form Handler
+ * Step 1: POST to api/donations.php  → saves record, returns transaction_id
+ * Step 2: POST to api/initiate-payment.php → returns Paytm params
+ * Step 3: Auto-submits a hidden form to Paytm's gateway URL
  */
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     initializeDonationForm();
     loadCSRFToken();
 });
 
-/**
- * Load CSRF token
- */
+// ── CSRF token ────────────────────────────────────────────────────────────────
 async function loadCSRFToken() {
     try {
-        const response = await fetch('api/csrf-token.php');
-        const data = await response.json();
-        
+        const res  = await fetch('api/csrf-token.php');
+        const data = await res.json();
         if (data.success && data.csrf_token) {
             document.getElementById('csrf_token').value = data.csrf_token;
         }
-    } catch (error) {
-        console.error('Failed to load security token:', error);
+    } catch (err) {
+        console.error('Failed to load CSRF token:', err);
     }
 }
 
-/**
- * Initialize donation form
- */
+// ── Form initialisation ───────────────────────────────────────────────────────
 function initializeDonationForm() {
     const form = document.getElementById('donationForm');
     if (!form) return;
-    
-    // Handle cause selection
+
+    // Cause buttons
     document.querySelectorAll('.cause-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             document.querySelectorAll('.cause-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
-            const cause = this.getAttribute('data-cause');
-            document.getElementById('selected_cause').value = cause;
+            document.getElementById('selected_cause').value = this.getAttribute('data-cause');
             updateSummary();
         });
     });
-    
-    // Handle amount selection
+
+    // Preset amount buttons
     document.querySelectorAll('.amount-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
-            const amount = this.getAttribute('data-amount');
-            document.getElementById('donation_amount').value = amount;
+            document.getElementById('donation_amount').value = this.getAttribute('data-amount');
             document.getElementById('customAmount').value = '';
             updateSummary();
         });
     });
-    
-    // Handle custom amount
-    document.getElementById('customAmount').addEventListener('input', function() {
-        if (this.value) {
-            document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('donation_amount').value = this.value;
-            updateSummary();
-        }
-    });
-    
-    // Handle frequency selection
-    document.querySelectorAll('input[name="frequency"]').forEach(radio => {
-        radio.addEventListener('change', updateSummary);
-    });
-    
-    // Handle form submission
+
+    // Custom amount input
+    const customInput = document.getElementById('customAmount');
+    if (customInput) {
+        customInput.addEventListener('input', function () {
+            if (this.value) {
+                document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('active'));
+                document.getElementById('donation_amount').value = this.value;
+                updateSummary();
+            }
+        });
+    }
+
+    // Frequency radios
+    document.querySelectorAll('input[name="frequency"]').forEach(r =>
+        r.addEventListener('change', updateSummary)
+    );
+
     form.addEventListener('submit', handleDonationSubmit);
 }
 
-/**
- * Update donation summary
- */
+// ── Summary panel ─────────────────────────────────────────────────────────────
 function updateSummary() {
-    const cause = document.getElementById('selected_cause').value;
-    const amount = document.getElementById('donation_amount').value;
-    const frequency = document.querySelector('input[name="frequency"]:checked').value;
-    
-    // Update cause display
+    const cause     = document.getElementById('selected_cause').value;
+    const amount    = document.getElementById('donation_amount').value;
+    const frequency = document.querySelector('input[name="frequency"]:checked')?.value || 'one-time';
+
     const causeBtn = document.querySelector(`[data-cause="${cause}"]`);
     if (causeBtn) {
-        document.getElementById('summary-cause').textContent = causeBtn.textContent.trim();
+        const el = document.getElementById('summary-cause');
+        if (el) el.textContent = causeBtn.textContent.trim();
     }
-    
-    // Update amount display
-    document.getElementById('summary-amount').textContent = '₹' + Number(amount).toLocaleString('en-IN');
-    document.getElementById('summary-total').textContent = '₹' + Number(amount).toLocaleString('en-IN');
-    
-    // Update frequency display
-    const frequencyText = {
-        'one-time': 'One Time',
-        'monthly': 'Monthly',
-        'yearly': 'Yearly'
-    };
-    document.getElementById('summary-frequency').textContent = frequencyText[frequency];
-    
-    // Update tax deduction (50% under 80G)
-    const taxDeduction = Math.round(Number(amount) * 0.5);
-    document.getElementById('tax-deduction').textContent = '₹' + taxDeduction.toLocaleString('en-IN');
+
+    const fmt = n => Number(n).toLocaleString('en-IN');
+    const el = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+
+    el('summary-amount',    '₹' + fmt(amount));
+    el('summary-total',     '₹' + fmt(amount));
+    el('tax-deduction',     '₹' + fmt(Math.round(Number(amount) * 0.5)));
+    el('summary-frequency', { 'one-time': 'One Time', 'monthly': 'Monthly', 'yearly': 'Yearly' }[frequency] || 'One Time');
 }
 
-/**
- * Handle donation form submission
- */
+// ── Main submit handler ───────────────────────────────────────────────────────
 async function handleDonationSubmit(e) {
     e.preventDefault();
-    
-    const form = e.target;
+    const form         = e.target;
     const submitButton = form.querySelector('button[type="submit"]');
-    
-    // Validate form
-    if (!validateDonationForm(form)) {
-        return;
-    }
-    
-    // Show loading state
-    const originalButtonText = submitButton.innerHTML;
+
+    if (!validateDonationForm(form)) return;
+
+    const originalText = submitButton.innerHTML;
     submitButton.disabled = true;
     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-    
-    // Show loading overlay
     showLoadingOverlay();
-    
+
     try {
+        // ── Step 1: Save donation record ──────────────────────────────────────
         const formData = new FormData(form);
-        
-        const response = await fetch('api/donations.php', {
-            method: 'POST',
-            body: formData
-        });
-        
-        const result = await response.json();
-        
-        hideLoadingOverlay();
-        
-        if (result.success) {
-            // Show success message
-            showNotification('Donation processed successfully! Redirecting...', 'success');
-            
-            // Store donation details for success page
-            sessionStorage.setItem('donation_details', JSON.stringify({
-                transaction_id: result.transaction_id,
-                amount: result.amount,
-                cause: formData.get('cause')
-            }));
-            
-            // Redirect to success page
-            setTimeout(() => {
-                window.location.href = result.payment_url;
-            }, 1500);
-        } else {
-            showNotification(result.message || 'An error occurred. Please try again.', 'error');
-            submitButton.disabled = false;
-            submitButton.innerHTML = originalButtonText;
+        const saveRes  = await fetch('api/donations.php', { method: 'POST', body: formData });
+        const saveData = await saveRes.json();
+
+        if (!saveData.success) {
+            throw new Error(saveData.message || 'Failed to save donation. Please try again.');
         }
-        
-    } catch (error) {
-        console.error('Donation submission error:', error);
+
+        const transactionId = saveData.transaction_id;
+
+        // ── Step 2: Initiate Paytm payment ────────────────────────────────────
+        // Reload CSRF token (the session token may have been consumed)
+        const csrfRes  = await fetch('api/csrf-token.php');
+        const csrfData = await csrfRes.json();
+        const freshCsrf = csrfData.csrf_token || '';
+
+        const payParams = new FormData();
+        payParams.append('transaction_id', transactionId);
+        payParams.append('csrf_token',     freshCsrf);
+
+        const payRes  = await fetch('api/initiate-payment.php', { method: 'POST', body: payParams });
+        const payData = await payRes.json();
+
+        if (!payData.success) {
+            throw new Error(payData.message || 'Payment initiation failed. Please try again.');
+        }
+
+        // ── Step 3: Auto-submit Paytm form ────────────────────────────────────
+        const paytmForm = document.createElement('form');
+        paytmForm.method  = 'POST';
+        paytmForm.action  = payData.paytm_url;
+        paytmForm.style.display = 'none';
+
+        Object.entries(payData.paytm_params).forEach(([key, value]) => {
+            const input = document.createElement('input');
+            input.type  = 'hidden';
+            input.name  = key;
+            input.value = value;
+            paytmForm.appendChild(input);
+        });
+
+        document.body.appendChild(paytmForm);
+        paytmForm.submit(); // Redirects user to Paytm gateway
+
+    } catch (err) {
+        console.error('Donation error:', err);
         hideLoadingOverlay();
-        showNotification('Network error. Please check your connection and try again.', 'error');
+        showNotification(err.message || 'Network error. Please check your connection and try again.', 'error');
         submitButton.disabled = false;
-        submitButton.innerHTML = originalButtonText;
+        submitButton.innerHTML = originalText;
     }
 }
 
-/**
- * Validate donation form
- */
+// ── Validation ────────────────────────────────────────────────────────────────
 function validateDonationForm(form) {
-    const name = form.querySelector('#donor_name').value.trim();
-    const email = form.querySelector('#donor_email').value.trim();
-    const amount = parseFloat(form.querySelector('#donation_amount').value);
-    const terms = form.querySelector('#terms').checked;
-    
-    if (!name) {
-        showNotification('Please enter your full name', 'error');
-        return false;
-    }
-    
-    if (!email || !isValidEmail(email)) {
-        showNotification('Please enter a valid email address', 'error');
-        return false;
-    }
-    
-    if (!amount || amount < 1) {
-        showNotification('Please select or enter a donation amount', 'error');
-        return false;
-    }
-    
-    if (amount > 1000000) {
-        showNotification('Maximum donation amount is ₹10,00,000', 'error');
-        return false;
-    }
-    
-    if (!terms) {
-        showNotification('Please accept the terms and conditions', 'error');
-        return false;
-    }
-    
+    const name   = form.querySelector('#donor_name')?.value.trim();
+    const email  = form.querySelector('#donor_email')?.value.trim();
+    const amount = parseFloat(form.querySelector('#donation_amount')?.value);
+    const terms  = form.querySelector('#terms')?.checked;
+
+    if (!name)                         { showNotification('Please enter your full name', 'error');                          return false; }
+    if (!email || !isValidEmail(email)) { showNotification('Please enter a valid email address', 'error');                   return false; }
+    if (!amount || amount < 1)          { showNotification('Please select or enter a donation amount', 'error');            return false; }
+    if (amount > 1000000)               { showNotification('Maximum donation amount is ₹10,00,000', 'error');               return false; }
+    if (!terms)                         { showNotification('Please accept the terms and conditions', 'error');              return false; }
     return true;
 }
 
-/**
- * Validate email format
- */
 function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-/**
- * Show loading overlay
- */
+// ── UI helpers ────────────────────────────────────────────────────────────────
 function showLoadingOverlay() {
-    const overlay = document.getElementById('loadingOverlay');
-    if (overlay) {
-        overlay.classList.remove('hidden');
-    }
+    document.getElementById('loadingOverlay')?.classList.remove('hidden');
 }
 
-/**
- * Hide loading overlay
- */
 function hideLoadingOverlay() {
-    const overlay = document.getElementById('loadingOverlay');
-    if (overlay) {
-        overlay.classList.add('hidden');
-    }
+    document.getElementById('loadingOverlay')?.classList.add('hidden');
 }
 
-/**
- * Show notification
- */
 function showNotification(message, type = 'info') {
-    // Create notification container if it doesn't exist
     let container = document.getElementById('notification-container');
     if (!container) {
         container = document.createElement('div');
         container.id = 'notification-container';
-        container.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
+        container.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;max-width:400px;';
         document.body.appendChild(container);
     }
-    
-    // Create notification
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.style.cssText = `
-        background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#007bff'};
-        color: white;
-        padding: 15px 20px;
-        margin-bottom: 10px;
-        border-radius: 5px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        animation: slideIn 0.3s ease;
-    `;
-    
-    notification.innerHTML = `
-        <div style="display: flex; align-items: center; justify-content: space-between;">
-            <span>${message}</span>
-            <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: white; font-size: 20px; cursor: pointer; margin-left: 15px;">&times;</button>
-        </div>
-    `;
-    
-    container.appendChild(notification);
-    
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-        if (notification.parentElement) {
-            notification.remove();
-        }
-    }, 5000);
+
+    const colours = { success: '#437a22', error: '#a12c2c', info: '#01696f' };
+    const n = document.createElement('div');
+    n.style.cssText = `background:${colours[type] || colours.info};color:#fff;padding:14px 18px;
+        margin-bottom:10px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);
+        animation:slideIn 0.25s ease;font-size:14px;font-family:inherit;`;
+    n.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+        <span>${message}</span>
+        <button onclick="this.closest('div').parentElement.remove()" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;line-height:1;">×</button>
+    </div>`;
+
+    container.appendChild(n);
+    setTimeout(() => n.isConnected && n.remove(), 5500);
 }
 
-// Add CSS animation
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-`;
-document.head.appendChild(style);
+// Slide-in animation
+(function () {
+    const s = document.createElement('style');
+    s.textContent = '@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}';
+    document.head.appendChild(s);
+})();
