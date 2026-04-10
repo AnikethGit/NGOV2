@@ -15,7 +15,7 @@
         totalSlides: 0,
         isAutoPlaying: true,
         autoPlayInterval: null,
-        autoPlayDelay: 5000, // 5 seconds
+        autoPlayDelay: 4000, // 4 seconds
         isTransitioning: false,
         progressInterval: null,
         progressDuration: 0

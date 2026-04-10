@@ -7,43 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load CSRF token immediately
     loadCSRFToken();
     initializeContactForm();
-    initializeFAQ();
 });
-
-/**
- * Initialize FAQ accordion
- */
-function initializeFAQ() {
-    const faqItems = document.querySelectorAll('.faq-item');
-    
-    faqItems.forEach(item => {
-        const question = item.querySelector('.faq-question');
-        
-        question.addEventListener('click', function() {
-            const isActive = item.classList.contains('active');
-            
-            // Close all other FAQ items
-            faqItems.forEach(otherItem => {
-                otherItem.classList.remove('active');
-                const icon = otherItem.querySelector('.faq-question i');
-                if (icon) {
-                    icon.classList.remove('fa-minus');
-                    icon.classList.add('fa-plus');
-                }
-            });
-            
-            // Toggle current item
-            if (!isActive) {
-                item.classList.add('active');
-                const icon = question.querySelector('i');
-                if (icon) {
-                    icon.classList.remove('fa-plus');
-                    icon.classList.add('fa-minus');
-                }
-            }
-        });
-    });
-}
 
 /**
  * Load CSRF token with retry logic
@@ -291,3 +255,29 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+/**
+ * Load CSRF token with retry logic
+ */
+async function loadCSRFToken() {
+    try {
+        const response = await fetch('api/csrf-token.php');
+        const data = await response.json();
+        
+        if (data.success && data.csrf_token) {
+            const csrfInput = document.querySelector('input[name="csrf_token"]');
+            if (csrfInput) {
+                csrfInput.value = data.csrf_token;
+                console.log('CSRF token loaded successfully:', data.csrf_token.substring(0, 20) + '...');
+            } else {
+                console.warn('CSRF input field not found in form');
+            }
+        } else {
+            console.error('Failed to get CSRF token from server:', data);
+        }
+    } catch (error) {
+        console.error('Failed to load security token:', error);
+        // Retry after 2 seconds
+        setTimeout(loadCSRFToken, 2000);
+    }
+}
