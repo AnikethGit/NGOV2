@@ -5,13 +5,58 @@
  * Credentials are read from .env file — never hardcode here.
  */
 
-// Load .env if present (local development)
-$env_path = __DIR__ . '/../.env';
-if (file_exists($env_path)) {
-    $env = parse_ini_file($env_path);
-} else {
+/**
+ * Robust .env parser — handles special characters like & # * % ! in values.
+ * parse_ini_file() breaks on these characters. This custom parser does not.
+ */
+function load_env_file($path) {
+    if (!file_exists($path)) return [];
+
     $env = [];
+    $lines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+
+    foreach ($lines as $line) {
+        $line = trim($line);
+
+        // Skip blank lines and comment lines
+        if ($line === '' || $line[0] === '#') continue;
+
+        // Must contain an = sign
+        $pos = strpos($line, '=');
+        if ($pos === false) continue;
+
+        $key   = trim(substr($line, 0, $pos));
+        $value = trim(substr($line, $pos + 1));
+
+        // Strip inline comments (only if value is NOT quoted)
+        // e.g.  KEY=value ; comment
+        if (strlen($value) > 0 && $value[0] !== '"' && $value[0] !== "'") {
+            $comment_pos = strpos($value, ' ;');
+            if ($comment_pos !== false) {
+                $value = trim(substr($value, 0, $comment_pos));
+            }
+        }
+
+        // Strip surrounding quotes (single or double)
+        if (strlen($value) >= 2) {
+            $first = $value[0];
+            $last  = $value[strlen($value) - 1];
+            if (($first === '"' && $last === '"') || ($first === "'" && $last === "'")) {
+                $value = substr($value, 1, -1);
+            }
+        }
+
+        if ($key !== '') {
+            $env[$key] = $value;
+        }
+    }
+
+    return $env;
 }
+
+// Load .env file
+$env_path = __DIR__ . '/../.env';
+$env = load_env_file($env_path);
 
 class Config {
     // Database Configuration
@@ -36,11 +81,11 @@ class Config {
 
     // Security Settings
     private static $security_config = [
-        'jwt_secret'       => '',
-        'password_salt'    => '',
-        'session_lifetime' => 7200,
+        'jwt_secret'         => '',
+        'password_salt'      => '',
+        'session_lifetime'   => 7200,
         'max_login_attempts' => 5,
-        'lockout_duration' => 900
+        'lockout_duration'   => 900
     ];
 
     public static function db($key = null) {
@@ -62,7 +107,6 @@ class Config {
 
 // Populate from .env
 if (!empty($env)) {
-    // Use reflection to update private static properties
     $ref = new ReflectionClass('Config');
 
     $dbProp = $ref->getProperty('db_config');
