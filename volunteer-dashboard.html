@@ -3,553 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Volunteer Dashboard - Sai Seva Foundation</title>
-    
-    <!-- CSS Files -->
+    <title>Volunteer Dashboard - Sri Dutta Sai Manga Bharadwaja</title>
+    <link rel="icon" href="images/LogoNGO.png" type="image/x-icon">
     <link rel="stylesheet" href="css/common.css">
-    <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/volunteer-dashboard.css">
     <link rel="stylesheet" href="css/theme-compatibility.css">
-<link rel="stylesheet" href="css/mobile-responsive.css">
-    
-    <!-- Font Awesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
-    
-    <!-- Meta Tags for SEO -->
-    <meta name="description" content="Volunteer Dashboard - Manage your volunteer activities with Sai Seva Foundation">
-    <meta name="keywords" content="volunteer, dashboard, NGO, Sai Seva Foundation, community service">
-    <meta name="robots" content="noindex, nofollow">
+    <style>
+        :root { --primary:#21808d; --bg:#f8fafc; --surface:#fff; --text:#0f172a; --text-muted:#64748b; --border:#e2e8f0; --radius:12px; }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter','Poppins',sans-serif; background:var(--bg); color:var(--text); }
+        .dash-header { background:var(--surface); border-bottom:1px solid var(--border); padding:0 24px; height:64px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+        .dash-brand { display:flex; align-items:center; gap:10px; text-decoration:none; }
+        .dash-brand img { width:36px; height:36px; object-fit:contain; }
+        .dash-brand span { font-weight:700; font-size:15px; color:var(--primary); }
+        .dash-user { display:flex; align-items:center; gap:12px; }
+        .btn-logout { background:none; border:1px solid var(--border); padding:7px 16px; border-radius:8px; font-size:13px; font-weight:500; cursor:pointer; color:var(--text-muted); transition:all .2s; }
+        .btn-logout:hover { background:#fee2e2; color:#dc2626; border-color:#fecaca; }
+        .dash-layout { display:flex; min-height:calc(100vh - 64px); }
+        .dash-sidebar { width:220px; background:var(--surface); border-right:1px solid var(--border); padding:24px 0; flex-shrink:0; }
+        .sidebar-nav a { display:flex; align-items:center; gap:10px; padding:11px 24px; color:var(--text-muted); text-decoration:none; font-size:14px; font-weight:500; transition:all .15s; border-left:3px solid transparent; }
+        .sidebar-nav a:hover, .sidebar-nav a.active { color:var(--primary); background:#f0fafa; border-left-color:var(--primary); }
+        .sidebar-nav a i { width:18px; text-align:center; }
+        .sidebar-section { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--text-muted); padding:18px 24px 6px; }
+        .dash-main { flex:1; padding:32px; overflow-y:auto; }
+        .dash-greeting { margin-bottom:28px; }
+        .dash-greeting h1 { font-size:24px; font-weight:700; }
+        .dash-greeting p  { color:var(--text-muted); font-size:14px; margin-top:4px; }
+        .kpi-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:20px; margin-bottom:32px; }
+        .kpi-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px; display:flex; align-items:center; gap:16px; }
+        .kpi-icon { width:48px; height:48px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+        .kpi-icon.teal   { background:#e0f2f1; color:#00796b; }
+        .kpi-icon.green  { background:#dcfce7; color:#16a34a; }
+        .kpi-icon.orange { background:#fff7ed; color:#ea580c; }
+        .kpi-value  { font-size:22px; font-weight:700; }
+        .kpi-label  { font-size:12px; color:var(--text-muted); margin-top:2px; }
+        .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin-bottom:24px; }
+        .card-header { padding:18px 22px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+        .card-header h2 { font-size:16px; font-weight:600; }
+        .card-body { padding:22px; }
+        .info-row { display:flex; align-items:center; gap:8px; font-size:14px; padding:10px 0; border-bottom:1px solid var(--border); }
+        .info-row:last-child { border-bottom:none; }
+        .info-row i { color:var(--primary); width:20px; }
+        @media (max-width:768px) { .dash-sidebar { display:none; } .dash-main { padding:20px; } .kpi-grid { grid-template-columns:1fr 1fr; } }
+    </style>
 </head>
 <body>
-    <!-- Header -->
-    <header class="dashboard-header">
-        <div class="header-container">
-            <div class="logo">
-                <img src="images/LogoNGO.png" alt="Sai Seva Foundation Logo">
-                <span>Sai Seva Foundation</span>
-            </div>
-            
-            <nav class="header-nav">
-                <a href="index.html" class="nav-link">
-                    <i class="fas fa-home"></i>
-                    Home
-                </a>
-                <a href="about.html" class="nav-link">
-                    <i class="fas fa-info-circle"></i>
-                    About
-                </a>
-                <a href="services.html" class="nav-link">
-                    <i class="fas fa-hands-helping"></i>
-                    Services
-                </a>
-            </nav>
-            
-            <div class="user-profile">
-                <div class="profile-info">
-                    <img src="images/default-avatar.png" alt="Profile" class="profile-avatar" id="profileAvatar">
-                    <div class="profile-details">
-                        <span class="profile-name" id="volunteerName">Loading...</span>
-                        <span class="profile-role">Volunteer</span>
-                    </div>
-                </div>
-                <div class="profile-dropdown">
-                    <button class="dropdown-toggle" aria-label="Profile menu">
-                        <i class="fas fa-chevron-down"></i>
-                    </button>
-                    <div class="dropdown-menu">
-                        <a href="#profile" class="dropdown-item">
-                            <i class="fas fa-user"></i>
-                            My Profile
-                        </a>
-                        <a href="#settings" class="dropdown-item">
-                            <i class="fas fa-cog"></i>
-                            Settings
-                        </a>
-                        <hr class="dropdown-divider">
-                        <button class="dropdown-item logout-btn">
-                            <i class="fas fa-sign-out-alt"></i>
-                            Logout
-                        </button>
-                    </div>
-                </div>
-            </div>
+    <header class="dash-header">
+        <a href="index.html" class="dash-brand">
+            <img src="images/LogoNGO.png" alt="Logo">
+            <span>Sai Seva Foundation</span>
+        </a>
+        <div class="dash-user">
+            <span style="font-size:12px;background:#e0f2f1;color:#00796b;padding:3px 10px;border-radius:999px;font-weight:600;">Volunteer</span>
+            <span style="font-weight:600;font-size:14px;" id="dashUserName">Loading...</span>
+            <button class="btn-logout" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
         </div>
     </header>
 
-    <div class="dashboard-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
+    <div class="dash-layout">
+        <aside class="dash-sidebar">
             <nav class="sidebar-nav">
-                <a href="#dashboard" class="nav-item active" data-section="dashboard">
-                    <i class="fas fa-tachometer-alt"></i>
-                    <span>Dashboard</span>
-                </a>
-                <a href="#activities" class="nav-item" data-section="activities">
-                    <i class="fas fa-tasks"></i>
-                    <span>My Activities</span>
-                </a>
-                <a href="#events" class="nav-item" data-section="events">
-                    <i class="fas fa-calendar-alt"></i>
-                    <span>Events</span>
-                </a>
-                <a href="#schedule" class="nav-item" data-section="schedule">
-                    <i class="fas fa-clock"></i>
-                    <span>Schedule</span>
-                </a>
-                <a href="#training" class="nav-item" data-section="training">
-                    <i class="fas fa-graduation-cap"></i>
-                    <span>Training</span>
-                </a>
-                <a href="#hours" class="nav-item" data-section="hours">
-                    <i class="fas fa-hourglass-half"></i>
-                    <span>Volunteer Hours</span>
-                </a>
-                <a href="#certificates" class="nav-item" data-section="certificates">
-                    <i class="fas fa-certificate"></i>
-                    <span>Certificates</span>
-                </a>
-                <a href="#profile" class="nav-item" data-section="profile">
-                    <i class="fas fa-user-edit"></i>
-                    <span>Profile</span>
-                </a>
+                <div class="sidebar-section">Volunteer</div>
+                <a href="volunteer-dashboard.html" class="active"><i class="fas fa-home"></i> Overview</a>
+                <a href="#schedule"><i class="fas fa-calendar"></i> My Schedule</a>
+                <a href="#hours"><i class="fas fa-clock"></i> Hours Log</a>
+                <div class="sidebar-section">More</div>
+                <a href="index.html"><i class="fas fa-globe"></i> Website Home</a>
+                <a href="contact.html"><i class="fas fa-envelope"></i> Contact Us</a>
             </nav>
         </aside>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Dashboard Overview -->
-            <section id="dashboard-section" class="content-section active">
-                <div class="section-header">
-                    <h1>Volunteer Dashboard</h1>
-                    <p>Welcome back! Here's your volunteer activity overview.</p>
+        <main class="dash-main">
+            <div class="dash-greeting">
+                <h1>Welcome, <span id="greetName">...</span> 🙏</h1>
+                <p>Thank you for volunteering with us. Here's your activity overview.</p>
+            </div>
+
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-icon teal"><i class="fas fa-clock"></i></div>
+                    <div><div class="kpi-value">0</div><div class="kpi-label">Hours Volunteered</div></div>
                 </div>
-
-                <!-- Stats Cards -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-hourglass-half"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3 id="totalHours">0</h3>
-                            <p>Total Hours</p>
-                            <span class="stat-change positive">+5 this month</span>
-                        </div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-calendar-check"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3 id="eventsAttended">0</h3>
-                            <p>Events Attended</p>
-                            <span class="stat-change positive">+2 this month</span>
-                        </div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3 id="peopleHelped">0</h3>
-                            <p>People Helped</p>
-                            <span class="stat-change positive">+25 this month</span>
-                        </div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-icon">
-                            <i class="fas fa-medal"></i>
-                        </div>
-                        <div class="stat-info">
-                            <h3 id="achievements">0</h3>
-                            <p>Achievements</p>
-                            <span class="stat-change neutral">No change</span>
-                        </div>
-                    </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon green"><i class="fas fa-calendar-check"></i></div>
+                    <div><div class="kpi-value">0</div><div class="kpi-label">Events Attended</div></div>
                 </div>
-
-                <!-- Quick Actions -->
-                <div class="quick-actions">
-                    <h2>Quick Actions</h2>
-                    <div class="actions-grid">
-                        <button class="action-btn" data-action="register-event">
-                            <i class="fas fa-plus-circle"></i>
-                            <span>Register for Event</span>
-                        </button>
-                        <button class="action-btn" data-action="log-hours">
-                            <i class="fas fa-clock"></i>
-                            <span>Log Hours</span>
-                        </button>
-                        <button class="action-btn" data-action="update-availability">
-                            <i class="fas fa-calendar"></i>
-                            <span>Update Availability</span>
-                        </button>
-                        <button class="action-btn" data-action="view-training">
-                            <i class="fas fa-play"></i>
-                            <span>Start Training</span>
-                        </button>
-                    </div>
+                <div class="kpi-card">
+                    <div class="kpi-icon orange"><i class="fas fa-star"></i></div>
+                    <div><div class="kpi-value">—</div><div class="kpi-label">Next Event</div></div>
                 </div>
+            </div>
 
-                <!-- Recent Activities -->
-                <div class="recent-activities">
-                    <h2>Recent Activities</h2>
-                    <div class="activity-list" id="recentActivities">
-                        <!-- Activities will be loaded here -->
-                    </div>
+            <div class="card">
+                <div class="card-header"><h2><i class="fas fa-user" style="margin-right:8px;color:var(--primary)"></i>My Profile</h2></div>
+                <div class="card-body" id="profileDetails">Loading...</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h2><i class="fas fa-info-circle" style="margin-right:8px;color:var(--primary)"></i>Getting Started</h2></div>
+                <div class="card-body">
+                    <p style="font-size:14px;color:var(--text-muted);line-height:1.7;">Your volunteer portal is being set up. Upcoming events, your schedule, and hours tracking will appear here once assigned by the admin team. Please contact us at <a href="contact.html" style="color:var(--primary);">the contact page</a> to get onboarded.</p>
                 </div>
-
-                <!-- Upcoming Events -->
-                <div class="upcoming-events">
-                    <h2>Upcoming Events</h2>
-                    <div class="event-list" id="upcomingEvents">
-                        <!-- Events will be loaded here -->
-                    </div>
-                </div>
-            </section>
-
-            <!-- My Activities Section -->
-            <section id="activities-section" class="content-section">
-                <div class="section-header">
-                    <h1>My Activities</h1>
-                    <button class="btn btn-primary" id="logNewActivity">
-                        <i class="fas fa-plus"></i>
-                        Log New Activity
-                    </button>
-                </div>
-
-                <div class="filters">
-                    <select id="activityFilter" class="filter-select">
-                        <option value="all">All Activities</option>
-                        <option value="completed">Completed</option>
-                        <option value="ongoing">Ongoing</option>
-                        <option value="upcoming">Upcoming</option>
-                    </select>
-                    <input type="date" id="dateFilter" class="filter-input">
-                    <button class="btn btn-secondary" id="clearFilters">Clear Filters</button>
-                </div>
-
-                <div class="activities-table-container">
-                    <table class="activities-table">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Activity</th>
-                                <th>Hours</th>
-                                <th>Status</th>
-                                <th>Location</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="activitiesTableBody">
-                            <!-- Activities will be loaded here -->
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <!-- Events Section -->
-            <section id="events-section" class="content-section">
-                <div class="section-header">
-                    <h1>Events</h1>
-                    <div class="header-actions">
-                        <select id="eventStatusFilter" class="filter-select">
-                            <option value="all">All Events</option>
-                            <option value="registered">Registered</option>
-                            <option value="available">Available</option>
-                            <option value="completed">Completed</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="events-grid" id="eventsGrid">
-                    <!-- Events will be loaded here -->
-                </div>
-            </section>
-
-            <!-- Schedule Section -->
-            <section id="schedule-section" class="content-section">
-                <div class="section-header">
-                    <h1>My Schedule</h1>
-                    <button class="btn btn-primary" id="updateAvailability">
-                        <i class="fas fa-edit"></i>
-                        Update Availability
-                    </button>
-                </div>
-
-                <div class="calendar-container">
-                    <div class="calendar-header">
-                        <button class="btn btn-secondary" id="prevMonth">
-                            <i class="fas fa-chevron-left"></i>
-                        </button>
-                        <h2 id="currentMonth">Loading...</h2>
-                        <button class="btn btn-secondary" id="nextMonth">
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                    </div>
-                    <div class="calendar-grid" id="calendar">
-                        <!-- Calendar will be generated here -->
-                    </div>
-                </div>
-
-                <div class="availability-settings">
-                    <h3>Availability Settings</h3>
-                    <form id="availabilityForm">
-                        <div class="time-slots">
-                            <div class="day-slot">
-                                <label>
-                                    <input type="checkbox" name="monday" value="monday">
-                                    Monday
-                                </label>
-                                <select name="monday_start">
-                                    <option value="09:00">9:00 AM</option>
-                                    <option value="10:00">10:00 AM</option>
-                                    <option value="11:00">11:00 AM</option>
-                                    <option value="14:00">2:00 PM</option>
-                                    <option value="15:00">3:00 PM</option>
-                                    <option value="16:00">4:00 PM</option>
-                                </select>
-                                <select name="monday_end">
-                                    <option value="12:00">12:00 PM</option>
-                                    <option value="13:00">1:00 PM</option>
-                                    <option value="17:00">5:00 PM</option>
-                                    <option value="18:00">6:00 PM</option>
-                                </select>
-                            </div>
-                            <!-- Similar structure for other days -->
-                        </div>
-                        <button type="submit" class="btn btn-primary">Save Availability</button>
-                    </form>
-                </div>
-            </section>
-
-            <!-- Training Section -->
-            <section id="training-section" class="content-section">
-                <div class="section-header">
-                    <h1>Training Programs</h1>
-                    <p>Complete training modules to enhance your volunteering skills</p>
-                </div>
-
-                <div class="training-progress">
-                    <h3>Overall Progress</h3>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: 0%;" id="overallProgress"></div>
-                    </div>
-                    <span class="progress-text">0% Complete</span>
-                </div>
-
-                <div class="training-modules" id="trainingModules">
-                    <!-- Training modules will be loaded here -->
-                </div>
-            </section>
-
-            <!-- Volunteer Hours Section -->
-            <section id="hours-section" class="content-section">
-                <div class="section-header">
-                    <h1>Volunteer Hours</h1>
-                    <button class="btn btn-primary" id="exportHours">
-                        <i class="fas fa-download"></i>
-                        Export Report
-                    </button>
-                </div>
-
-                <div class="hours-summary">
-                    <div class="summary-cards">
-                        <div class="summary-card">
-                            <h3>This Month</h3>
-                            <span class="hours-count" id="thisMonthHours">0</span>
-                            <span class="hours-label">hours</span>
-                        </div>
-                        <div class="summary-card">
-                            <h3>This Year</h3>
-                            <span class="hours-count" id="thisYearHours">0</span>
-                            <span class="hours-label">hours</span>
-                        </div>
-                        <div class="summary-card">
-                            <h3>Total</h3>
-                            <span class="hours-count" id="totalHoursCount">0</span>
-                            <span class="hours-label">hours</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="hours-chart">
-                    <canvas id="hoursChart" width="400" height="200"></canvas>
-                </div>
-
-                <div class="hours-log">
-                    <h3>Hours Log</h3>
-                    <div class="log-filters">
-                        <input type="month" id="monthFilter" class="filter-input">
-                        <select id="activityTypeFilter" class="filter-select">
-                            <option value="all">All Types</option>
-                            <option value="event">Events</option>
-                            <option value="community">Community Service</option>
-                            <option value="education">Education</option>
-                            <option value="healthcare">Healthcare</option>
-                        </select>
-                    </div>
-                    <div class="hours-table" id="hoursTable">
-                        <!-- Hours log will be displayed here -->
-                    </div>
-                </div>
-            </section>
-
-            <!-- Certificates Section -->
-            <section id="certificates-section" class="content-section">
-                <div class="section-header">
-                    <h1>Certificates & Achievements</h1>
-                    <p>Your volunteer achievements and certifications</p>
-                </div>
-
-                <div class="certificates-grid" id="certificatesGrid">
-                    <!-- Certificates will be loaded here -->
-                </div>
-
-                <div class="achievements">
-                    <h3>Achievements</h3>
-                    <div class="achievements-list" id="achievementsList">
-                        <!-- Achievements will be loaded here -->
-                    </div>
-                </div>
-            </section>
-
-            <!-- Profile Section -->
-            <section id="profile-section" class="content-section">
-                <div class="section-header">
-                    <h1>My Profile</h1>
-                    <p>Update your volunteer profile information</p>
-                </div>
-
-                <div class="profile-form-container">
-                    <form id="profileForm" class="profile-form">
-                        <div class="form-group">
-                            <label for="fullName">Full Name *</label>
-                            <input type="text" id="fullName" name="full_name" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="email">Email Address *</label>
-                            <input type="email" id="email" name="email" required readonly>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="phone">Phone Number</label>
-                            <input type="tel" id="phone" name="phone">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="address">Address</label>
-                            <textarea id="address" name="address" rows="3"></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="skills">Skills & Interests</label>
-                            <textarea id="skills" name="skills" placeholder="E.g., Teaching, Healthcare, Event Management, Technology" rows="3"></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="availability">General Availability</label>
-                            <select id="availability" name="availability">
-                                <option value="weekends">Weekends Only</option>
-                                <option value="weekdays">Weekdays Only</option>
-                                <option value="flexible">Flexible</option>
-                                <option value="limited">Limited Availability</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="experience">Previous Volunteer Experience</label>
-                            <textarea id="experience" name="experience" rows="4"></textarea>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="emergencyContact">Emergency Contact</label>
-                            <input type="text" id="emergencyContact" name="emergency_contact" placeholder="Name and Phone Number">
-                        </div>
-
-                        <div class="form-actions">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save"></i>
-                                Update Profile
-                            </button>
-                            <button type="button" class="btn btn-secondary" id="cancelEdit">
-                                Cancel
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </section>
+            </div>
         </main>
     </div>
 
-    <!-- Modals -->
-    <div id="logActivityModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Log Volunteer Activity</h2>
-                <button class="modal-close">&times;</button>
-            </div>
-            <form id="logActivityForm" class="modal-form">
-                <div class="form-group">
-                    <label for="activityDate">Date *</label>
-                    <input type="date" id="activityDate" name="activity_date" required>
-                </div>
+    <script>
+    (async function () {
+        try {
+            const res  = await fetch('api/auth.php?action=check-session');
+            const data = await res.json();
+            if (!data.success) { window.location.href = 'login.html'; return; }
+            const u = data.data;
+            document.getElementById('dashUserName').textContent = u.user_name;
+            document.getElementById('greetName').textContent    = u.user_name.split(' ')[0];
+            document.getElementById('profileDetails').innerHTML = `
+                <div class="info-row"><i class="fas fa-user"></i><span><strong>Name:</strong> ${u.user_name}</span></div>
+                <div class="info-row"><i class="fas fa-envelope"></i><span><strong>Email:</strong> ${u.user_email}</span></div>
+                <div class="info-row"><i class="fas fa-user-tag"></i><span><strong>Role:</strong> Volunteer</span></div>
+            `;
+        } catch (e) { window.location.href = 'login.html'; }
 
-                <div class="form-group">
-                    <label for="activityType">Activity Type *</label>
-                    <select id="activityType" name="activity_type" required>
-                        <option value="">Select Activity Type</option>
-                        <option value="event">Event Participation</option>
-                        <option value="community">Community Service</option>
-                        <option value="education">Educational Support</option>
-                        <option value="healthcare">Healthcare Assistance</option>
-                        <option value="administration">Administrative Work</option>
-                        <option value="other">Other</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="activityDescription">Description *</label>
-                    <textarea id="activityDescription" name="description" required rows="3"></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="hoursSpent">Hours Spent *</label>
-                    <input type="number" id="hoursSpent" name="hours" min="0.5" step="0.5" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="activityLocation">Location</label>
-                    <input type="text" id="activityLocation" name="location">
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary">Log Activity</button>
-                    <button type="button" class="btn btn-secondary modal-close">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="loading-overlay">
-        <div class="loading-content">
-            <div class="loading-spinner"></div>
-            <p>Loading...</p>
-        </div>
-    </div>
-
-    <!-- JavaScript Files -->
-    <script src="js/main.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/volunteer-dashboard.js"></script>
-    <script src="js/theme-switcher.js"></script>
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            try { await fetch('api/auth.php?action=logout', { method:'POST' }); } finally { window.location.href = 'login.html'; }
+        });
+    })();
+    </script>
 </body>
 </html>
