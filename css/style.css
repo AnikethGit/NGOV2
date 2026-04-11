@@ -321,7 +321,7 @@ body {
 
 /* Typography */
 h1,
-h2,
+ह2,
 h3,
 h4,
 h5,
@@ -743,8 +743,7 @@ select.form-control {
  * Styles for index.html matching your exact HTML structure
  * Works perfectly with common-final.css
  * 
- * @version 2.0.0
- * @author Sai Seva Foundation Development Team
+ * @version 2.1.0 (trust-focused palette refinements)
  */
 
 /* =================================================================
@@ -756,10 +755,8 @@ select.form-control {
     min-height: 100vh;
     display: flex;
     align-items: center;
-    background: linear-gradient(135deg, 
-        rgba(var(--color-orange-500-rgb), 0.95) 0%, 
-        rgba(var(--color-teal-500-rgb), 0.9) 100%
-    );
+    /* Calmer, trust-focused hero: rely on image + soft overlay */
+    background: var(--color-slate-900);
     color: var(--color-white);
     overflow: hidden;
     padding: var(--space-32) 0;
@@ -781,9 +778,11 @@ select.form-control {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, 
-        rgba(var(--color-slate-900-rgb), 0.8) 0%, 
-        rgba(var(--color-orange-500-rgb), 0.7) 100%
+    /* Removed orange cast, keep subtle teal accent at edge */
+    background: linear-gradient(135deg,
+        rgba(var(--color-slate-900-rgb), 0.86) 0%,
+        rgba(var(--color-slate-900-rgb), 0.7) 55%,
+        rgba(var(--color-teal-500-rgb), 0.25) 100%
     );
     z-index: -1;
 }
@@ -811,7 +810,8 @@ select.form-control {
 }
 
 .highlight {
-    background: linear-gradient(120deg, var(--color-orange-400) 0%, var(--color-teal-300) 100%);
+    /* Teal-only gradient for a more serious, institutional feel */
+    background: linear-gradient(120deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -967,7 +967,8 @@ select.form-control {
 }
 
 .video-placeholder:hover {
-    background: linear-gradient(135deg, var(--color-background) 0%, rgba(var(--color-orange-500-rgb), 0.1) 100%);
+    /* Soften hover tint to teal-only */
+    background: linear-gradient(135deg, var(--color-background) 0%, rgba(var(--color-teal-500-rgb), 0.08) 100%);
     border-color: var(--color-primary);
     transform: translateY(-4px);
     box-shadow: var(--shadow-lg);
@@ -1040,9 +1041,10 @@ select.form-control {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, 
-        rgba(var(--color-orange-500-rgb), 0.9) 0%, 
-        rgba(var(--color-teal-500-rgb), 0.8) 100%
+    /* Remove orange-teal mix, use slate + teal for calmer overlay */
+    background: linear-gradient(135deg,
+        rgba(var(--color-slate-900-rgb), 0.9) 0%,
+        rgba(var(--color-teal-500-rgb), 0.75) 100%
     );
     display: flex;
     align-items: center;
@@ -1401,9 +1403,10 @@ select.form-control {
     left: 0;
     right: 0;
     bottom: 0;
+    /* Remove orange glow, keep soft teal lighting */
     background: 
-        radial-gradient(circle at 30% 70%, rgba(var(--color-orange-400-rgb), 0.3) 0%, transparent 50%),
-        radial-gradient(circle at 70% 30%, rgba(var(--color-teal-300-rgb), 0.2) 0%, transparent 50%);
+        radial-gradient(circle at 30% 70%, rgba(var(--color-teal-500-rgb), 0.18) 0%, transparent 55%),
+        radial-gradient(circle at 70% 30%, rgba(var(--color-teal-300-rgb), 0.12) 0%, transparent 55%);
     pointer-events: none;
 }
 
