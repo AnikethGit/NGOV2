@@ -12,9 +12,11 @@
         try {
             const res  = await fetch('api/csrf-token.php');
             const data = await res.json();
-            if (data.token) {
+            // API returns 'csrf_token', not 'token'
+            const token = data.csrf_token || data.token;
+            if (token) {
                 document.querySelectorAll('input[name="csrf_token"]').forEach(el => {
-                    el.value = data.token;
+                    el.value = token;
                 });
             }
         } catch (e) {
@@ -87,8 +89,8 @@
             const checks = wrap?.querySelectorAll('.password-match i');
             if (!checks) return;
             const match = cpw.value && pw.value === cpw.value;
-            checks[0].style.display = match ? 'inline'  : 'none'; // check
-            checks[1].style.display = match ? 'none'    : (cpw.value ? 'inline' : 'none'); // x
+            checks[0].style.display = match ? 'inline'  : 'none';
+            checks[1].style.display = match ? 'none'    : (cpw.value ? 'inline' : 'none');
         }
 
         pw.addEventListener('input', checkMatch);
@@ -167,7 +169,7 @@
                     setTimeout(() => { window.location.href = data.data.redirect; }, 800);
                 } else {
                     showMessage('loginForm', data.message, 'error');
-                    await loadCsrfToken(); // Refresh token after failed attempt
+                    await loadCsrfToken();
                 }
             } catch (err) {
                 showMessage('loginForm', 'Network error. Please check your connection.', 'error');
@@ -185,7 +187,6 @@
         form.addEventListener('submit', async e => {
             e.preventDefault();
 
-            // Terms check
             if (!document.getElementById('terms_agreement')?.checked) {
                 showMessage('registerForm', 'Please agree to the Terms of Service to continue.', 'error');
                 return;
@@ -276,23 +277,6 @@
         });
     }
 
-    // ── Update nav based on session ─────────────────────────────────────────
-    async function updateNavForSession() {
-        try {
-            const res  = await fetch('api/auth.php?action=check-session');
-            const data = await res.json();
-            if (data.success) {
-                // Replace Login button with user name + dashboard link
-                const loginBtn = document.querySelector('a[href="login.html"].btn-outline, a[href="login.html"].btn');
-                if (loginBtn) {
-                    loginBtn.textContent = data.data.user_name.split(' ')[0];
-                    loginBtn.href = 'dashboard.html';
-                    loginBtn.title = 'Go to your dashboard';
-                }
-            }
-        } catch (e) { /* silent */ }
-    }
-
     // ── Init ────────────────────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', () => {
         loadCsrfToken();
@@ -304,12 +288,14 @@
         initRegisterForm();
         initForgotPassword();
 
-        // If on login page and already logged in, redirect
+        // If on login page and already logged in, redirect away
         fetch('api/auth.php?action=check-session')
             .then(r => r.json())
             .then(d => {
                 if (d.success) {
-                    const redirect = d.data.user_type === 'volunteer' ? 'volunteer-dashboard.html' : 'dashboard.html';
+                    const redirect = d.data.user_type === 'volunteer'
+                        ? 'volunteer-dashboard.html'
+                        : 'donor-dashboard.html';
                     window.location.href = redirect;
                 }
             })
