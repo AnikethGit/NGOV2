@@ -1,138 +1,138 @@
 <?php
 /**
- * Contact Form API - Simplified
- * No session dependency - direct validation
+ * Contact Form API
+ * Session config MUST match csrf-token.php exactly so both files
+ * share the same PHP session (and therefore the same csrf_token value).
  */
 
+// ── 0. No output before headers ────────────────────────────────────────────
+if (ob_get_level() === 0) ob_start();
+
 header('Content-Type: application/json');
+header('X-Content-Type-Options: nosniff');
 
-// Don't start session - use direct token validation
+require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/../includes/database.php';
+require_once __DIR__ . '/../includes/security.php';
 
-require_once '../includes/config.php';
-require_once '../includes/database.php';
-require_once '../includes/security.php';
+// ── 1. Start session with IDENTICAL params as csrf-token.php ───────────────
+if (session_status() === PHP_SESSION_NONE) {
+    session_name('NGOV2_SESSION');
+
+    $is_https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+             || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+             || (!empty($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443);
+
+    session_set_cookie_params([
+        'lifetime' => 7200,
+        'path'     => '/',
+        'secure'   => $is_https,
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+    session_start();
+}
 
 try {
-    
+
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         throw new Exception('Invalid request method');
     }
-    
-    // Get CSRF token from POST
-    $csrfToken = $_POST['csrf_token'] ?? '';
-    
-    if (!Security::validateCSRFToken($csrfToken)) {
+
+    // ── 2. CSRF check ──────────────────────────────────────────────────────
+    $csrfToken    = $_POST['csrf_token'] ?? '';
+    $sessionToken = $_SESSION['csrf_token'] ?? null;
+    $tokenTime    = $_SESSION['csrf_token_time'] ?? null;
+
+    if (empty($csrfToken) || empty($sessionToken)) {
+        error_log('Contact CSRF: token missing. POST=' . strlen($csrfToken) . ' SESSION=' . strlen((string)$sessionToken));
         throw new Exception('Invalid security token. Please refresh the page and try again.');
     }
-    
-    // Get form fields
-    $firstName = isset($_POST['first_name']) ? trim($_POST['first_name']) : '';
-    $lastName = isset($_POST['last_name']) ? trim($_POST['last_name']) : '';
-    $email = isset($_POST['email']) ? trim($_POST['email']) : '';
-    $phone = isset($_POST['phone']) ? trim($_POST['phone']) : '';
-    $subject = isset($_POST['subject']) ? trim($_POST['subject']) : '';
-    $message = isset($_POST['message']) ? trim($_POST['message']) : '';
-    
-    // Validate first name
-    if (empty($firstName)) {
-        throw new Exception('First name is required');
+
+    if ($tokenTime && (time() - $tokenTime > 3600)) {
+        throw new Exception('Security token expired. Please refresh the page and try again.');
     }
-    if (strlen($firstName) < 2) {
+
+    if (!hash_equals($sessionToken, $csrfToken)) {
+        error_log('Contact CSRF mismatch. Expected=' . substr($sessionToken, 0, 10) . ' Got=' . substr($csrfToken, 0, 10));
+        throw new Exception('Invalid security token. Please refresh the page and try again.');
+    }
+
+    // ── 3. Collect and validate fields ────────────────────────────────────
+    $firstName = trim($_POST['first_name'] ?? '');
+    $lastName  = trim($_POST['last_name']  ?? '');
+    $email     = trim($_POST['email']      ?? '');
+    $phone     = trim($_POST['phone']      ?? '');
+    $subject   = trim($_POST['subject']    ?? '');
+    $message   = trim($_POST['message']    ?? '');
+
+    if (empty($firstName) || strlen($firstName) < 2) {
         throw new Exception('First name must be at least 2 characters');
     }
-    
-    // Validate last name
-    if (empty($lastName)) {
-        throw new Exception('Last name is required');
-    }
-    if (strlen($lastName) < 2) {
+    if (empty($lastName) || strlen($lastName) < 2) {
         throw new Exception('Last name must be at least 2 characters');
     }
-    
-    // Validate email
-    if (empty($email)) {
-        throw new Exception('Email is required');
+    if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        throw new Exception('Please enter a valid email address');
     }
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        throw new Exception('Email address is invalid');
-    }
-    
-    // Validate phone (optional but if provided must be valid)
     if (!empty($phone)) {
         $phone = preg_replace('/[^0-9]/', '', $phone);
-        if (strlen($phone) != 10 || !preg_match('/^[6-9]/', $phone)) {
+        if (strlen($phone) !== 10 || !preg_match('/^[6-9]/', $phone)) {
             throw new Exception('Phone must be a valid 10-digit Indian mobile number');
         }
     } else {
         $phone = '';
     }
-    
-    // Validate subject
     if (empty($subject)) {
         throw new Exception('Please select a subject');
     }
-    
-    // Validate message
-    if (empty($message)) {
-        throw new Exception('Message is required');
-    }
-    if (strlen($message) < 10) {
+    if (empty($message) || strlen($message) < 10) {
         throw new Exception('Message must be at least 10 characters');
     }
     if (strlen($message) > 5000) {
         throw new Exception('Message is too long (max 5000 characters)');
     }
-    
-    // Combine names
-    $fullName = $firstName . ' ' . $lastName;
-    
-    // Get database
-    $db = Database::getInstance();
-    
-    // Map subject to display value
+
+    // ── 4. Save to database ───────────────────────────────────────────────
     $subjectMap = [
-        'general' => 'General Inquiry',
-        'donation' => 'Donation Related',
-        'volunteer' => 'Volunteer Opportunities',
+        'general'     => 'General Inquiry',
+        'donation'    => 'Donation Related',
+        'volunteer'   => 'Volunteer Opportunities',
         'partnership' => 'Partnership',
-        'support' => 'Support/Help',
-        'other' => 'Other'
+        'support'     => 'Support/Help',
+        'other'       => 'Other'
     ];
-    $subjectDisplay = $subjectMap[$subject] ?? 'General Inquiry';
-    
-    // Prepare data for database
-    $ipAddress = $_SERVER['REMOTE_ADDR'] ?? '';
-    $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-    
-    // Insert into database
-    $contactData = [
-        'name' => $fullName,
-        'email' => $email,
-        'phone' => $phone,
-        'subject' => $subjectDisplay,
-        'message' => $message,
-        'status' => 'new',
-        'priority' => 'normal',
-        'ip_address' => $ipAddress,
-        'user_agent' => $userAgent
-    ];
-    
-    // Insert the contact message
-    $contactId = $db->insert('contact_messages', $contactData);
-    
+
+    $db        = Database::getInstance();
+    $contactId = $db->insert('contact_messages', [
+        'name'       => $firstName . ' ' . $lastName,
+        'email'      => $email,
+        'phone'      => $phone,
+        'subject'    => $subjectMap[$subject] ?? 'General Inquiry',
+        'message'    => $message,
+        'status'     => 'new',
+        'priority'   => 'normal',
+        'ip_address' => $_SERVER['REMOTE_ADDR']    ?? '',
+        'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? ''
+    ]);
+
     if (!$contactId) {
         throw new Exception('Failed to save message to database');
     }
-    
-    // Return success
+
+    // Invalidate the used token so it cannot be replayed
+    unset($_SESSION['csrf_token'], $_SESSION['csrf_token_time']);
+
+    ob_end_clean();
     echo json_encode([
-        'success' => true,
-        'message' => 'Thank you for contacting us, ' . htmlspecialchars($firstName) . '! We will get back to you soon.',
+        'success'    => true,
+        'message'    => 'Thank you for contacting us, ' . htmlspecialchars($firstName) . '! We will get back to you soon.',
         'contact_id' => $contactId
     ]);
     exit;
-    
+
 } catch (Exception $e) {
+    ob_end_clean();
     http_response_code(400);
     echo json_encode([
         'success' => false,

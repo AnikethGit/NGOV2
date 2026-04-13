@@ -9,13 +9,11 @@
     <link rel="stylesheet" href="css/common.css">
     <link rel="stylesheet" href="css/contact.css">
     <link rel="stylesheet" href="css/theme-compatibility.css">
-<link rel="stylesheet" href="css/mobile-responsive.css">
+    <link rel="stylesheet" href="css/mobile-responsive.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <meta name="csrf-token" content="">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <!-- Header -->
@@ -166,7 +164,9 @@
                     <p>Have a question or want to work together? Fill out the form below.</p>
 
                     <form id="contactForm" action="/api/contact.php" method="POST">
+                        <!-- Single CSRF token input (duplicate removed) -->
                         <input type="hidden" name="csrf_token" id="csrf_token" value="">
+
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="firstName">First Name *</label>
@@ -223,8 +223,6 @@
                             </label>
                         </div>
 
-                        <input type="hidden" name="csrf_token" id="csrf_token" value="">
-
                         <button type="submit" class="btn btn-primary btn-large">
                             <i class="fas fa-paper-plane"></i>
                             Send Message
@@ -244,13 +242,8 @@
             </div>
         </div>
         
-        <!-- Map Container - Replace with actual map integration -->
         <div class="map-container">
             <div class="map-placeholder">
-                <!-- <i class="fas fa-map-marked-alt"></i>
-                <h3>Interactive Map Coming Soon</h3>
-                <p>Please use the contact information above to reach us</p> -->
-                <!-- Replace this placeholder with actual Google Maps embed -->
                 <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3811.7728077297647!2d76.5302306260118!3d17.18125943367124!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bc89f3b964599df%3A0xa23fcc219f165944!2sGanagapur%2C%20Karnataka%20585212!5e0!3m2!1sen!2sin!4v1757410842023!5m2!1sen!2sin" width="1893" height="396" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
             </div>
         </div>
@@ -340,12 +333,6 @@
                     <p class="footer-description">
                         Dedicated to serving humanity with compassion and commitment. Together, we can build a better tomorrow for those who need it most.
                     </p>
-                    <!-- <div class="social-links">
-                        <a href="#" class="social-link"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
-                        <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
-                        <a href="#" class="social-link"><i class="fab fa-youtube"></i></a>
-                    </div> -->
                 </div>
 
                 <div class="footer-section">
@@ -379,28 +366,6 @@
                         <li><a href="#partnership">Partnership</a></li>
                     </ul>
                 </div>
-
-                <!-- <div class="footer-section">
-                    <h3>Contact Info</h3>
-                    <div class="contact-info">
-                        <div class="contact-item">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span>Shirdi, Maharashtra, India</span><br>
-                            <i class="fas fa-map-marker-alt"></i>
-                            <span>Ganagapur, Karnataka, India</span>
-                            
-                        </div>
-                        <div class="contact-item">
-                            <i class="fas fa-phone"></i>
-                            <span>+91 7893601789, +91 9491062255,</span><br>
-                            <span>+91 9440916031, +91 9398557142</span>
-                        </div>
-                        <div class="contact-item">
-                            <i class="fas fa-envelope"></i>
-                            <span>info@saisevafoundation.org</span>
-                        </div>
-                    </div>
-                </div> -->
             </div>
 
             <div class="footer-bottom">
@@ -417,8 +382,8 @@
     </footer>
 
     <!-- Scripts -->
-    <script src="js/contact-handler.js"></script>
-    <script src="js/main.js"></script>
-    <script src="js/theme-switcher.js"></script>
+    <script src="js/contact-handler.js" defer></script>
+    <script src="js/main.js" defer></script>
+    <script src="js/theme-switcher.js" defer></script>
 </body>
 </html>
