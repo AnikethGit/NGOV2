@@ -261,6 +261,9 @@ html {
   background-color: var(--color-background);
   -webkit-font-smoothing: antialiased;
   box-sizing: border-box;
+  /* Forces browser-native UI (scrollbars, inputs, date pickers)
+     to render in dark style on ALL devices, regardless of OS theme */
+  color-scheme: dark;
 }
 
 body {
