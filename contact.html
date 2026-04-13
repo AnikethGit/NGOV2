@@ -25,7 +25,7 @@
                     <span class="logo-text">Sri Dutta Sai Manga Bharadwaja Trust</span>
                 </div>
                 
-                <div class="nav-menu">
+                <div class="nav-menu" id="navMenu">
                     <a href="index.html" class="nav-link">Home</a>
                     <a href="about.html" class="nav-link">About</a>
                     <a href="services.html" class="nav-link">Services</a>
@@ -37,12 +37,15 @@
                         <a href="login.html" class="btn btn-outline">Login</a>
                     </div>
                 </div>
-                
-                <div class="hamburger">
+
+                <!-- Mobile overlay -->
+                <div class="mobile-overlay" id="mobileOverlay"></div>
+
+                <button class="hamburger" id="hamburger" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="navMenu">
                     <span></span>
                     <span></span>
                     <span></span>
-                </div>
+                </button>
             </div>
         </nav>
     </header>
@@ -75,85 +78,49 @@
 
                     <div class="contact-details">
                         <div class="contact-item">
-                            <div class="contact-icon">
-                                <i class="fas fa-map-marker-alt"></i>
-                            </div>
+                            <div class="contact-icon"><i class="fas fa-map-marker-alt"></i></div>
                             <div class="contact-text">
                                 <h3>Our Ganagapur Address</h3>
-                                <p>House No. - 5/72/12,<br>
-                                Basaveshwar Colony, Sangam Rd,<br>
-                                Ganagapur, Taluk - Afzalpur, Kalaburgi<br>
-                                Karnataka, India<br>
-                                PIN: 585212</p>
+                                <p>House No. - 5/72/12,<br>Basaveshwar Colony, Sangam Rd,<br>Ganagapur, Taluk - Afzalpur, Kalaburgi<br>Karnataka, India<br>PIN: 585212</p>
                             </div>
                             <div class="contact-text">
                                 <h3>Our Shirdi Address</h3>
-                                <p>House No. - 123,<br>
-                                Address<br>
-                                Address<br>
-                                Maharashtra, India<br>
-                                PIN: 123456</p>
+                                <p>House No. - 123,<br>Address<br>Address<br>Maharashtra, India<br>PIN: 123456</p>
                             </div>
                         </div>
 
                         <div class="contact-item">
-                            <div class="contact-icon">
-                                <i class="fas fa-phone"></i>
-                            </div>
+                            <div class="contact-icon"><i class="fas fa-phone"></i></div>
                             <div class="contact-text">
                                 <h3>Phone Number</h3>
-                                <p>Primary: +91 7893601789<br>
-                                Secondary: +91 94910 62255<br>
-                                Secondary: +91 94409 16031<br>
-                                WhatsApp: +91 93985 57142</p>
+                                <p>Primary: +91 7893601789<br>Secondary: +91 94910 62255<br>Secondary: +91 94409 16031<br>WhatsApp: +91 93985 57142</p>
                             </div>
                         </div>
 
                         <div class="contact-item">
-                            <div class="contact-icon">
-                                <i class="fas fa-envelope"></i>
-                            </div>
+                            <div class="contact-icon"><i class="fas fa-envelope"></i></div>
                             <div class="contact-text">
                                 <h3>Email Address</h3>
-                                <p>General: info@saisevafoundation.org<br>
-                                Donations: donate@saisevafoundation.org<br>
-                                Volunteers: volunteer@saisevafoundation.org</p>
+                                <p>General: info@saisevafoundation.org<br>Donations: donate@saisevafoundation.org<br>Volunteers: volunteer@saisevafoundation.org</p>
                             </div>
                         </div>
 
                         <div class="contact-item">
-                            <div class="contact-icon">
-                                <i class="fas fa-clock"></i>
-                            </div>
+                            <div class="contact-icon"><i class="fas fa-clock"></i></div>
                             <div class="contact-text">
                                 <h3>Office Hours</h3>
-                                <p>Monday - Friday: 9:00 AM - 6:00 PM<br>
-                                Saturday: 9:00 AM - 4:00 PM<br>
-                                Sunday: Closed</p>
+                                <p>Monday - Friday: 9:00 AM - 6:00 PM<br>Saturday: 9:00 AM - 4:00 PM<br>Sunday: Closed</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Social Links -->
                     <div class="social-section">
                         <h3>Follow Us</h3>
                         <div class="social-links">
-                            <a href="#" class="social-link facebook" target="_blank">
-                                <i class="fab fa-facebook-f"></i>
-                                <span>Facebook</span>
-                            </a>
-                            <a href="#" class="social-link twitter" target="_blank">
-                                <i class="fab fa-twitter"></i>
-                                <span>Twitter</span>
-                            </a>
-                            <a href="#" class="social-link instagram" target="_blank">
-                                <i class="fab fa-instagram"></i>
-                                <span>Instagram</span>
-                            </a>
-                            <a href="#" class="social-link youtube" target="_blank">
-                                <i class="fab fa-youtube"></i>
-                                <span>YouTube</span>
-                            </a>
+                            <a href="https://www.facebook.com/profile.php?id=61580505505543" class="social-link facebook" target="_blank" rel="noopener noreferrer"><i class="fab fa-facebook-f"></i><span>Facebook</span></a>
+                            <a href="#" class="social-link twitter"><i class="fab fa-twitter"></i><span>Twitter</span></a>
+                            <a href="https://www.instagram.com/sri_dutta_sai_manga_bharadwaja/" class="social-link instagram" target="_blank" rel="noopener noreferrer"><i class="fab fa-instagram"></i><span>Instagram</span></a>
+                            <a href="#" class="social-link youtube"><i class="fab fa-youtube"></i><span>YouTube</span></a>
                         </div>
                     </div>
                 </div>
@@ -164,7 +131,6 @@
                     <p>Have a question or want to work together? Fill out the form below.</p>
 
                     <form id="contactForm" action="/api/contact.php" method="POST">
-                        <!-- Single CSRF token input (duplicate removed) -->
                         <input type="hidden" name="csrf_token" id="csrf_token" value="">
 
                         <div class="form-row">
@@ -207,7 +173,6 @@
                             <textarea id="message" name="message" rows="6" placeholder="Please provide details about your inquiry..." required></textarea>
                         </div>
 
-                        <!-- Newsletter Subscription -->
                         <div class="form-group">
                             <label class="checkbox-label">
                                 <input type="checkbox" id="newsletter" name="newsletter" value="1">
@@ -215,11 +180,10 @@
                             </label>
                         </div>
 
-                        <!-- Privacy Policy -->
                         <div class="form-group">
                             <label class="checkbox-label">
                                 <input type="checkbox" id="privacy" name="privacy" required>
-                                I agree to the <a href="#privacy-policy" target="_blank">Privacy Policy</a> *
+                                I agree to the <a href="policy.html" target="_blank">Privacy Policy</a> *
                             </label>
                         </div>
 
@@ -241,10 +205,9 @@
                 <p>Visit our office or reach out to us for any assistance</p>
             </div>
         </div>
-        
         <div class="map-container">
             <div class="map-placeholder">
-                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3811.7728077297647!2d76.5302306260118!3d17.18125943367124!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bc89f3b964599df%3A0xa23fcc219f165944!2sGanagapur%2C%20Karnataka%20585212!5e0!3m2!1sen!2sin!4v1757410842023!5m2!1sen!2sin" width="1893" height="396" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3811.7728077297647!2d76.5302306260118!3d17.18125943367124!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bc89f3b964599df%3A0xa23fcc219f165944!2sGanagapur%2C%20Karnataka%20585212!5e0!3m2!1sen!2sin!4v1757410842023!5m2!1sen!2sin" width="100%" height="396" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Ganagapur location map"></iframe>
             </div>
         </div>
     </section>
@@ -259,63 +222,28 @@
 
             <div class="faq-grid">
                 <div class="faq-item">
-                    <div class="faq-question">
-                        <h3>How can I make a donation?</h3>
-                        <i class="fas fa-plus"></i>
-                    </div>
-                    <div class="faq-answer">
-                        <p>[Add information about donation methods, online payments, bank transfers, etc.]</p>
-                    </div>
+                    <div class="faq-question"><h3>How can I make a donation?</h3><i class="fas fa-plus"></i></div>
+                    <div class="faq-answer"><p>You can donate online via our <a href="donate.html">Donate page</a> using UPI, net banking, or card. You can also transfer directly to our bank account — details available on the donate page.</p></div>
                 </div>
-
                 <div class="faq-item">
-                    <div class="faq-question">
-                        <h3>How can I become a volunteer?</h3>
-                        <i class="fas fa-plus"></i>
-                    </div>
-                    <div class="faq-answer">
-                        <p>[Add information about volunteer registration, requirements, training process, etc.]</p>
-                    </div>
+                    <div class="faq-question"><h3>How can I become a volunteer?</h3><i class="fas fa-plus"></i></div>
+                    <div class="faq-answer"><p>Fill out the contact form above selecting "Volunteer Opportunities" as the subject, or email us at volunteer@saisevafoundation.org. We will reach out with available roles and onboarding details.</p></div>
                 </div>
-
                 <div class="faq-item">
-                    <div class="faq-question">
-                        <h3>Are donations tax-deductible?</h3>
-                        <i class="fas fa-plus"></i>
-                    </div>
-                    <div class="faq-answer">
-                        <p>[Add information about tax exemption status, 80G benefits, receipt process, etc.]</p>
-                    </div>
+                    <div class="faq-question"><h3>Are donations tax-deductible?</h3><i class="fas fa-plus"></i></div>
+                    <div class="faq-answer"><p>Yes. The Trust is registered under section 12A and eligible for 80G benefits. Donors receive an official receipt that can be used for tax deduction claims under the Income Tax Act.</p></div>
                 </div>
-
                 <div class="faq-item">
-                    <div class="faq-question">
-                        <h3>How do you ensure transparency?</h3>
-                        <i class="fas fa-plus"></i>
-                    </div>
-                    <div class="faq-answer">
-                        <p>[Add information about annual reports, fund utilization, audit reports, etc.]</p>
-                    </div>
+                    <div class="faq-question"><h3>How do you ensure transparency?</h3><i class="fas fa-plus"></i></div>
+                    <div class="faq-answer"><p>We publish annual reports, maintain independent financial audits by certified CAs, and ensure 75%+ of all donations go directly to program activities. Reports are available on the About page.</p></div>
                 </div>
-
                 <div class="faq-item">
-                    <div class="faq-question">
-                        <h3>Can I visit your projects?</h3>
-                        <i class="fas fa-plus"></i>
-                    </div>
-                    <div class="faq-answer">
-                        <p>[Add information about project visits, scheduling, guidelines, etc.]</p>
-                    </div>
+                    <div class="faq-question"><h3>Can I visit your projects?</h3><i class="fas fa-plus"></i></div>
+                    <div class="faq-answer"><p>Yes, project visits can be arranged by prior appointment. Please contact us via the form above or call our office and we will coordinate a suitable time.</p></div>
                 </div>
-
                 <div class="faq-item">
-                    <div class="faq-question">
-                        <h3>How can I partner with your organization?</h3>
-                        <i class="fas fa-plus"></i>
-                    </div>
-                    <div class="faq-answer">
-                        <p>[Add information about partnership opportunities, corporate CSR, collaboration process, etc.]</p>
-                    </div>
+                    <div class="faq-question"><h3>How can I partner with your organization?</h3><i class="fas fa-plus"></i></div>
+                    <div class="faq-answer"><p>We welcome CSR partnerships, NGO collaborations, and institutional support. Reach out via the contact form selecting "Partnership" or email info@saisevafoundation.org with your proposal.</p></div>
                 </div>
             </div>
         </div>
@@ -328,25 +256,21 @@
                 <div class="footer-section">
                     <div class="footer-logo">
                         <img src="images/LogoNGO.png" alt="Sai Seva Foundation" class="logo-img">
-                        <span class="logo-text">Sri Dutta Sai Manga Bharadwaja</br>Spiritual and Social Service Trust</span>
+                        <span class="logo-text">Sri Dutta Sai Manga Bharadwaja<br>Spiritual and Social Service Trust</span>
                     </div>
-                    <p class="footer-description">
-                        Dedicated to serving humanity with compassion and commitment. Together, we can build a better tomorrow for those who need it most.
-                    </p>
+                    <p class="footer-description">Dedicated to serving humanity with compassion and commitment. Together, we can build a better tomorrow for those who need it most.</p>
                 </div>
-
                 <div class="footer-section">
                     <h3>Quick Links</h3>
                     <ul class="footer-links">
                         <li><a href="index.html">Home</a></li>
                         <li><a href="about.html">About Us</a></li>
                         <li><a href="services.html">Our Services</a></li>
-                        <li><a href="#projects">Projects</a></li>
-                        <li><a href="#events">Events</a></li>
+                        <li><a href="index.html#projects">Projects</a></li>
+                        <li><a href="index.html#events">Events</a></li>
                         <li><a href="contact.html">Contact</a></li>
                     </ul>
                 </div>
-
                 <div class="footer-section">
                     <h3>Our Services</h3>
                     <ul class="footer-links">
@@ -356,18 +280,15 @@
                         <li><a href="services.html#disaster">Disaster Relief</a></li>
                     </ul>
                 </div>
-
                 <div class="footer-section">
                     <h3>Get Involved</h3>
                     <ul class="footer-links">
                         <li><a href="donate.html">Make a Donation</a></li>
                         <li><a href="#volunteer">Volunteer</a></li>
-                        <li><a href="#events">Join Events</a></li>
-                        <li><a href="#partnership">Partnership</a></li>
+                        <li><a href="index.html#events">Join Events</a></li>
                     </ul>
                 </div>
             </div>
-
             <div class="footer-bottom">
                 <div class="footer-bottom-content">
                     <p>&copy; 2025 Sri Dutta Sai Manga Bharadwaja Spiritual and Social Service Trust. All rights reserved.</p>
@@ -381,7 +302,6 @@
         </div>
     </footer>
 
-    <!-- Scripts -->
     <script src="js/contact-handler.js" defer></script>
     <script src="js/main.js" defer></script>
     <script src="js/theme-switcher.js" defer></script>
