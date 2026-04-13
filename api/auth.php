@@ -2,6 +2,10 @@
 /**
  * Authentication API
  * Handles login, register, logout, forgot-password, check-session
+ *
+ * DB column reference (users table):
+ *   full_name, email, phone, password_hash, user_type enum('admin','volunteer','donor')
+ *   newsletter_subscribed, status enum('active','inactive','suspended')
  */
 
 require_once __DIR__ . '/../includes/config.php';
@@ -23,21 +27,7 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-$method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
-
-// ── Helper: link email donations to user account ─────────────────────────────
-function linkEmailDonations($db, $userId, $email) {
-    try {
-        $db->query(
-            "UPDATE donations SET user_id = ? WHERE donor_email = ? AND user_id IS NULL",
-            [$userId, $email]
-        );
-    } catch (Exception $e) {
-        error_log('linkEmailDonations error: ' . $e->getMessage());
-        // Non-fatal — do not interrupt login/register flow
-    }
-}
 
 // ── Route ──────────────────────────────────────────────────────────────────
 switch ($action) {
@@ -53,22 +43,39 @@ switch ($action) {
 // ── Helpers ────────────────────────────────────────────────────────────────
 function jsonResponse($success, $message, $data = [], $code = 200) {
     http_response_code($code);
-    echo json_encode([
-        'success' => $success,
-        'message' => $message,
-        'data'    => $data
-    ]);
+    echo json_encode(['success' => $success, 'message' => $message, 'data' => $data]);
     exit;
 }
 
 function getPostData() {
-    $raw = file_get_contents('php://input');
+    $raw  = file_get_contents('php://input');
     $json = json_decode($raw, true);
     return $json ?: $_POST;
 }
 
 function verifyCsrf($token) {
     return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
+}
+
+/**
+ * Map frontend user_type values to DB enum values.
+ * Frontend may send 'user' but DB enum only accepts 'donor'.
+ */
+function normaliseUserType($type) {
+    if ($type === 'user') return 'donor';
+    return $type;
+}
+
+/** Link any guest donations made with this email to the user account. */
+function linkEmailDonations($db, $userId, $email) {
+    try {
+        $db->query(
+            "UPDATE donations SET user_id = ? WHERE donor_email = ? AND user_id IS NULL",
+            [$userId, $email]
+        );
+    } catch (Exception $e) {
+        error_log('linkEmailDonations: ' . $e->getMessage());
+    }
 }
 
 // ── Login ──────────────────────────────────────────────────────────────────
@@ -79,32 +86,30 @@ function handleLogin() {
 
     $data = getPostData();
 
-    // CSRF
     if (!verifyCsrf($data['csrf_token'] ?? '')) {
         jsonResponse(false, 'Invalid security token. Please refresh and try again.', [], 403);
     }
 
     $email     = trim(strtolower($data['email'] ?? ''));
     $password  = $data['password'] ?? '';
-    $user_type = $data['user_type'] ?? '';
-    $remember  = !empty($data['remember_me']);
+    $user_type = normaliseUserType($data['user_type'] ?? '');
 
-    // Basic validation
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         jsonResponse(false, 'Please enter a valid email address.');
     }
     if (empty($password)) {
         jsonResponse(false, 'Password is required.');
     }
-    if (!in_array($user_type, ['user', 'volunteer', 'admin'])) {
+    // Valid DB enum values
+    if (!in_array($user_type, ['donor', 'volunteer', 'admin'])) {
         jsonResponse(false, 'Please select a valid account type.');
     }
 
     try {
-        $db   = Database::getInstance();
+        $db = Database::getInstance();
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 
-        // Rate-limit: check lockout
-        $ip     = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+        // Rate-limit check
         $locked = $db->fetch(
             "SELECT COUNT(*) as cnt FROM login_attempts
               WHERE ip_address = :ip AND email = :email
@@ -116,13 +121,13 @@ function handleLogin() {
             jsonResponse(false, 'Too many failed attempts. Please wait 15 minutes and try again.', [], 429);
         }
 
-        // Fetch user
+        // Fetch user — uses correct column full_name via SELECT *
         $user = $db->fetch(
             "SELECT * FROM users WHERE email = :email AND user_type = :type AND status = 'active' LIMIT 1",
             [':email' => $email, ':type' => $user_type]
         );
 
-        $logAttempt = function($success) use ($db, $ip, $email) {
+        $logAttempt = function ($success) use ($db, $ip, $email) {
             try {
                 $db->insert('login_attempts', [
                     'ip_address' => $ip,
@@ -139,24 +144,19 @@ function handleLogin() {
         }
 
         $logAttempt(true);
-
-        // Regenerate session ID to prevent fixation
         session_regenerate_id(true);
 
         $_SESSION['user_id']    = $user['id'];
-        $_SESSION['user_name']  = $user['name'];
+        $_SESSION['user_name']  = $user['full_name'];   // correct column
         $_SESSION['user_email'] = $user['email'];
         $_SESSION['user_type']  = $user['user_type'];
         $_SESSION['logged_in']  = true;
         $_SESSION['login_time'] = time();
 
-        // Update last login
         $db->update('users', ['last_login' => date('Y-m-d H:i:s')], 'id = :id', [':id' => $user['id']]);
-
         linkEmailDonations($db, $user['id'], $email);
 
-        // Determine redirect
-        $redirect = match($user['user_type']) {
+        $redirect = match ($user['user_type']) {
             'admin'     => 'admin/dashboard.html',
             'volunteer' => 'volunteer-dashboard.html',
             default     => 'dashboard.html'
@@ -164,7 +164,7 @@ function handleLogin() {
 
         jsonResponse(true, 'Login successful! Redirecting...', [
             'redirect'   => $redirect,
-            'user_name'  => $user['name'],
+            'user_name'  => $user['full_name'],          // correct column
             'user_type'  => $user['user_type'],
             'user_email' => $user['email']
         ]);
@@ -187,16 +187,14 @@ function handleRegister() {
         jsonResponse(false, 'Invalid security token. Please refresh and try again.', [], 403);
     }
 
-    // Sanitise inputs
     $name       = trim($data['name'] ?? '');
     $email      = trim(strtolower($data['email'] ?? ''));
     $phone      = preg_replace('/\D/', '', $data['phone'] ?? '');
     $password   = $data['password'] ?? '';
     $confirm    = $data['confirm_password'] ?? '';
-    $user_type  = $data['user_type'] ?? '';
+    $user_type  = normaliseUserType($data['user_type'] ?? '');  // 'user' → 'donor'
     $newsletter = !empty($data['newsletter']) ? 1 : 0;
 
-    // Validation
     $errors = [];
     if (strlen($name) < 2 || strlen($name) > 100) {
         $errors[] = 'Name must be between 2 and 100 characters.';
@@ -207,7 +205,8 @@ function handleRegister() {
     if (!empty($phone) && strlen($phone) !== 10) {
         $errors[] = 'Phone number must be 10 digits.';
     }
-    if (!in_array($user_type, ['user', 'volunteer'])) {
+    // Valid DB enum values for self-registration
+    if (!in_array($user_type, ['donor', 'volunteer'])) {
         $errors[] = 'Please select a valid account type.';
     }
     if (strlen($password) < 8) {
@@ -229,7 +228,6 @@ function handleRegister() {
     try {
         $db = Database::getInstance();
 
-        // Check duplicate email
         $existing = $db->fetch(
             'SELECT id FROM users WHERE email = :email LIMIT 1',
             [':email' => $email]
@@ -238,23 +236,23 @@ function handleRegister() {
             jsonResponse(false, 'An account with this email already exists. Please login or use a different email.');
         }
 
-        $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+        $hash     = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
+        $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
 
         $userId = $db->insert('users', [
-            'name'           => htmlspecialchars($name, ENT_QUOTES, 'UTF-8'),
-            'email'          => $email,
-            'phone'          => $phone ?: null,
-            'password_hash'  => $hash,
-            'user_type'      => $user_type,
-            'newsletter'     => $newsletter,
-            'status'         => 'active',
-            'created_at'     => date('Y-m-d H:i:s')
+            'full_name'             => $safeName,       // correct column
+            'email'                 => $email,
+            'phone'                 => $phone ?: null,
+            'password_hash'         => $hash,
+            'user_type'             => $user_type,      // 'donor' or 'volunteer'
+            'newsletter_subscribed' => $newsletter,     // correct column
+            'status'                => 'active',
+            'created_at'            => date('Y-m-d H:i:s')
         ]);
 
-        // Auto-login after registration
         session_regenerate_id(true);
         $_SESSION['user_id']    = $userId;
-        $_SESSION['user_name']  = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+        $_SESSION['user_name']  = $safeName;
         $_SESSION['user_email'] = $email;
         $_SESSION['user_type']  = $user_type;
         $_SESSION['logged_in']  = true;
@@ -266,7 +264,7 @@ function handleRegister() {
 
         jsonResponse(true, 'Account created successfully! Welcome aboard.', [
             'redirect'   => $redirect,
-            'user_name'  => htmlspecialchars($name, ENT_QUOTES, 'UTF-8'),
+            'user_name'  => $safeName,
             'user_type'  => $user_type,
             'user_email' => $email
         ]);
@@ -304,19 +302,17 @@ function handleForgotPassword() {
 
     try {
         $db   = Database::getInstance();
-        $user = $db->fetch('SELECT id, name FROM users WHERE email = :email AND status = "active" LIMIT 1', [':email' => $email]);
+        // correct column: full_name
+        $user = $db->fetch(
+            'SELECT id, full_name FROM users WHERE email = :email AND status = "active" LIMIT 1',
+            [':email' => $email]
+        );
 
-        // Always return success (security: don't reveal if email exists)
         if ($user) {
             $token     = bin2hex(random_bytes(32));
             $expiresAt = date('Y-m-d H:i:s', time() + 3600);
-
-            // Store token (requires password_resets table)
             try {
-                $db->query(
-                    'DELETE FROM password_resets WHERE email = :email',
-                    [':email' => $email]
-                );
+                $db->query('DELETE FROM password_resets WHERE email = :email', [':email' => $email]);
                 $db->insert('password_resets', [
                     'email'      => $email,
                     'token'      => hash('sha256', $token),
@@ -324,7 +320,6 @@ function handleForgotPassword() {
                     'created_at' => date('Y-m-d H:i:s')
                 ]);
             } catch (Exception $e) {
-                // Table may not exist yet — log and continue
                 error_log('password_resets table missing: ' . $e->getMessage());
             }
         }
