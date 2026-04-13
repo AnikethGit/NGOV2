@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Checker - NGOV2</title>
+    <link rel="icon" href="images/LogoNGO.png" type="image/x-icon">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/theme-compatibility.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #21808d;
+            --success: #16a34a;
+            --warning: #ea580c;
+            --error: #dc2626;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --radius: 12px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Inter','Poppins',sans-serif; background:var(--bg); color:var(--text); padding:0; }
+
+        .page-header {
+            background: linear-gradient(135deg, var(--primary), #1a6975);
+            color: white;
+            padding: 32px 40px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .page-header h1 { font-size: 26px; font-weight: 700; }
+        .page-header p  { opacity: .85; font-size: 14px; margin-top: 4px; }
+        .page-header i  { font-size: 36px; opacity: .9; }
+
+        .container { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+
+        /* Status Cards */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px,1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .status-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+        }
+        .status-card .icon { font-size: 28px; margin-bottom: 8px; }
+        .status-card .label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
+        .status-card .value { font-size: 18px; font-weight: 700; margin-top: 4px; }
+        .status-ok    .value { color: var(--success); }
+        .status-error .value { color: var(--error); }
+        .status-warn  .value { color: var(--warning); }
+
+        /* Panels */
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+        .panel-header {
+            padding: 16px 22px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f8fafc;
+        }
+        .panel-header h2 { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .panel-body { padding: 22px; }
+
+        /* Check rows */
+        .check-list { list-style: none; }
+        .check-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+        }
+        .check-item:last-child { border-bottom: none; }
+        .check-icon {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+        .check-icon.ok    { background: #dcfce7; color: var(--success); }
+        .check-icon.error { background: #fee2e2; color: var(--error); }
+        .check-icon.warn  { background: #fff7ed; color: var(--warning); }
+        .check-icon.info  { background: #dbeafe; color: #2563eb; }
+        .check-label  { font-weight: 600; }
+        .check-detail { color: var(--text-muted); margin-top: 2px; font-size: 13px; }
+
+        /* Code block */
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 16px 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            line-height: 1.7;
+            margin: 16px 0;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 14px 18px;
+            border-radius: 8px;
+            margin: 16px 0;
+            font-size: 14px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .alert-success { background: #dcfce7; border-left: 4px solid var(--success); color: #15803d; }
+        .alert-error   { background: #fee2e2; border-left: 4px solid var(--error);   color: #b91c1c; }
+        .alert-warning { background: #fff7ed; border-left: 4px solid var(--warning); color: #92400e; }
+        .alert-info    { background: #dbeafe; border-left: 4px solid #2563eb;        color: #1e3a8a; }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 20px; border-radius: 8px; font-size: 14px;
+            font-weight: 600; cursor: pointer; border: none; transition: all .2s;
+            text-decoration: none;
+        }
+        .btn-primary  { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: #1a6975; }
+        .btn-outline  { background: none; border: 1px solid var(--border); color: var(--text); }
+        .btn-outline:hover { background: var(--bg); }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; }
+
+        /* Table */
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th {
+            text-align: left; padding: 10px 14px;
+            font-size: 12px; font-weight: 600; text-transform: uppercase;
+            letter-spacing: .05em; color: var(--text-muted);
+            background: #f8fafc; border-bottom: 1px solid var(--border);
+        }
+        td { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+        tr:last-child td { border-bottom: none; }
+
+        .badge {
+            padding: 3px 10px; border-radius: 999px;
+            font-size: 12px; font-weight: 600;
+        }
+        .badge-ok   { background: #dcfce7; color: #15803d; }
+        .badge-miss { background: #fee2e2; color: #b91c1c; }
+
+        /* Loading state */
+        .spinner {
+            width: 20px; height: 20px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin .8s linear infinite;
+            display: inline-block;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 640px) {
+            .page-header { padding: 24px 20px; }
+            .container   { padding: 20px 16px; }
+            .status-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page-header">
+    <i class="fas fa-database"></i>
+    <div>
+        <h1>Database Checker</h1>
+        <p>Verify your NGOV2 database schema, indexes, and data integrity</p>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- Summary cards -->
+    <div class="status-grid">
+        <div class="status-card" id="cardTables">
+            <div class="icon">📋</div>
+            <div class="label">Tables</div>
+            <div class="value"><span class="spinner"></span></div>
+        </div>
+        <div class="status-card" id="cardIndexes">
+            <div class="icon">⚡</div>
+            <div class="label">Indexes</div>
+            <div class="value"><span class="spinner"></span></div>
+        </div>
+        <div class="status-card" id="cardRows">
+            <div class="icon">🗄️</div>
+            <div class="label">Total Rows</div>
+            <div class="value"><span class="spinner"></span></div>
+        </div>
+        <div class="status-card" id="cardHealth">
+            <div class="icon">❤️</div>
+            <div class="label">Health</div>
+            <div class="value"><span class="spinner"></span></div>
+        </div>
+    </div>
+
+    <!-- DB Connection -->
+    <div class="panel" id="panelConnection">
+        <div class="panel-header">
+            <h2><i class="fas fa-plug"></i> Database Connection</h2>
+            <span id="connStatus"><span class="spinner"></span></span>
+        </div>
+        <div class="panel-body" id="connBody">
+            <p style="color:var(--text-muted);font-size:14px">Checking connection…</p>
+        </div>
+    </div>
+
+    <!-- Tables -->
+    <div class="panel">
+        <div class="panel-header">
+            <h2><i class="fas fa-table"></i> Required Tables</h2>
+        </div>
+        <div class="panel-body">
+            <ul class="check-list" id="tableList">
+                <li class="check-item"><span class="spinner"></span> Checking tables…</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Indexes -->
+    <div class="panel">
+        <div class="panel-header">
+            <h2><i class="fas fa-bolt"></i> Performance Indexes</h2>
+        </div>
+        <div class="panel-body">
+            <ul class="check-list" id="indexList">
+                <li class="check-item"><span class="spinner"></span> Checking indexes…</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Row counts -->
+    <div class="panel">
+        <div class="panel-header">
+            <h2><i class="fas fa-chart-bar"></i> Row Counts</h2>
+        </div>
+        <div class="panel-body">
+            <div style="overflow-x:auto">
+                <table>
+                    <thead><tr><th>Table</th><th>Rows</th><th>Status</th></tr></thead>
+                    <tbody id="rowCountBody">
+                        <tr><td colspan="3" style="text-align:center;padding:20px">
+                            <span class="spinner"></span> Loading…
+                        </td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="panel">
+        <div class="panel-header">
+            <h2><i class="fas fa-tools"></i> Quick Actions</h2>
+        </div>
+        <div class="panel-body">
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="runChecks()"><i class="fas fa-sync"></i> Re-run Checks</button>
+                <a href="admin-dashboard.html" class="btn btn-outline"><i class="fas fa-tachometer-alt"></i> Admin Dashboard</a>
+                <a href="index.html" class="btn btn-outline"><i class="fas fa-home"></i> Home</a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+const REQUIRED_TABLES  = ['users','donations','campaigns','volunteers','contacts','settings'];
+const REQUIRED_INDEXES = [
+    {table:'users',     name:'idx_users_email',       col:'email'},
+    {table:'users',     name:'idx_users_status',      col:'status'},
+    {table:'donations', name:'idx_donations_user',    col:'user_id'},
+    {table:'donations', name:'idx_donations_transaction', col:'transaction_id'},
+    {table:'donations', name:'idx_donations_status',  col:'status'},
+    {table:'campaigns', name:'idx_campaigns_status',  col:'status'},
+];
+
+async function runChecks() {
+    // Reset spinners
+    ['cardTables','cardIndexes','cardRows','cardHealth'].forEach(id => {
+        document.getElementById(id).querySelector('.value').innerHTML = '<span class="spinner"></span>';
+    });
+    document.getElementById('tableList').innerHTML  = '<li class="check-item"><span class="spinner"></span> Checking…</li>';
+    document.getElementById('indexList').innerHTML  = '<li class="check-item"><span class="spinner"></span> Checking…</li>';
+    document.getElementById('rowCountBody').innerHTML = '<tr><td colspan="3" style="text-align:center;padding:20px"><span class="spinner"></span></td></tr>';
+
+    try {
+        const res  = await fetch('api/db-check.php');
+        const data = await res.json();
+        renderResults(data);
+    } catch(e) {
+        renderError(e.message);
+    }
+}
+
+function renderResults(d) {
+    // Connection
+    const connBody   = document.getElementById('connBody');
+    const connStatus = document.getElementById('connStatus');
+    if (d.connected) {
+        connStatus.innerHTML = '<span style="color:var(--success);font-weight:600"><i class="fas fa-check-circle"></i> Connected</span>';
+        connBody.innerHTML   = `
+            <div class="alert alert-success"><i class="fas fa-check-circle"></i>
+                <div><strong>Connection successful!</strong><br>
+                Host: ${d.host || 'localhost'} &nbsp;|&nbsp; Database: ${d.dbname || '—'}
+                </div>
+            </div>`;
+    } else {
+        connStatus.innerHTML = '<span style="color:var(--error);font-weight:600"><i class="fas fa-times-circle"></i> Failed</span>';
+        connBody.innerHTML   = `<div class="alert alert-error"><i class="fas fa-times-circle"></i>
+            <div><strong>Connection failed</strong><br>${d.error || 'Unknown error'}</div>
+        </div>`;
+    }
+
+    // Tables
+    const existingTables = d.tables || [];
+    const tableHTML = REQUIRED_TABLES.map(t => {
+        const ok = existingTables.includes(t);
+        return `<li class="check-item">
+            <span class="check-icon ${ok ? 'ok' : 'error'}"><i class="fas fa-${ok ? 'check' : 'times'}"></i></span>
+            <div><div class="check-label">${t}</div>
+            <div class="check-detail">${ok ? 'Table exists' : 'Table missing — run schema.sql'}</div></div>
+        </li>`;
+    }).join('');
+    document.getElementById('tableList').innerHTML = tableHTML;
+    const tableOk = REQUIRED_TABLES.filter(t => existingTables.includes(t)).length;
+    setCard('cardTables', `${tableOk}/${REQUIRED_TABLES.length}`, tableOk === REQUIRED_TABLES.length ? 'ok' : 'error');
+
+    // Indexes
+    const existingIndexes = d.indexes || [];
+    const indexHTML = REQUIRED_INDEXES.map(ix => {
+        const ok = existingIndexes.includes(ix.name);
+        return `<li class="check-item">
+            <span class="check-icon ${ok ? 'ok' : 'warn'}"><i class="fas fa-${ok ? 'check' : 'exclamation'}"></i></span>
+            <div><div class="check-label">${ix.name}</div>
+            <div class="check-detail">${ix.table}.${ix.col} — ${ok ? 'Index present' : 'Missing — add for better performance'}</div></div>
+        </li>`;
+    }).join('');
+    document.getElementById('indexList').innerHTML = indexHTML;
+    const indexOk = REQUIRED_INDEXES.filter(ix => existingIndexes.includes(ix.name)).length;
+    setCard('cardIndexes', `${indexOk}/${REQUIRED_INDEXES.length}`, indexOk === REQUIRED_INDEXES.length ? 'ok' : 'warn');
+
+    // Row counts
+    const rows = d.row_counts || {};
+    const rowHTML = REQUIRED_TABLES.map(t => {
+        const count = rows[t] !== undefined ? rows[t] : '—';
+        return `<tr><td>${t}</td><td><strong>${count}</strong></td>
+            <td><span class="badge ${existingTables.includes(t) ? 'badge-ok' : 'badge-miss'}">
+                ${existingTables.includes(t) ? 'OK' : 'Missing'}
+            </span></td></tr>`;
+    }).join('');
+    document.getElementById('rowCountBody').innerHTML = rowHTML;
+    const totalRows = Object.values(rows).reduce((a,b) => a + (parseInt(b)||0), 0);
+    setCard('cardRows', totalRows.toLocaleString(), 'ok');
+
+    // Health
+    const allOk = tableOk === REQUIRED_TABLES.length && d.connected;
+    setCard('cardHealth', allOk ? 'Good ✓' : 'Issues', allOk ? 'ok' : 'error');
+}
+
+function renderError(msg) {
+    document.getElementById('connBody').innerHTML = `
+        <div class="alert alert-error"><i class="fas fa-times-circle"></i>
+            <div><strong>API Error</strong><br>${msg}<br><br>
+            Make sure <code>api/db-check.php</code> exists and your server is running.</div>
+        </div>`;
+    ['cardTables','cardIndexes','cardRows'].forEach(id => setCard(id, 'Error', 'error'));
+    setCard('cardHealth', 'Error', 'error');
+    document.getElementById('tableList').innerHTML = '<li class="check-item"><span class="check-icon error"><i class="fas fa-times"></i></span><div><div class="check-label">API not reachable</div><div class="check-detail">Check that api/db-check.php exists</div></div></li>';
+    document.getElementById('indexList').innerHTML = document.getElementById('tableList').innerHTML;
+    document.getElementById('rowCountBody').innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--error);padding:20px">API error</td></tr>';
+}
+
+function setCard(id, val, type) {
+    const card = document.getElementById(id);
+    card.className = `status-card status-${type}`;
+    card.querySelector('.value').textContent = val;
+}
+
+document.addEventListener('DOMContentLoaded', runChecks);
+</script>
+    <script src="js/theme-switcher.js"></script>
+</body>
+</html>

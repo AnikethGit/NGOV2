@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful - Sri Dutta Sai Manga Bharadwaja Trust</title>
+    <link rel="icon" href="images/LogoNGO.png" type="image/x-icon">
+    <link rel="stylesheet" href="css/common.css">
+    <link rel="stylesheet" href="css/theme-compatibility.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #21808d;
+            --success: #16a34a;
+            --bg: #f0fdf4;
+            --surface: #ffffff;
+            --text: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family:'Inter','Poppins',sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .success-card {
+            background: var(--surface);
+            border-radius: 20px;
+            padding: 48px 40px;
+            max-width: 520px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 8px 40px rgba(0,0,0,.08);
+        }
+
+        .success-icon {
+            width: 88px; height: 88px;
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 40px;
+            color: var(--success);
+            margin: 0 auto 24px;
+            animation: popIn .5s cubic-bezier(.175,.885,.32,1.275) both;
+        }
+        @keyframes popIn {
+            0%   { transform: scale(0); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        h1 { font-size: 26px; font-weight: 800; color: var(--success); margin-bottom: 10px; }
+        .subtitle { color: var(--text-muted); font-size: 15px; line-height: 1.6; margin-bottom: 32px; }
+
+        /* Receipt block */
+        .receipt {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 22px;
+            text-align: left;
+            margin-bottom: 28px;
+        }
+        .receipt-title {
+            font-size: 12px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: .07em;
+            color: var(--text-muted); margin-bottom: 14px;
+        }
+        .receipt-row {
+            display: flex; justify-content: space-between;
+            font-size: 14px; padding: 7px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .receipt-row:last-child { border-bottom: none; }
+        .receipt-row .label { color: var(--text-muted); }
+        .receipt-row .value { font-weight: 600; }
+        .receipt-row.total .value { color: var(--success); font-size: 16px; }
+
+        /* Buttons */
+        .btn-group { display: flex; flex-direction: column; gap: 12px; }
+        .btn {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 13px 24px; border-radius: 10px;
+            font-size: 15px; font-weight: 600; text-decoration: none;
+            border: none; cursor: pointer; transition: all .2s;
+        }
+        .btn-primary  { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: #1a6975; }
+        .btn-outline  { background: none; border: 1px solid var(--border); color: var(--text); }
+        .btn-outline:hover { background: var(--bg); }
+
+        /* Tax certificate note */
+        .tax-note {
+            font-size: 12px; color: var(--text-muted);
+            margin-top: 20px; line-height: 1.5;
+        }
+        .tax-note strong { color: var(--text); }
+
+        @media (max-width: 480px) {
+            .success-card { padding: 32px 20px; }
+            h1 { font-size: 22px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="success-card">
+    <div class="success-icon"><i class="fas fa-check"></i></div>
+    <h1>Payment Successful!</h1>
+    <p class="subtitle">Your generous donation has been received.<br>Thank you for supporting our cause.</p>
+
+    <!-- Receipt -->
+    <div class="receipt">
+        <div class="receipt-title">📄 Donation Receipt</div>
+        <div class="receipt-row">
+            <span class="label">Donor Name</span>
+            <span class="value" id="donorName">Loading…</span>
+        </div>
+        <div class="receipt-row">
+            <span class="label">Transaction ID</span>
+            <span class="value" id="txnId" style="font-family:monospace;font-size:12px">—</span>
+        </div>
+        <div class="receipt-row">
+            <span class="label">Date & Time</span>
+            <span class="value" id="txnDate">—</span>
+        </div>
+        <div class="receipt-row">
+            <span class="label">Payment Method</span>
+            <span class="value" id="payMethod">Paytm</span>
+        </div>
+        <div class="receipt-row total">
+            <span class="label">Amount Donated</span>
+            <span class="value" id="txnAmount">—</span>
+        </div>
+    </div>
+
+    <div class="btn-group">
+        <a href="dashboard.html" class="btn btn-primary"><i class="fas fa-tachometer-alt"></i> View My Dashboard</a>
+        <a href="donate.html"    class="btn btn-outline"><i class="fas fa-heart"></i> Donate Again</a>
+        <a href="index.html"     class="btn btn-outline"><i class="fas fa-home"></i> Back to Home</a>
+    </div>
+
+    <p class="tax-note">
+        <strong>80G Tax Benefit:</strong> A tax exemption certificate will be emailed to you within 7 working days.
+        Contact us at <strong>info@sadgurubharadwaja.org</strong> for any queries.
+    </p>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Pull data from URL params (sent by Paytm callback)
+    const p = new URLSearchParams(window.location.search);
+    const user = JSON.parse(sessionStorage.getItem('user_data') || localStorage.getItem('user_data') || '{}');
+
+    document.getElementById('donorName').textContent = user.name || p.get('name') || 'Valued Donor';
+    document.getElementById('txnId').textContent     = p.get('TXNID') || p.get('txn_id') || '—';
+    document.getElementById('txnAmount').textContent = p.get('TXNAMOUNT')
+        ? '\u20B9' + parseFloat(p.get('TXNAMOUNT')).toLocaleString('en-IN')
+        : '—';
+    document.getElementById('payMethod').textContent  = p.get('PAYMENTMODE') || 'Paytm';
+
+    const ts = p.get('TXNDATE') || new Date().toISOString();
+    document.getElementById('txnDate').textContent =
+        new Date(ts).toLocaleString('en-IN', { dateStyle:'medium', timeStyle:'short' });
+});
+</script>
+    <script src="js/theme-switcher.js"></script>
+</body>
+</html>
