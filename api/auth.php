@@ -8,6 +8,9 @@
  *   newsletter_subscribed, status enum('active','inactive','suspended')
  */
 
+// ── 0. No output before headers ────────────────────────────────────────────
+if (ob_get_level() === 0) ob_start();
+
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/database.php';
 require_once __DIR__ . '/../includes/security.php';
@@ -15,14 +18,20 @@ require_once __DIR__ . '/../includes/security.php';
 header('Content-Type: application/json');
 header('X-Content-Type-Options: nosniff');
 
-// Start session safely
+// ── 1. Start session with IDENTICAL params to csrf-token.php ───────────────
 if (session_status() === PHP_SESSION_NONE) {
+    session_name('NGOV2_SESSION');  // Must match csrf-token.php
+
+    $is_https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+             || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+             || (!empty($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443);
+
     session_set_cookie_params([
         'lifetime' => 7200,
         'path'     => '/',
-        'secure'   => isset($_SERVER['HTTPS']),
+        'secure'   => $is_https,
         'httponly' => true,
-        'samesite' => 'Strict'
+        'samesite' => 'Lax'   // Must match csrf-token.php
     ]);
     session_start();
 }
@@ -42,6 +51,7 @@ switch ($action) {
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function jsonResponse($success, $message, $data = [], $code = 200) {
+    ob_end_clean();
     http_response_code($code);
     echo json_encode(['success' => $success, 'message' => $message, 'data' => $data]);
     exit;
@@ -54,12 +64,13 @@ function getPostData() {
 }
 
 function verifyCsrf($token) {
-    return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
+    if (empty($_SESSION['csrf_token']) || empty($token)) return false;
+    return hash_equals($_SESSION['csrf_token'], $token);
 }
 
 /**
  * Map frontend user_type values to DB enum values.
- * Frontend may send 'user' but DB enum only accepts 'donor'.
+ * Frontend sends 'user' but DB enum only accepts 'donor'.
  */
 function normaliseUserType($type) {
     if ($type === 'user') return 'donor';
@@ -86,6 +97,10 @@ function handleLogin() {
 
     $data = getPostData();
 
+    // ── CSRF debug (remove after confirming login works) ───────────────────
+    // Uncomment the line below temporarily if you still get CSRF errors:
+    // error_log('CSRF check | session=' . ($_SESSION['csrf_token'] ?? 'NONE') . ' | sent=' . ($data['csrf_token'] ?? 'NONE'));
+
     if (!verifyCsrf($data['csrf_token'] ?? '')) {
         jsonResponse(false, 'Invalid security token. Please refresh and try again.', [], 403);
     }
@@ -100,7 +115,6 @@ function handleLogin() {
     if (empty($password)) {
         jsonResponse(false, 'Password is required.');
     }
-    // Valid DB enum values
     if (!in_array($user_type, ['donor', 'volunteer', 'admin'])) {
         jsonResponse(false, 'Please select a valid account type.');
     }
@@ -109,22 +123,27 @@ function handleLogin() {
         $db = Database::getInstance();
         $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 
-        // Rate-limit check
-        $locked = $db->fetch(
-            "SELECT COUNT(*) as cnt FROM login_attempts
-              WHERE ip_address = :ip AND email = :email
-                AND created_at > DATE_SUB(NOW(), INTERVAL 15 MINUTE)
-                AND success = 0",
-            [':ip' => $ip, ':email' => $email]
-        );
-        if (($locked['cnt'] ?? 0) >= 5) {
-            jsonResponse(false, 'Too many failed attempts. Please wait 15 minutes and try again.', [], 429);
+        // Rate-limit check — wrapped in its own try/catch so a missing
+        // login_attempts table never blocks the login flow
+        try {
+            $locked = $db->fetch(
+                "SELECT COUNT(*) as cnt FROM login_attempts
+                  WHERE ip_address = ? AND email = ?
+                    AND created_at > DATE_SUB(NOW(), INTERVAL 15 MINUTE)
+                    AND success = 0",
+                [$ip, $email]
+            );
+            if (($locked['cnt'] ?? 0) >= 5) {
+                jsonResponse(false, 'Too many failed attempts. Please wait 15 minutes and try again.', [], 429);
+            }
+        } catch (Exception $e) {
+            // login_attempts table missing — log and continue, don't block login
+            error_log('login_attempts table missing or error: ' . $e->getMessage());
         }
 
-        // Fetch user — uses correct column full_name via SELECT *
         $user = $db->fetch(
-            "SELECT * FROM users WHERE email = :email AND user_type = :type AND status = 'active' LIMIT 1",
-            [':email' => $email, ':type' => $user_type]
+            "SELECT * FROM users WHERE email = ? AND user_type = ? AND status = 'active' LIMIT 1",
+            [$email, $user_type]
         );
 
         $logAttempt = function ($success) use ($db, $ip, $email) {
@@ -147,13 +166,16 @@ function handleLogin() {
         session_regenerate_id(true);
 
         $_SESSION['user_id']    = $user['id'];
-        $_SESSION['user_name']  = $user['full_name'];   // correct column
+        $_SESSION['user_name']  = $user['full_name'];
         $_SESSION['user_email'] = $user['email'];
         $_SESSION['user_type']  = $user['user_type'];
         $_SESSION['logged_in']  = true;
         $_SESSION['login_time'] = time();
 
-        $db->update('users', ['last_login' => date('Y-m-d H:i:s')], 'id = :id', [':id' => $user['id']]);
+        try {
+            $db->update('users', ['last_login' => date('Y-m-d H:i:s')], 'id = ?', [$user['id']]);
+        } catch (Exception $e) { /* last_login column optional */ }
+
         linkEmailDonations($db, $user['id'], $email);
 
         $redirect = match ($user['user_type']) {
@@ -164,7 +186,7 @@ function handleLogin() {
 
         jsonResponse(true, 'Login successful! Redirecting...', [
             'redirect'   => $redirect,
-            'user_name'  => $user['full_name'],          // correct column
+            'user_name'  => $user['full_name'],
             'user_type'  => $user['user_type'],
             'user_email' => $user['email']
         ]);
@@ -192,7 +214,7 @@ function handleRegister() {
     $phone      = preg_replace('/\D/', '', $data['phone'] ?? '');
     $password   = $data['password'] ?? '';
     $confirm    = $data['confirm_password'] ?? '';
-    $user_type  = normaliseUserType($data['user_type'] ?? '');  // 'user' → 'donor'
+    $user_type  = normaliseUserType($data['user_type'] ?? '');
     $newsletter = !empty($data['newsletter']) ? 1 : 0;
 
     $errors = [];
@@ -205,7 +227,6 @@ function handleRegister() {
     if (!empty($phone) && strlen($phone) !== 10) {
         $errors[] = 'Phone number must be 10 digits.';
     }
-    // Valid DB enum values for self-registration
     if (!in_array($user_type, ['donor', 'volunteer'])) {
         $errors[] = 'Please select a valid account type.';
     }
@@ -229,8 +250,8 @@ function handleRegister() {
         $db = Database::getInstance();
 
         $existing = $db->fetch(
-            'SELECT id FROM users WHERE email = :email LIMIT 1',
-            [':email' => $email]
+            'SELECT id FROM users WHERE email = ? LIMIT 1',
+            [$email]
         );
         if ($existing) {
             jsonResponse(false, 'An account with this email already exists. Please login or use a different email.');
@@ -240,12 +261,12 @@ function handleRegister() {
         $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
 
         $userId = $db->insert('users', [
-            'full_name'             => $safeName,       // correct column
+            'full_name'             => $safeName,
             'email'                 => $email,
             'phone'                 => $phone ?: null,
             'password_hash'         => $hash,
-            'user_type'             => $user_type,      // 'donor' or 'volunteer'
-            'newsletter_subscribed' => $newsletter,     // correct column
+            'user_type'             => $user_type,
+            'newsletter_subscribed' => $newsletter,
             'status'                => 'active',
             'created_at'            => date('Y-m-d H:i:s')
         ]);
@@ -302,17 +323,16 @@ function handleForgotPassword() {
 
     try {
         $db   = Database::getInstance();
-        // correct column: full_name
         $user = $db->fetch(
-            'SELECT id, full_name FROM users WHERE email = :email AND status = "active" LIMIT 1',
-            [':email' => $email]
+            'SELECT id, full_name FROM users WHERE email = ? AND status = "active" LIMIT 1',
+            [$email]
         );
 
         if ($user) {
             $token     = bin2hex(random_bytes(32));
             $expiresAt = date('Y-m-d H:i:s', time() + 3600);
             try {
-                $db->query('DELETE FROM password_resets WHERE email = :email', [':email' => $email]);
+                $db->query('DELETE FROM password_resets WHERE email = ?', [$email]);
                 $db->insert('password_resets', [
                     'email'      => $email,
                     'token'      => hash('sha256', $token),
