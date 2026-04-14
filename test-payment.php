@@ -229,32 +229,54 @@ if ($action === 'cleanup') {
 /* ── 5. CHECK ENV / CONFIG ─────────────────────────────────────────────────── */
 if ($action === 'check_env') {
     $checks = [];
-    $constants = ['PAYTM_MID', 'PAYTM_MERCHANT_KEY', 'PAYTM_WEBSITE', 'PAYTM_CALLBACK_URL', 'PAYTM_ENV', 'DB_HOST', 'DB_NAME', 'DB_USER'];
-    foreach ($constants as $c) {
+
+    // ── Paytm constants (defined via config.php) ──────────────────────────────
+    $paytm_keys = ['PAYTM_MID', 'PAYTM_MERCHANT_KEY', 'PAYTM_WEBSITE', 'PAYTM_CALLBACK_URL', 'PAYTM_ENV'];
+    foreach ($paytm_keys as $c) {
         $val = defined($c) ? constant($c) : null;
         $placeholder_vals = ['your_live_merchant_id', 'your_live_merchant_key', '', null];
         $is_real = $val !== null && !in_array($val, $placeholder_vals, true);
         $checks[$c] = [
-            'defined' => defined($c),
             'is_real' => $is_real,
             'value'   => ($c === 'PAYTM_MERCHANT_KEY' && $is_real)
                             ? substr($val, 0, 4) . str_repeat('*', max(0, strlen($val) - 4))
-                            : ($c === 'DB_USER' ? $val : (($is_real && strlen($val ?? '') > 40) ? substr($val, 0, 40) . '...' : $val)),
+                            : (($is_real && strlen((string)$val) > 50) ? substr($val, 0, 50) . '...' : $val),
         ];
     }
-    // DB connection test
+
+    // ── DB credentials — stored in Config class, not as constants ─────────────
+    // FIX: was incorrectly using defined('DB_HOST') which always returns false
+    //      because config.php puts these values into Config::db(), not define().
+    $db_cfg = Config::db();
+    $db_fields = ['host' => 'DB_HOST', 'name' => 'DB_NAME', 'user' => 'DB_USER'];
+    foreach ($db_fields as $key => $label) {
+        $val     = $db_cfg[$key] ?? '';
+        $is_real = $val !== '' && $val !== null;
+        $checks[$label] = [
+            'is_real' => $is_real,
+            'value'   => $is_real ? $val : '— (not loaded from .env)',
+        ];
+    }
+    // DB password — confirm it's set but never display it
+    $checks['DB_PASS'] = [
+        'is_real' => !empty($db_cfg['pass']),
+        'value'   => !empty($db_cfg['pass']) ? '(set, ' . strlen($db_cfg['pass']) . ' chars) ✓' : '— (empty)',
+    ];
+
+    // ── DB connection test ────────────────────────────────────────────────────
     try {
         $db->fetch("SELECT 1");
-        $checks['DB_CONNECTION'] = ['defined' => true, 'is_real' => true, 'value' => 'Connected successfully ✓'];
+        $checks['DB_CONNECTION'] = ['is_real' => true, 'value' => 'Connected successfully ✓'];
     } catch (Exception $e) {
-        $checks['DB_CONNECTION'] = ['defined' => false, 'is_real' => false, 'value' => 'FAILED: ' . $e->getMessage()];
+        $checks['DB_CONNECTION'] = ['is_real' => false, 'value' => 'FAILED: ' . $e->getMessage()];
     }
-    // PaytmChecksum class
+
+    // ── PaytmChecksum class ───────────────────────────────────────────────────
     $checks['PaytmChecksum_class'] = [
-        'defined' => file_exists(__DIR__ . '/includes/PaytmChecksum.php'),
         'is_real' => file_exists(__DIR__ . '/includes/PaytmChecksum.php'),
         'value'   => file_exists(__DIR__ . '/includes/PaytmChecksum.php') ? 'File found ✓' : '⚠ File missing at includes/PaytmChecksum.php',
     ];
+
     $result = ['checks' => $checks];
 }
 
@@ -311,9 +333,7 @@ td{padding:10px 12px;border-bottom:1px solid #1e293b;color:#cbd5e1}
 .check-ok{color:#86efac}
 .check-warn{color:#fbbf24}
 .check-fail{color:#fca5a5}
-.section-divider{height:1px;background:#334155;margin:24px 0}
 .logout{float:right;font-size:12px;color:#64748b;text-decoration:none;margin-top:4px}
-.full-width{grid-column:1/-1}
 </style>
 </head>
 <body>
