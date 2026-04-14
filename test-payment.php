@@ -1,6 +1,6 @@
 <?php
 /**
- * test-payment.php  —  NGOV2 Payment Flow Mock Test Harness
+ * test-payment.php  — NGOV2 Payment Flow Mock Test Harness
  * DEV ONLY — delete from server before going live.
  */
 
@@ -34,7 +34,7 @@ require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/database.php';
 
 $db  = Database::getInstance();
-$pdo = $db->getConnection(); // raw PDO for schema introspection
+$pdo = $db->getConnection();
 $log    = [];
 $result = null;
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
@@ -44,62 +44,69 @@ function getColumns(PDO $pdo, string $table): array {
     $cols = [];
     try {
         $stmt = $pdo->query("SHOW COLUMNS FROM `{$table}`");
-        foreach ($stmt->fetchAll() as $row) {
-            $cols[] = $row['Field'];
-        }
-    } catch (Exception $e) { /* table may not exist yet */ }
+        foreach ($stmt->fetchAll() as $row) $cols[] = $row['Field'];
+    } catch (Exception $e) {}
     return $cols;
 }
 
-/* ── 1. CREATE DONATION ──────────────────────────────────────────────── */
+/* ── 1. CREATE DONATION ──────────────────────────────────────────────────── */
 if ($action === 'create_donation') {
     $amount      = (float)($_POST['amount']      ?? 500);
     $donor_name  = trim($_POST['donor_name']     ?? 'Test Donor');
     $donor_email = trim($_POST['donor_email']    ?? 'test@example.com');
     $donor_phone = trim($_POST['donor_phone']    ?? '9999999999');
-    $purpose     = trim($_POST['purpose']        ?? 'General Donation');
+    $cause       = trim($_POST['cause']          ?? 'general'); // matches DB column name
+    $frequency   = trim($_POST['frequency']      ?? 'one-time');
 
     if ($amount < 1) { $result = ['error' => 'Amount must be ≥ ₹1']; goto render; }
 
     $transaction_id = 'TEST_' . strtoupper(uniqid());
 
-    // Detect which columns actually exist in the donations table
-    $existing_cols  = getColumns($pdo, 'donations');
-    $log[] = ['status' => 'info', 'step' => '0 — Schema Check', 'msg' => 'donations table columns: ' . (empty($existing_cols) ? 'TABLE NOT FOUND' : implode(', ', $existing_cols)), 'data' => null];
+    // Detect live schema
+    $existing_cols = getColumns($pdo, 'donations');
+    $log[] = ['status' => 'info', 'step' => '0 — Schema Check',
+        'msg'  => 'donations columns: ' . (empty($existing_cols) ? 'TABLE NOT FOUND' : implode(', ', $existing_cols)),
+        'data' => null];
 
     if (empty($existing_cols)) {
-        $log[]  = ['status' => 'error', 'step' => '0 — Schema Check', 'msg' => 'The donations table does not exist. Run your schema.sql first.', 'data' => null];
-        $result = ['error' => 'donations table not found — run schema.sql first'];
+        $log[]  = ['status' => 'error', 'step' => '0 — Schema Check', 'msg' => 'The donations table does not exist. Run schema.sql first.', 'data' => null];
+        $result = ['error' => 'donations table not found'];
         goto render;
     }
 
-    // Build INSERT using only columns that exist
-    $fields = [
+    // Core fields (these must exist — if missing, show a clear error per field)
+    $core = [
         'transaction_id' => $transaction_id,
         'donor_name'     => $donor_name,
         'donor_email'    => $donor_email,
         'donor_phone'    => $donor_phone,
         'amount'         => $amount,
-        'purpose'        => $purpose,
     ];
 
-    // Optional columns — only add if they exist in the live table
-    $optional = [
-        'payment_status'  => 'pending',
-        'payment_gateway' => 'paytm',
-        'status'          => 'pending',   // some schemas use 'status' instead
-        'created_at'      => date('Y-m-d H:i:s'),
-        'updated_at'      => date('Y-m-d H:i:s'),
+    // Optional fields — only inserted if column exists in live table
+    // Maps: PHP value  =>  DB column name
+    $optional_map = [
+        'cause'                => $cause,
+        'frequency'            => $frequency,
+        'currency'             => 'INR',
+        'payment_status'       => 'pending',
+        'payment_method'       => 'Paytm',
+        'payment_gateway'      => 'paytm',
+        'is_anonymous'         => 0,
+        'is_recurring'         => ($frequency !== 'one-time') ? 1 : 0,
+        'tax_exemption_amount' => round($amount * 0.5, 2),
+        'status'               => 'pending',
+        'created_at'           => date('Y-m-d H:i:s'),
+        'updated_at'           => date('Y-m-d H:i:s'),
     ];
-    foreach ($optional as $col => $val) {
-        if (in_array($col, $existing_cols, true)) {
-            $fields[$col] = $val;
-        }
+
+    $fields = $core;
+    foreach ($optional_map as $col => $val) {
+        if (in_array($col, $existing_cols, true)) $fields[$col] = $val;
     }
 
-    $cols_used    = array_keys($fields);
-    $placeholders = implode(', ', array_fill(0, count($cols_used), '?'));
-    $col_list     = implode(', ', $cols_used);
+    $col_list     = implode(', ', array_keys($fields));
+    $placeholders = implode(', ', array_fill(0, count($fields), '?'));
     $values       = array_values($fields);
 
     $log[] = ['status' => 'info', 'step' => '1a — INSERT Preview',
@@ -107,20 +114,19 @@ if ($action === 'create_donation') {
         'data' => $fields];
 
     try {
-        // Bypass Database::query() wrapper so we get the real PDOException message
         $stmt = $pdo->prepare("INSERT INTO donations ({$col_list}) VALUES ({$placeholders})");
         $stmt->execute($values);
         $inserted_id = $pdo->lastInsertId();
 
         $donation = $db->fetch("SELECT * FROM donations WHERE id = ?", [$inserted_id]);
-        $log[] = ['status' => 'ok',   'step' => '1 — Create Donation', 'msg' => "Row inserted. ID: {$inserted_id}", 'data' => $donation];
-        $log[] = ['status' => 'ok',   'step' => '2 — Transaction ID',  'msg' => $transaction_id, 'data' => null];
-        $log[] = ['status' => 'info', 'step' => '3 — Amount', 'msg' => '₹' . number_format($amount, 2) . ' (fetched from DB — client value ignored in live flow)', 'data' => null];
+        $log[] = ['status' => 'ok',   'step' => '1 — Create Donation', 'msg' => "Row inserted ✓  ID: {$inserted_id}",   'data' => $donation];
+        $log[] = ['status' => 'ok',   'step' => '2 — Transaction ID',  'msg' => $transaction_id,                       'data' => null];
+        $log[] = ['status' => 'info', 'step' => '3 — Amount',          'msg' => '₹' . number_format($amount, 2),       'data' => null];
 
-        // Simulate initiate-payment param building
+        // Paytm param preview
         $paytm_params = [
-            'MID'              => defined('PAYTM_MID') ? PAYTM_MID : 'MOCK_MID',
-            'WEBSITE'          => defined('PAYTM_WEBSITE') ? PAYTM_WEBSITE : 'WEBSTAGING',
+            'MID'              => defined('PAYTM_MID')          ? PAYTM_MID          : 'MOCK_MID',
+            'WEBSITE'          => defined('PAYTM_WEBSITE')      ? PAYTM_WEBSITE      : 'WEBSTAGING',
             'CHANNEL_ID'       => 'WEB',
             'INDUSTRY_TYPE_ID' => 'Ecommerce',
             'ORDER_ID'         => $transaction_id,
@@ -130,19 +136,18 @@ if ($action === 'create_donation') {
             'EMAIL'            => $donor_email,
             'MOBILE_NO'        => preg_replace('/[^0-9]/', '', $donor_phone),
         ];
-        $log[] = ['status' => 'ok', 'step' => '4 — Paytm Params', 'msg' => 'Params built (checksum skipped in mock mode)', 'data' => $paytm_params];
+        $log[] = ['status' => 'ok', 'step' => '4 — Paytm Params', 'msg' => 'Params built (checksum skipped in mock)', 'data' => $paytm_params];
 
-        $mid_ok = defined('PAYTM_MID') && PAYTM_MID !== 'your_live_merchant_id' && PAYTM_MID !== '';
-        $key_ok = defined('PAYTM_MERCHANT_KEY') && PAYTM_MERCHANT_KEY !== 'your_live_merchant_key' && PAYTM_MERCHANT_KEY !== '';
+        $mid_ok = defined('PAYTM_MID') && !in_array(PAYTM_MID, ['your_live_merchant_id', '']);
+        $key_ok = defined('PAYTM_MERCHANT_KEY') && !in_array(PAYTM_MERCHANT_KEY, ['your_live_merchant_key', '']);
         $log[] = ['status' => $mid_ok ? 'ok' : 'warn', 'step' => '5 — PAYTM_MID',
-            'msg' => $mid_ok ? 'Real MID found ✓ (' . substr(PAYTM_MID, 0, 4) . '****)' : 'Still placeholder — update .env when keys arrive', 'data' => null];
+            'msg' => $mid_ok ? 'Real MID found (' . substr(PAYTM_MID, 0, 4) . '****)' : 'Placeholder — update .env when keys arrive', 'data' => null];
         $log[] = ['status' => $key_ok ? 'ok' : 'warn', 'step' => '6 — MERCHANT_KEY',
-            'msg' => $key_ok ? 'Key found ✓ (length: ' . strlen(PAYTM_MERCHANT_KEY) . ')' : 'Still placeholder — update .env when keys arrive', 'data' => null];
+            'msg' => $key_ok ? 'Key found (length: ' . strlen(PAYTM_MERCHANT_KEY) . ')' : 'Placeholder — update .env when keys arrive', 'data' => null];
 
         $result = ['success' => true, 'transaction_id' => $transaction_id, 'amount' => $amount];
 
     } catch (PDOException $e) {
-        // Show the FULL PDO error so you know exactly which column/constraint failed
         $log[]  = ['status' => 'error', 'step' => '1 — Create Donation',
             'msg'  => 'PDO Error: ' . $e->getMessage() . ' (SQLSTATE: ' . $e->getCode() . ')',
             'data' => null];
@@ -153,7 +158,7 @@ if ($action === 'create_donation') {
     }
 }
 
-/* ── 2. SIMULATE CALLBACK ──────────────────────────────────────────────── */
+/* ── 2. SIMULATE CALLBACK ────────────────────────────────────────────────── */
 if ($action === 'simulate_callback') {
     $transaction_id  = trim($_POST['transaction_id'] ?? '');
     $simulate_status = $_POST['simulate_status'] ?? 'TXN_SUCCESS';
@@ -168,7 +173,7 @@ if ($action === 'simulate_callback') {
 
     if ($donation['payment_status'] === 'completed') {
         $log[] = ['status' => 'warn', 'step' => '2 — Duplicate Guard',
-            'msg' => 'Already completed — idempotency guard would skip re-processing ✓', 'data' => null];
+            'msg' => 'Already completed — idempotency guard skips re-processing ✓', 'data' => null];
         $result = ['success' => true, 'already_complete' => true, 'transaction_id' => $transaction_id];
         goto render;
     }
@@ -185,27 +190,24 @@ if ($action === 'simulate_callback') {
         'PAYMENTMODE' => 'UPI',
     ];
     $log[] = ['status' => 'info', 'step' => '2 — Mock Callback', 'msg' => 'Checksum + API verify skipped in mock', 'data' => $mock_callback];
-    $log[] = ['status' => 'ok',   'step' => '3 — Checksum',     'msg' => 'MOCK: skipped (PaytmChecksum::verifySignature in production)', 'data' => null];
-    $log[] = ['status' => 'ok',   'step' => '4 — API Verify',   'msg' => 'MOCK: skipped (curl to PAYTM_STATUS_URL in production)', 'data' => null];
+    $log[] = ['status' => 'ok',   'step' => '3 — Checksum',     'msg' => 'MOCK: skipped', 'data' => null];
+    $log[] = ['status' => 'ok',   'step' => '4 — API Verify',   'msg' => 'MOCK: skipped', 'data' => null];
 
-    // Amount cross-check
     if ($simulate_status === 'TXN_SUCCESS') {
         if ((float)$mock_callback['TXNAMOUNT'] < (float)$donation['amount']) {
             $log[] = ['status' => 'error', 'step' => '5 — Amount Check',
-                'msg' => "FAIL: ₹{$mock_callback['TXNAMOUNT']} < ₹{$donation['amount']} — would reject", 'data' => null];
-            $db->query("UPDATE donations SET payment_status='failed', updated_at=NOW() WHERE transaction_id=?", [$transaction_id]);
+                'msg' => "FAIL: ₹{$mock_callback['TXNAMOUNT']} < ₹{$donation['amount']}", 'data' => null];
+            $pdo->prepare("UPDATE donations SET payment_status='failed', updated_at=NOW() WHERE transaction_id=?")->execute([$transaction_id]);
             $result = ['error' => 'Amount mismatch']; goto render;
         }
-        $log[] = ['status' => 'ok', 'step' => '5 — Amount Check', 'msg' => "PASS ✓ ₹{$mock_callback['TXNAMOUNT']} ≥ ₹{$donation['amount']}", 'data' => null];
+        $log[] = ['status' => 'ok', 'step' => '5 — Amount Check', 'msg' => "PASS ✓ ₹{$mock_callback['TXNAMOUNT']}", 'data' => null];
     }
 
-    // Detect which UPDATE columns exist
     $existing_cols = getColumns($pdo, 'donations');
 
     try {
         if ($simulate_status === 'TXN_SUCCESS') {
-            // Build UPDATE dynamically — only use columns that exist
-            $update_fields = ['payment_status' => 'completed'];
+            $upd = ['payment_status' => 'completed'];
             $map = [
                 'paytm_order_id'       => $transaction_id,
                 'paytm_transaction_id' => $mock_txn_id,
@@ -214,123 +216,69 @@ if ($action === 'simulate_callback') {
                 'paytm_response_code'  => $mock_callback['RESPCODE'],
                 'paytm_response_msg'   => $mock_callback['RESPMSG'],
             ];
-            foreach ($map as $col => $val) {
-                if (in_array($col, $existing_cols, true)) $update_fields[$col] = $val;
-            }
-            $set_parts = array_map(fn($c) => "`{$c}`=?", array_keys($update_fields));
-            $set_parts[] = 'updated_at=NOW()';
-            $pdo->prepare('UPDATE donations SET ' . implode(', ', $set_parts) . ' WHERE transaction_id=?')
-                ->execute([...array_values($update_fields), $transaction_id]);
-
+            foreach ($map as $c => $v) if (in_array($c, $existing_cols, true)) $upd[$c] = $v;
+            $set = implode(', ', array_map(fn($c) => "`{$c}`=?", array_keys($upd))) . ', updated_at=NOW()';
+            $pdo->prepare("UPDATE donations SET {$set} WHERE transaction_id=?")->execute([...array_values($upd), $transaction_id]);
             $log[] = ['status' => 'ok', 'step' => '6 — DB Update', 'msg' => "payment_status → 'completed' ✓", 'data' => null];
-            $log[] = ['status' => 'ok', 'step' => '7 — Redirect',  'msg' => "Would go to: /payment-success.html?txn={$transaction_id}&status=success", 'data' => null];
-
+            $log[] = ['status' => 'ok', 'step' => '7 — Redirect',  'msg' => "/payment-success.html?txn={$transaction_id}&status=success", 'data' => null];
         } elseif ($simulate_status === 'PENDING') {
-            $pending_fields = ['payment_status' => 'pending'];
-            if (in_array('paytm_transaction_id', $existing_cols, true)) $pending_fields['paytm_transaction_id'] = $mock_txn_id;
-            $set_parts = array_map(fn($c) => "`{$c}`=?", array_keys($pending_fields));
-            $set_parts[] = 'updated_at=NOW()';
-            $pdo->prepare('UPDATE donations SET ' . implode(', ', $set_parts) . ' WHERE transaction_id=?')
-                ->execute([...array_values($pending_fields), $transaction_id]);
-
-            $log[] = ['status' => 'warn', 'step' => '6 — DB Update', 'msg' => "payment_status → 'pending' (still in transit)", 'data' => null];
-            $log[] = ['status' => 'warn', 'step' => '7 — Redirect',  'msg' => "Would go to: /payment-success.html?txn={$transaction_id}&status=pending", 'data' => null];
-
+            $upd = ['payment_status' => 'pending'];
+            if (in_array('paytm_transaction_id', $existing_cols, true)) $upd['paytm_transaction_id'] = $mock_txn_id;
+            $set = implode(', ', array_map(fn($c) => "`{$c}`=?", array_keys($upd))) . ', updated_at=NOW()';
+            $pdo->prepare("UPDATE donations SET {$set} WHERE transaction_id=?")->execute([...array_values($upd), $transaction_id]);
+            $log[] = ['status' => 'warn', 'step' => '6 — DB Update', 'msg' => "payment_status → 'pending' (in transit)", 'data' => null];
         } else {
-            $fail_fields = ['payment_status' => 'failed'];
-            if (in_array('paytm_transaction_id', $existing_cols, true)) $fail_fields['paytm_transaction_id'] = $mock_txn_id;
-            if (in_array('paytm_response_code',  $existing_cols, true)) $fail_fields['paytm_response_code']  = $mock_callback['RESPCODE'];
-            if (in_array('paytm_response_msg',   $existing_cols, true)) $fail_fields['paytm_response_msg']   = $mock_callback['RESPMSG'];
-            $set_parts = array_map(fn($c) => "`{$c}`=?", array_keys($fail_fields));
-            $set_parts[] = 'updated_at=NOW()';
-            $pdo->prepare('UPDATE donations SET ' . implode(', ', $set_parts) . ' WHERE transaction_id=?')
-                ->execute([...array_values($fail_fields), $transaction_id]);
-
-            $log[] = ['status' => 'error', 'step' => '6 — DB Update', 'msg' => "payment_status → 'failed' | Code: {$mock_callback['RESPCODE']}", 'data' => null];
-            $log[] = ['status' => 'error', 'step' => '7 — Redirect',  'msg' => "Would go to: /donate.html?error=payment_failed", 'data' => null];
+            $upd = ['payment_status' => 'failed'];
+            foreach (['paytm_transaction_id' => $mock_txn_id, 'paytm_response_code' => $mock_callback['RESPCODE'], 'paytm_response_msg' => $mock_callback['RESPMSG']] as $c => $v)
+                if (in_array($c, $existing_cols, true)) $upd[$c] = $v;
+            $set = implode(', ', array_map(fn($c) => "`{$c}`=?", array_keys($upd))) . ', updated_at=NOW()';
+            $pdo->prepare("UPDATE donations SET {$set} WHERE transaction_id=?")->execute([...array_values($upd), $transaction_id]);
+            $log[] = ['status' => 'error', 'step' => '6 — DB Update', 'msg' => "payment_status → 'failed'", 'data' => null];
         }
     } catch (PDOException $e) {
-        $log[] = ['status' => 'error', 'step' => '6 — DB Update',
-            'msg' => 'PDO Error: ' . $e->getMessage(), 'data' => null];
+        $log[] = ['status' => 'error', 'step' => '6 — DB Update', 'msg' => 'PDO: ' . $e->getMessage(), 'data' => null];
         $result = ['error' => $e->getMessage()]; goto render;
     }
 
     $final = $db->fetch("SELECT * FROM donations WHERE transaction_id=?", [$transaction_id]);
-    $log[]  = ['status' => 'info', 'step' => '8 — Final DB Row', 'msg' => 'Verify all fields below', 'data' => $final];
+    $log[]  = ['status' => 'info', 'step' => '8 — Final DB Row', 'msg' => 'All fields below', 'data' => $final];
     $result = ['success' => true, 'transaction_id' => $transaction_id, 'final_status' => $simulate_status, 'db_row' => $final];
 }
 
 /* ── 3. LIST RECENT TEST DONATIONS ──────────────────────────────────────── */
 if ($action === 'list_donations') {
     try {
-        $rows = $db->fetchAll("SELECT * FROM donations WHERE transaction_id LIKE 'TEST_%' ORDER BY created_at DESC LIMIT 20");
+        $rows  = $db->fetchAll("SELECT * FROM donations WHERE transaction_id LIKE 'TEST_%' ORDER BY created_at DESC LIMIT 20");
         $result = ['donations' => $rows];
-    } catch (PDOException $e) {
-        $result = ['error' => 'PDO: ' . $e->getMessage()];
-    } catch (Exception $e) {
-        $result = ['error' => $e->getMessage()];
-    }
+    } catch (PDOException $e) { $result = ['error' => 'PDO: ' . $e->getMessage()]; }
+      catch (Exception   $e) { $result = ['error' => $e->getMessage()]; }
 }
 
-/* ── 4. CLEAN UP ──────────────────────────────────────────────────────────── */
+/* ── 4. CLEAN UP ─────────────────────────────────────────────────────────── */
 if ($action === 'cleanup') {
     try {
         $db->query("DELETE FROM donations WHERE transaction_id LIKE 'TEST_%'");
         $result = ['success' => true, 'msg' => 'All TEST_ rows deleted ✓'];
-    } catch (Exception $e) {
-        $result = ['error' => $e->getMessage()];
-    }
+    } catch (Exception $e) { $result = ['error' => $e->getMessage()]; }
 }
 
 /* ── 5. CHECK ENV / CONFIG ────────────────────────────────────────────────── */
 if ($action === 'check_env') {
     $checks = [];
-
-    // Paytm constants
     foreach (['PAYTM_MID', 'PAYTM_MERCHANT_KEY', 'PAYTM_WEBSITE', 'PAYTM_CALLBACK_URL', 'PAYTM_ENV'] as $c) {
         $val = defined($c) ? constant($c) : null;
-        $placeholder = ['your_live_merchant_id', 'your_live_merchant_key', '', null];
-        $is_real = $val !== null && !in_array($val, $placeholder, true);
-        $checks[$c] = [
-            'is_real' => $is_real,
-            'value'   => ($c === 'PAYTM_MERCHANT_KEY' && $is_real)
-                ? substr($val, 0, 4) . str_repeat('*', max(0, strlen($val) - 4))
-                : ($is_real && strlen((string)$val) > 50 ? substr($val, 0, 50) . '...' : $val),
-        ];
+        $real = $val !== null && !in_array($val, ['your_live_merchant_id', 'your_live_merchant_key', ''], true);
+        $checks[$c] = ['is_real' => $real, 'value' => ($c === 'PAYTM_MERCHANT_KEY' && $real) ? substr($val, 0, 4) . str_repeat('*', max(0, strlen($val) - 4)) : $val];
     }
-
-    // DB credentials from Config class (not PHP constants)
-    $db_cfg = Config::db();
-    foreach (['host' => 'DB_HOST', 'name' => 'DB_NAME', 'user' => 'DB_USER'] as $key => $label) {
-        $val = $db_cfg[$key] ?? '';
-        $checks[$label] = ['is_real' => $val !== '', 'value' => $val !== '' ? $val : '— (not loaded)'];
-    }
-    $checks['DB_PASS'] = [
-        'is_real' => !empty($db_cfg['pass']),
-        'value'   => !empty($db_cfg['pass']) ? '(set, ' . strlen($db_cfg['pass']) . ' chars) ✓' : '— (empty)',
-    ];
-
-    // DB connection
-    try {
-        $db->fetch("SELECT 1");
-        $checks['DB_CONNECTION'] = ['is_real' => true, 'value' => 'Connected ✓'];
-    } catch (Exception $e) {
-        $checks['DB_CONNECTION'] = ['is_real' => false, 'value' => 'FAILED: ' . $e->getMessage()];
-    }
-
-    // donations table columns
+    $cfg = Config::db();
+    foreach (['host' => 'DB_HOST', 'name' => 'DB_NAME', 'user' => 'DB_USER'] as $k => $l)
+        $checks[$l] = ['is_real' => !empty($cfg[$k]), 'value' => $cfg[$k] ?? '—'];
+    $checks['DB_PASS'] = ['is_real' => !empty($cfg['pass']), 'value' => !empty($cfg['pass']) ? '(set, ' . strlen($cfg['pass']) . ' chars) ✓' : '— (empty)'];
+    try { $db->fetch("SELECT 1"); $checks['DB_CONNECTION'] = ['is_real' => true,  'value' => 'Connected ✓']; }
+    catch (Exception $e) {         $checks['DB_CONNECTION'] = ['is_real' => false, 'value' => 'FAILED: ' . $e->getMessage()]; }
     $cols = getColumns($pdo, 'donations');
-    $checks['donations_table'] = [
-        'is_real' => !empty($cols),
-        'value'   => empty($cols) ? '⚠ Table not found — run schema.sql' : implode(', ', $cols),
-    ];
-
-    // PaytmChecksum
-    $checks['PaytmChecksum_class'] = [
-        'is_real' => file_exists(__DIR__ . '/includes/PaytmChecksum.php'),
-        'value'   => file_exists(__DIR__ . '/includes/PaytmChecksum.php') ? 'Found ✓' : '⚠ Missing',
-    ];
-
+    $checks['donations_table'] = ['is_real' => !empty($cols), 'value' => empty($cols) ? '⚠ Not found — run schema.sql' : implode(', ', $cols)];
+    $checks['PaytmChecksum_class'] = ['is_real' => file_exists(__DIR__ . '/includes/PaytmChecksum.php'), 'value' => file_exists(__DIR__ . '/includes/PaytmChecksum.php') ? 'Found ✓' : '⚠ Missing'];
     $result = ['checks' => $checks];
 }
 
@@ -369,10 +317,8 @@ input:focus,select:focus{outline:none;border-color:#21808d}
 .log-item{padding:11px 18px;border-bottom:1px solid #1a2540;display:flex;gap:10px;font-size:12px;align-items:flex-start}
 .log-item:last-child{border-bottom:none}
 .badge{padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px;text-transform:uppercase;letter-spacing:.05em}
-.badge-ok{background:#14532d;color:#86efac}
-.badge-warn{background:#451a03;color:#fbbf24}
-.badge-error{background:#450a0a;color:#fca5a5}
-.badge-info{background:#1e3a5f;color:#93c5fd}
+.badge-ok{background:#14532d;color:#86efac}.badge-warn{background:#451a03;color:#fbbf24}
+.badge-error{background:#450a0a;color:#fca5a5}.badge-info{background:#1e3a5f;color:#93c5fd}
 .log-step{color:#64748b;font-size:11px;min-width:170px;flex-shrink:0;padding-top:1px}
 .log-msg{flex:1;color:#e2e8f0;word-break:break-word}
 .data-toggle{margin-top:5px;font-size:11px;color:#7dd3fc;cursor:pointer;text-decoration:underline;background:none;border:none;padding:0}
@@ -381,11 +327,8 @@ pre{background:#0f172a;border-radius:6px;padding:10px;font-size:11px;overflow-x:
 table{width:100%;border-collapse:collapse;font-size:12px}
 th{background:#0f172a;color:#7dd3fc;padding:9px 12px;text-align:left;font-weight:600;white-space:nowrap}
 td{padding:9px 12px;border-bottom:1px solid #1a2540;color:#cbd5e1;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.s-completed{color:#86efac;font-weight:600}
-.s-failed{color:#fca5a5;font-weight:600}
-.s-pending{color:#fbbf24;font-weight:600}
+.s-completed{color:#86efac;font-weight:600}.s-failed{color:#fca5a5;font-weight:600}.s-pending{color:#fbbf24;font-weight:600}
 .ok{color:#86efac}.warn{color:#fbbf24}.fail{color:#fca5a5}
-.logout{float:right;font-size:11px;color:#64748b;text-decoration:none}
 .env-val{font-size:11px;color:#94a3b8;word-break:break-all;max-width:380px}
 </style>
 </head>
@@ -393,7 +336,6 @@ td{padding:9px 12px;border-bottom:1px solid #1a2540;color:#cbd5e1;max-width:200p
 <div class="container">
 
   <div class="header">
-    <a href="?" class="logout" onclick="fetch('?logout=1')">Logout</a>
     <h1>🧪 NGOV2 — Payment Flow Test Harness</h1>
     <p>Mock-test donation → initiate → callback → DB without real Paytm keys</p>
   </div>
@@ -437,10 +379,21 @@ td{padding:9px 12px;border-bottom:1px solid #1a2540;color:#cbd5e1;max-width:200p
         <div class="form-group"><label>Phone</label><input name="donor_phone" value="9999999999"></div>
         <div class="form-group"><label>Amount (₹)</label><input type="number" name="amount" value="500" min="1"></div>
         <div class="form-group">
-          <label>Purpose</label>
-          <select name="purpose">
-            <option>General Donation</option><option>Poor Feeding Program</option>
-            <option>Medical Camp</option><option>Disaster Relief</option><option>Spiritual Events</option>
+          <label>Cause</label>
+          <select name="cause">
+            <option value="general">General Donation</option>
+            <option value="poor-feeding">Poor Feeding Program</option>
+            <option value="medical">Medical Camp</option>
+            <option value="disaster">Disaster Relief</option>
+            <option value="education">Education</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Frequency</label>
+          <select name="frequency">
+            <option value="one-time">One-time</option>
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
           </select>
         </div>
         <button class="btn btn-teal">▶ Create &amp; Initiate</button>
@@ -524,7 +477,7 @@ td{padding:9px 12px;border-bottom:1px solid #1a2540;color:#cbd5e1;max-width:200p
     <?php else: ?>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>ID</th><th>Transaction ID</th><th>Donor</th><th>Amount</th><th>Status</th><th>Mode</th><th>Created</th></tr></thead>
+        <thead><tr><th>ID</th><th>Transaction ID</th><th>Donor</th><th>Amount</th><th>Cause</th><th>Status</th><th>Created</th></tr></thead>
         <tbody>
           <?php foreach ($result['donations'] as $r): ?>
           <tr>
@@ -532,8 +485,8 @@ td{padding:9px 12px;border-bottom:1px solid #1a2540;color:#cbd5e1;max-width:200p
             <td><code style="font-size:10px"><?= htmlspecialchars($r['transaction_id']) ?></code></td>
             <td><?= htmlspecialchars($r['donor_name']) ?></td>
             <td>₹<?= number_format((float)$r['amount'], 2) ?></td>
+            <td><?= htmlspecialchars($r['cause'] ?? '—') ?></td>
             <td><span class="s-<?= htmlspecialchars($r['payment_status'] ?? 'pending') ?>"><?= htmlspecialchars($r['payment_status'] ?? '—') ?></span></td>
-            <td><?= htmlspecialchars($r['payment_mode'] ?? '—') ?></td>
             <td style="font-size:11px"><?= htmlspecialchars($r['created_at']) ?></td>
           </tr>
           <?php endforeach; ?>
@@ -547,8 +500,8 @@ td{padding:9px 12px;border-bottom:1px solid #1a2540;color:#cbd5e1;max-width:200p
   <div class="card">
     <h2>📖 How to Test</h2>
     <ol style="padding-left:18px;line-height:2.1;color:#64748b;font-size:13px">
-      <li>Run <strong style="color:#e2e8f0">Config Check</strong> — DB + donations table columns shown</li>
-      <li>Fill <strong style="color:#e2e8f0">Step 1</strong> → audit trail shows exactly which columns were used in the INSERT</li>
+      <li>Run <strong style="color:#e2e8f0">Config Check</strong> — verify DB + donations columns</li>
+      <li>Fill <strong style="color:#e2e8f0">Step 1</strong> → audit trail shows INSERT with <code style="color:#a5f3fc">cause</code> column ✓</li>
       <li>Copy the <code style="color:#a5f3fc">transaction_id</code> into Step 2</li>
       <li>Run all 3 statuses: <span class="ok">TXN_SUCCESS</span>, <span class="warn">PENDING</span>, <span class="fail">TXN_FAILURE</span></li>
       <li>Use <strong style="color:#e2e8f0">View Donations</strong> to confirm DB rows look correct</li>
