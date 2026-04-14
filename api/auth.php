@@ -19,29 +19,46 @@ require_once '../includes/logger.php';
 if (session_status() === PHP_SESSION_NONE) session_start();
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Helper: resolve redirect URL from role
+// ─────────────────────────────────────────────────────────────────────────────
+function redirectForRole(string $role): string {
+    switch ($role) {
+        case 'admin':     return 'admin-dashboard.html';
+        case 'volunteer': return 'volunteer-dashboard.html';
+        default:          return 'donor-dashboard.html';   // donor + any unknown
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // GET actions
 // ─────────────────────────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $action = $_GET['action'] ?? '';
 
-    // Session check (used by donor-dashboard.js)
-    if ($action === 'check') {
+    // Session check – supports both 'check' and 'check-session' for compatibility
+    if ($action === 'check' || $action === 'check-session') {
         if (!empty($_SESSION['logged_in'])) {
+            $role = $_SESSION['user_role'] ?? 'donor';
             echo json_encode([
+                'success'   => true,
                 'logged_in' => true,
-                'user' => [
-                    'id'         => $_SESSION['user_id'],
-                    'name'       => $_SESSION['user_name'] ?? '',
-                    'full_name'  => $_SESSION['user_name'] ?? '',
-                    'email'      => $_SESSION['user_email'] ?? '',
-                    'role'       => $_SESSION['user_role'] ?? 'donor',
-                    'phone'      => $_SESSION['user_phone'] ?? '',
-                    'address'    => $_SESSION['user_address'] ?? '',
-                    'pan_number' => $_SESSION['user_pan'] ?? '',
+                'data' => [
+                    'user_type' => $role,
+                    'redirect'  => redirectForRole($role),
+                    'user' => [
+                        'id'         => $_SESSION['user_id'],
+                        'name'       => $_SESSION['user_name']    ?? '',
+                        'full_name'  => $_SESSION['user_name']    ?? '',
+                        'email'      => $_SESSION['user_email']   ?? '',
+                        'role'       => $role,
+                        'phone'      => $_SESSION['user_phone']   ?? '',
+                        'address'    => $_SESSION['user_address'] ?? '',
+                        'pan_number' => $_SESSION['user_pan']     ?? '',
+                    ]
                 ]
             ]);
         } else {
-            echo json_encode(['logged_in' => false]);
+            echo json_encode(['success' => false, 'logged_in' => false]);
         }
         exit;
     }
@@ -66,15 +83,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$action = $_POST['action'] ?? '';
+// Decode JSON body (auth-enhanced.js sends JSON, not form-encoded)
+$body   = json_decode(file_get_contents('php://input'), true) ?? [];
+$action = $body['action'] ?? $_POST['action'] ?? '';
 
 try {
     $db = Database::getInstance();
 
     // ── Login ──────────────────────────────────────────────────────────────
     if ($action === 'login') {
-        $email    = Security::sanitize($_POST['email'] ?? '');
-        $password = $_POST['password'] ?? '';
+        $email    = Security::sanitize($body['email']    ?? '');
+        $password = $body['password'] ?? '';
 
         if (!$email || !$password) {
             echo json_encode(['success' => false, 'message' => 'Email and password are required']);
@@ -110,14 +129,15 @@ try {
         unset($_SESSION['login_attempts'], $_SESSION['login_lockout']);
 
         // Store session
+        $role = $user['role'] ?? 'donor';
         session_regenerate_id(true);
         $_SESSION['logged_in']    = true;
         $_SESSION['user_id']      = $user['id'];
         $_SESSION['user_name']    = $user['name'] ?? $user['full_name'] ?? '';
         $_SESSION['user_email']   = $user['email'];
-        $_SESSION['user_role']    = $user['role'] ?? 'donor';
-        $_SESSION['user_phone']   = $user['phone'] ?? '';
-        $_SESSION['user_address'] = $user['address'] ?? '';
+        $_SESSION['user_role']    = $role;
+        $_SESSION['user_phone']   = $user['phone']      ?? '';
+        $_SESSION['user_address'] = $user['address']    ?? '';
         $_SESSION['user_pan']     = $user['pan_number'] ?? '';
 
         $logger = new Logger();
@@ -126,11 +146,15 @@ try {
         echo json_encode([
             'success' => true,
             'message' => 'Login successful',
-            'user' => [
-                'id'    => $user['id'],
-                'name'  => $_SESSION['user_name'],
-                'email' => $user['email'],
-                'role'  => $_SESSION['user_role'],
+            'data' => [
+                'redirect'  => redirectForRole($role),
+                'user_type' => $role,
+                'user' => [
+                    'id'    => $user['id'],
+                    'name'  => $_SESSION['user_name'],
+                    'email' => $user['email'],
+                    'role'  => $role,
+                ]
             ]
         ]);
         exit;
@@ -138,20 +162,23 @@ try {
 
     // ── Register ───────────────────────────────────────────────────────────
     if ($action === 'register') {
-        $csrfToken = $_POST['csrf_token'] ?? '';
+        $csrfToken = $body['csrf_token'] ?? '';
         if (!Security::validateCSRFToken($csrfToken)) {
             echo json_encode(['success' => false, 'message' => 'Invalid security token. Please refresh and try again.']);
             exit;
         }
 
-        $name     = Security::sanitize($_POST['name'] ?? '');
-        $email    = Security::sanitize($_POST['email'] ?? '');
-        $password = $_POST['password'] ?? '';
-        $phone    = Security::sanitize($_POST['phone'] ?? '');
+        $name      = Security::sanitize($body['name']      ?? '');
+        $email     = Security::sanitize($body['email']     ?? '');
+        $password  = $body['password']  ?? '';
+        $phone     = Security::sanitize($body['phone']     ?? '');
+        // Only allow donor or volunteer self-registration; admin cannot self-register
+        $requested = $body['user_type'] ?? 'donor';
+        $role      = in_array($requested, ['donor', 'volunteer']) ? $requested : 'donor';
 
-        if (!$name)                                throw new Exception('Name is required');
-        if (!Security::validateEmail($email))      throw new Exception('Valid email is required');
-        if (strlen($password) < 8)                 throw new Exception('Password must be at least 8 characters');
+        if (!$name)                                    throw new Exception('Name is required');
+        if (!Security::validateEmail($email))          throw new Exception('Valid email is required');
+        if (strlen($password) < 8)                     throw new Exception('Password must be at least 8 characters');
         if ($phone && !Security::validatePhone($phone)) throw new Exception('Invalid phone number');
 
         $exists = $db->fetch("SELECT id FROM users WHERE email = ? LIMIT 1", [$email]);
@@ -163,7 +190,7 @@ try {
             'email'    => $email,
             'password' => $hashed,
             'phone'    => $phone,
-            'role'     => 'donor',
+            'role'     => $role,
             'status'   => 'active',
         ]);
 
@@ -172,12 +199,19 @@ try {
         $_SESSION['user_id']    = $userId;
         $_SESSION['user_name']  = $name;
         $_SESSION['user_email'] = $email;
-        $_SESSION['user_role']  = 'donor';
+        $_SESSION['user_role']  = $role;
 
         $logger = new Logger();
         $logger->log($userId, 'register', 'New user registered', 'user', $userId);
 
-        echo json_encode(['success' => true, 'message' => 'Account created successfully']);
+        echo json_encode([
+            'success' => true,
+            'message' => 'Account created successfully! Redirecting...',
+            'data' => [
+                'redirect'  => redirectForRole($role),
+                'user_type' => $role,
+            ]
+        ]);
         exit;
     }
 
@@ -189,17 +223,17 @@ try {
             exit;
         }
 
-        $csrfToken = $_POST['csrf_token'] ?? '';
+        $csrfToken = $body['csrf_token'] ?? $_POST['csrf_token'] ?? '';
         if (!Security::validateCSRFToken($csrfToken)) {
             echo json_encode(['success' => false, 'message' => 'Invalid security token']);
             exit;
         }
 
         $userId  = $_SESSION['user_id'];
-        $name    = Security::sanitize($_POST['full_name'] ?? '');
-        $phone   = Security::sanitize($_POST['phone'] ?? '');
-        $address = Security::sanitize($_POST['address'] ?? '');
-        $pan     = strtoupper(Security::sanitize($_POST['pan_number'] ?? ''));
+        $name    = Security::sanitize($body['full_name']   ?? $_POST['full_name']   ?? '');
+        $phone   = Security::sanitize($body['phone']       ?? $_POST['phone']       ?? '');
+        $address = Security::sanitize($body['address']     ?? $_POST['address']     ?? '');
+        $pan     = strtoupper(Security::sanitize($body['pan_number'] ?? $_POST['pan_number'] ?? ''));
 
         if ($pan && !Security::validatePAN($pan)) {
             echo json_encode(['success' => false, 'message' => 'Invalid PAN number format (e.g. ABCDE1234F)']);
@@ -214,11 +248,10 @@ try {
 
         $db->update('users', $update, 'id = ?', [$userId]);
 
-        // Refresh session values
         if ($name)    $_SESSION['user_name']    = $name;
         if ($phone)   $_SESSION['user_phone']   = $phone;
         if ($address) $_SESSION['user_address'] = $address;
-        if ($pan)     $_SESSION['user_pan']      = $pan;
+        if ($pan)     $_SESSION['user_pan']     = $pan;
 
         $logger = new Logger();
         $logger->log($userId, 'profile_update', 'Profile updated', 'user', $userId);

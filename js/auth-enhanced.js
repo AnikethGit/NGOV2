@@ -12,7 +12,6 @@
         try {
             const res  = await fetch('api/csrf-token.php');
             const data = await res.json();
-            // API returns 'csrf_token', not 'token'
             const token = data.csrf_token || data.token;
             if (token) {
                 document.querySelectorAll('input[name="csrf_token"]').forEach(el => {
@@ -62,11 +61,11 @@
         pwInput.addEventListener('input', () => {
             const val = pwInput.value;
             let score = 0;
-            if (val.length >= 8)   score++;
-            if (val.length >= 12)  score++;
-            if (/[A-Z]/.test(val)) score++;
-            if (/[0-9]/.test(val)) score++;
-            if (/[^A-Za-z0-9]/.test(val)) score++;
+            if (val.length >= 8)             score++;
+            if (val.length >= 12)            score++;
+            if (/[A-Z]/.test(val))           score++;
+            if (/[0-9]/.test(val))           score++;
+            if (/[^A-Za-z0-9]/.test(val))   score++;
 
             const levels = ['', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong'];
             const colors = ['', '#ef4444', '#f97316', '#eab308', '#22c55e', '#16a34a'];
@@ -133,12 +132,21 @@
         }
     }
 
+    // ── Redirect helper ─────────────────────────────────────────────────────
+    function redirectForRole(role) {
+        switch (role) {
+            case 'admin':     return 'admin-dashboard.html';
+            case 'volunteer': return 'volunteer-dashboard.html';
+            default:          return 'donor-dashboard.html';
+        }
+    }
+
     // ── API call ────────────────────────────────────────────────────────────
     async function authRequest(action, payload) {
-        const res  = await fetch('api/auth.php?action=' + action, {
+        const res = await fetch('api/auth.php?action=' + action, {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify(payload)
+            body:    JSON.stringify({ ...payload, action })
         });
         return res.json();
     }
@@ -155,20 +163,22 @@
             clearMessages();
 
             const payload = {
-                email:      form.email.value.trim(),
-                password:   form.password.value,
-                user_type:  form.user_type.value,
+                email:       form.email.value.trim(),
+                password:    form.password.value,
+                user_type:   form.user_type?.value || 'donor',
                 remember_me: form.remember_me?.checked ? 1 : 0,
-                csrf_token: document.getElementById('login_csrf_token')?.value || ''
+                csrf_token:  document.getElementById('login_csrf_token')?.value || ''
             };
 
             try {
                 const data = await authRequest('login', payload);
                 if (data.success) {
                     showMessage('loginForm', data.message, 'success');
-                    setTimeout(() => { window.location.href = data.data.redirect; }, 800);
+                    // Use server-provided redirect; fall back to client-side role mapping
+                    const dest = data.data?.redirect || redirectForRole(data.data?.user_type || data.data?.user?.role || 'donor');
+                    setTimeout(() => { window.location.href = dest; }, 800);
                 } else {
-                    showMessage('loginForm', data.message, 'error');
+                    showMessage('loginForm', data.message || 'Login failed.', 'error');
                     await loadCsrfToken();
                 }
             } catch (err) {
@@ -202,7 +212,7 @@
                 phone:            form.querySelector('[name="phone"]').value.trim(),
                 password:         document.getElementById('register_password').value,
                 confirm_password: document.getElementById('confirm_password').value,
-                user_type:        form.querySelector('[name="user_type"]').value,
+                user_type:        form.querySelector('[name="user_type"]')?.value || 'donor',
                 newsletter:       form.querySelector('[name="newsletter"]')?.checked ? 1 : 0,
                 csrf_token:       document.getElementById('register_csrf_token')?.value || ''
             };
@@ -211,9 +221,10 @@
                 const data = await authRequest('register', payload);
                 if (data.success) {
                     showMessage('registerForm', data.message, 'success');
-                    setTimeout(() => { window.location.href = data.data.redirect; }, 900);
+                    const dest = data.data?.redirect || redirectForRole(data.data?.user_type || 'donor');
+                    setTimeout(() => { window.location.href = dest; }, 900);
                 } else {
-                    showMessage('registerForm', data.message, 'error');
+                    showMessage('registerForm', data.message || 'Registration failed.', 'error');
                     await loadCsrfToken();
                 }
             } catch (err) {
@@ -253,7 +264,7 @@
 
         form?.addEventListener('submit', async e => {
             e.preventDefault();
-            const btn   = form.querySelector('button[type="submit"]');
+            const btn = form.querySelector('button[type="submit"]');
             setLoading(btn, true);
 
             const payload = {
@@ -288,15 +299,13 @@
         initRegisterForm();
         initForgotPassword();
 
-        // If on login page and already logged in, redirect away
+        // If already logged in, redirect away from login page immediately
         fetch('api/auth.php?action=check-session')
             .then(r => r.json())
             .then(d => {
-                if (d.success) {
-                    const redirect = d.data.user_type === 'volunteer'
-                        ? 'volunteer-dashboard.html'
-                        : 'donor-dashboard.html';
-                    window.location.href = redirect;
+                if (d.success && d.logged_in) {
+                    const dest = d.data?.redirect || redirectForRole(d.data?.user_type || 'donor');
+                    window.location.href = dest;
                 }
             })
             .catch(() => {});
