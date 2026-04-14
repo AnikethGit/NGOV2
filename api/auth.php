@@ -1,11 +1,13 @@
 <?php
 /**
  * api/auth.php
- * Handles: login, register, logout, check (session), update-profile, forgot-password
+ * Handles: login, register, logout, check-session, update-profile, forgot-password
  *
- * Column reference (must match database/schema.sql exactly):
- *   users.password_hash  (NOT users.password)
- *   users.user_type      (NOT users.role)
+ * Live DB column reference (u701659873_ngo_management.users):
+ *   full_name        VARCHAR(255)  NOT NULL
+ *   password_hash    VARCHAR(255)  NOT NULL
+ *   user_type        ENUM('admin','volunteer','donor')  DEFAULT 'donor'
+ *   email, phone, address, pan_number, status, newsletter_subscribed ...
  */
 
 header('Content-Type: application/json');
@@ -23,11 +25,9 @@ require_once '../includes/logger.php';
 // ── Session: must match csrf-token.php + security.php exactly
 if (session_status() === PHP_SESSION_NONE) {
     session_name('NGOV2_SESSION');
-
     $is_https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
              || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
              || (!empty($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443);
-
     session_set_cookie_params([
         'lifetime' => 7200,
         'path'     => '/',
@@ -38,26 +38,24 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Helper: resolve redirect URL from user_type
-// ─────────────────────────────────────────────────────────────────────────────
+// ── Redirect helper
 function redirectForRole(string $role): string {
     switch ($role) {
         case 'admin':     return 'admin-dashboard.html';
         case 'volunteer': return 'volunteer-dashboard.html';
-        default:          return 'donor-dashboard.html';
+        default:          return 'donor-dashboard.html'; // donor
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// GET: check-session, check, logout
-// ─────────────────────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════
+// GET — check-session / logout
+// ════════════════════════════════════════════════════════════
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $action = $_GET['action'] ?? '';
 
     if ($action === 'check' || $action === 'check-session') {
         if (!empty($_SESSION['logged_in'])) {
-            $role = $_SESSION['user_role'] ?? 'user';
+            $role = $_SESSION['user_role'] ?? 'donor';
             echo json_encode([
                 'success'   => true,
                 'logged_in' => true,
@@ -92,9 +90,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     exit;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════
 // POST actions
-// ─────────────────────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Invalid method']);
@@ -109,7 +107,7 @@ $action = trim($body['action'] ?? $_POST['action'] ?? '');
 try {
     $db = Database::getInstance();
 
-    // ── Login ──────────────────────────────────────────────────────────────
+    // ── LOGIN ───────────────────────────────────────────────────────
     if ($action === 'login') {
         $email    = Security::sanitize($body['email']    ?? '');
         $password = $body['password'] ?? '';
@@ -119,6 +117,7 @@ try {
             exit;
         }
 
+        // Rate-limit
         $attempts = $_SESSION['login_attempts'] ?? 0;
         $lockout  = $_SESSION['login_lockout']  ?? 0;
         if ($attempts >= 5 && time() < $lockout) {
@@ -127,9 +126,10 @@ try {
             exit;
         }
 
-        // Schema column is password_hash, user_type (not password, role)
         $user = $db->fetch(
-            "SELECT id, name, email, phone, password_hash, user_type, status FROM users WHERE email = ? LIMIT 1",
+            "SELECT id, full_name, email, phone, address, pan_number,
+                    password_hash, user_type, status
+             FROM users WHERE email = ? LIMIT 1",
             [$email]
         );
 
@@ -149,16 +149,16 @@ try {
 
         unset($_SESSION['login_attempts'], $_SESSION['login_lockout']);
 
-        $role = $user['user_type'] ?? 'user';
+        $role = $user['user_type'] ?? 'donor';
         session_regenerate_id(true);
         $_SESSION['logged_in']    = true;
         $_SESSION['user_id']      = $user['id'];
-        $_SESSION['user_name']    = $user['name'] ?? '';
+        $_SESSION['user_name']    = $user['full_name'] ?? '';  // live column: full_name
         $_SESSION['user_email']   = $user['email'];
         $_SESSION['user_role']    = $role;
-        $_SESSION['user_phone']   = $user['phone']   ?? '';
-        $_SESSION['user_address'] = '';
-        $_SESSION['user_pan']     = '';
+        $_SESSION['user_phone']   = $user['phone']      ?? '';
+        $_SESSION['user_address'] = $user['address']    ?? '';
+        $_SESSION['user_pan']     = $user['pan_number'] ?? '';
 
         $logger = new Logger();
         $logger->log($user['id'], 'login', 'User logged in', 'user', $user['id']);
@@ -171,7 +171,7 @@ try {
                 'user_type' => $role,
                 'user' => [
                     'id'    => $user['id'],
-                    'name'  => $user['name'] ?? '',
+                    'name'  => $user['full_name'] ?? '',
                     'email' => $user['email'],
                     'role'  => $role,
                 ]
@@ -180,7 +180,7 @@ try {
         exit;
     }
 
-    // ── Register ───────────────────────────────────────────────────────────
+    // ── REGISTER ───────────────────────────────────────────────────
     if ($action === 'register') {
         $csrfToken = $body['csrf_token'] ?? '';
         if (!Security::validateCSRFToken($csrfToken)) {
@@ -188,39 +188,39 @@ try {
             exit;
         }
 
-        $name      = Security::sanitize($body['name']      ?? '');
+        $fullName  = Security::sanitize($body['name']      ?? $body['full_name'] ?? '');
         $email     = Security::sanitize($body['email']     ?? '');
         $password  = $body['password']  ?? '';
         $phone     = Security::sanitize($body['phone']     ?? '');
-        // user_type ENUM: 'user', 'volunteer', 'admin'
-        // JS sends 'donor' — map it to 'user' to match schema ENUM
-        $requested = $body['user_type'] ?? $body['role'] ?? 'user';
-        $typeMap   = ['donor' => 'user', 'user' => 'user', 'volunteer' => 'volunteer'];
-        $userType  = $typeMap[$requested] ?? 'user';
+        // user_type ENUM: 'admin','volunteer','donor'  — default donor
+        $requested = strtolower($body['user_type'] ?? $body['role'] ?? 'donor');
+        $userType  = in_array($requested, ['admin', 'volunteer', 'donor']) ? $requested : 'donor';
+        // never allow self-registration as admin
+        if ($userType === 'admin') $userType = 'donor';
 
-        if (!$name)                                     throw new Exception('Name is required');
-        if (!Security::validateEmail($email))           throw new Exception('Valid email is required');
-        if (strlen($password) < 8)                      throw new Exception('Password must be at least 8 characters');
-        if ($phone && !Security::validatePhone($phone)) throw new Exception('Invalid phone number');
+        if (!$fullName)                                    throw new Exception('Full name is required');
+        if (!Security::validateEmail($email))              throw new Exception('Valid email is required');
+        if (strlen($password) < 8)                         throw new Exception('Password must be at least 8 characters');
+        if ($phone && !Security::validatePhone($phone))    throw new Exception('Invalid phone number');
 
         $exists = $db->fetch("SELECT id FROM users WHERE email = ? LIMIT 1", [$email]);
         if ($exists) throw new Exception('An account with this email already exists');
 
         $hashed = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
         $userId = $db->insert('users', [
-            'name'          => $name,
-            'email'         => $email,
-            'password_hash' => $hashed,   // schema column name
-            'phone'         => $phone,
-            'user_type'     => $userType, // schema column name
-            'status'        => 'active',
-            'newsletter'    => (int)($body['newsletter'] ?? 0),
+            'full_name'             => $fullName,        // live column
+            'email'                 => $email,
+            'password_hash'         => $hashed,          // live column
+            'phone'                 => $phone,
+            'user_type'             => $userType,        // live column
+            'status'                => 'active',
+            'newsletter_subscribed' => (int)($body['newsletter'] ?? 0),
         ]);
 
         session_regenerate_id(true);
         $_SESSION['logged_in']  = true;
         $_SESSION['user_id']    = $userId;
-        $_SESSION['user_name']  = $name;
+        $_SESSION['user_name']  = $fullName;
         $_SESSION['user_email'] = $email;
         $_SESSION['user_role']  = $userType;
 
@@ -238,7 +238,7 @@ try {
         exit;
     }
 
-    // ── Forgot Password ────────────────────────────────────────────────────
+    // ── FORGOT PASSWORD ───────────────────────────────────────────────
     if ($action === 'forgot-password') {
         $csrfToken = $body['csrf_token'] ?? '';
         if (!Security::validateCSRFToken($csrfToken)) {
@@ -253,7 +253,7 @@ try {
         }
 
         $user = $db->fetch(
-            "SELECT id, name FROM users WHERE email = ? AND status = 'active' LIMIT 1",
+            "SELECT id, full_name FROM users WHERE email = ? AND status = 'active' LIMIT 1",
             [$email]
         );
 
@@ -261,19 +261,20 @@ try {
             $token   = bin2hex(random_bytes(32));
             $expires = date('Y-m-d H:i:s', time() + 3600);
             try {
+                // Use live password_reset_token + password_reset_expires columns
                 $db->query(
-                    "INSERT INTO password_resets (email, token, expires_at, created_at)
-                     VALUES (?, ?, ?, NOW())",
-                    [$email, hash('sha256', $token), $expires]
+                    "UPDATE users SET password_reset_token = ?, password_reset_expires = ? WHERE id = ?",
+                    [hash('sha256', $token), $expires, $user['id']]
                 );
 
                 $resetLink = rtrim(getenv('APP_URL') ?: 'https://sadgurubharadwaja.org', '/')
                            . '/reset-password.html?token=' . urlencode($token);
 
                 if (function_exists('mail')) {
+                    $name    = $user['full_name'];
                     $subject = 'Password Reset — Sadguru Bharadwaja Seva Mandali Bangalore Trust';
-                    $html    = "<p>Hello {$user['name']},</p>"
-                             . "<p>Click below to reset your password (link expires in 1 hour):</p>"
+                    $html    = "<p>Hello {$name},</p>"
+                             . "<p>Click below to reset your password (expires in 1 hour):</p>"
                              . "<p><a href='{$resetLink}'>{$resetLink}</a></p>"
                              . "<p>If you didn't request this, please ignore this email.</p>"
                              . "<p>Warm regards,<br>SDSMBT Team</p>";
@@ -292,7 +293,7 @@ try {
         exit;
     }
 
-    // ── Update Profile ─────────────────────────────────────────────────────
+    // ── UPDATE PROFILE ───────────────────────────────────────────────
     if ($action === 'update-profile') {
         if (empty($_SESSION['logged_in'])) {
             http_response_code(401);
@@ -318,10 +319,10 @@ try {
         }
 
         $update = ['updated_at' => date('Y-m-d H:i:s')];
-        if ($name)    $update['name']       = $name;
-        if ($phone)   $update['phone']      = $phone;
-        if ($address) $update['address']    = $address;
-        if ($pan)     $update['pan_number'] = $pan;
+        if ($name)    $update['full_name']   = $name;    // live column
+        if ($phone)   $update['phone']       = $phone;
+        if ($address) $update['address']     = $address;
+        if ($pan)     $update['pan_number']  = $pan;
 
         $db->update('users', $update, 'id = ?', [$userId]);
 
