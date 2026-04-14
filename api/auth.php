@@ -1,7 +1,7 @@
 <?php
 /**
  * api/auth.php
- * Handles: login, register, logout, check (session), update-profile
+ * Handles: login, register, logout, check (session), update-profile, forgot-password
  */
 
 header('Content-Type: application/json');
@@ -16,7 +16,23 @@ require_once '../includes/database.php';
 require_once '../includes/security.php';
 require_once '../includes/logger.php';
 
-if (session_status() === PHP_SESSION_NONE) session_start();
+// ── Session: must match csrf-token.php exactly so both files share one session
+if (session_status() === PHP_SESSION_NONE) {
+    session_name('NGOV2_SESSION');
+
+    $is_https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+             || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+             || (!empty($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443);
+
+    session_set_cookie_params([
+        'lifetime' => 7200,
+        'path'     => '/',
+        'secure'   => $is_https,
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+    session_start();
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helper: resolve redirect URL from role
@@ -25,17 +41,16 @@ function redirectForRole(string $role): string {
     switch ($role) {
         case 'admin':     return 'admin-dashboard.html';
         case 'volunteer': return 'volunteer-dashboard.html';
-        default:          return 'donor-dashboard.html';   // donor + any unknown
+        default:          return 'donor-dashboard.html';
     }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET actions
+// GET actions (check-session, check, logout)
 // ─────────────────────────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $action = $_GET['action'] ?? '';
 
-    // Session check – supports both 'check' and 'check-session' for compatibility
     if ($action === 'check' || $action === 'check-session') {
         if (!empty($_SESSION['logged_in'])) {
             $role = $_SESSION['user_role'] ?? 'donor';
@@ -63,13 +78,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         exit;
     }
 
-    // Logout
     if ($action === 'logout') {
         session_destroy();
         echo json_encode(['success' => true, 'message' => 'Logged out']);
         exit;
     }
 
+    // Any other GET action is not supported
     echo json_encode(['success' => false, 'message' => 'Unknown action']);
     exit;
 }
@@ -83,9 +98,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Decode JSON body (auth-enhanced.js sends JSON, not form-encoded)
-$body   = json_decode(file_get_contents('php://input'), true) ?? [];
-$action = $body['action'] ?? $_POST['action'] ?? '';
+// Decode JSON body — auth-enhanced.js sends JSON, not form-encoded.
+// FIX: action is read from body only (JS no longer appends ?action= to URL).
+$raw    = file_get_contents('php://input');
+$body   = json_decode($raw, true);
+if (!is_array($body)) $body = [];
+$action = trim($body['action'] ?? $_POST['action'] ?? '');
 
 try {
     $db = Database::getInstance();
@@ -100,7 +118,6 @@ try {
             exit;
         }
 
-        // Rate-limit check
         $attempts = $_SESSION['login_attempts'] ?? 0;
         $lockout  = $_SESSION['login_lockout']  ?? 0;
         if ($attempts >= 5 && time() < $lockout) {
@@ -114,7 +131,7 @@ try {
         if (!$user || !password_verify($password, $user['password'])) {
             $_SESSION['login_attempts'] = $attempts + 1;
             if ($_SESSION['login_attempts'] >= 5) {
-                $_SESSION['login_lockout'] = time() + 900; // 15 min
+                $_SESSION['login_lockout'] = time() + 900;
             }
             echo json_encode(['success' => false, 'message' => 'Invalid email or password']);
             exit;
@@ -125,10 +142,8 @@ try {
             exit;
         }
 
-        // Reset rate-limit
         unset($_SESSION['login_attempts'], $_SESSION['login_lockout']);
 
-        // Store session
         $role = $user['role'] ?? 'donor';
         session_regenerate_id(true);
         $_SESSION['logged_in']    = true;
@@ -172,13 +187,12 @@ try {
         $email     = Security::sanitize($body['email']     ?? '');
         $password  = $body['password']  ?? '';
         $phone     = Security::sanitize($body['phone']     ?? '');
-        // Only allow donor or volunteer self-registration; admin cannot self-register
         $requested = $body['user_type'] ?? 'donor';
         $role      = in_array($requested, ['donor', 'volunteer']) ? $requested : 'donor';
 
-        if (!$name)                                    throw new Exception('Name is required');
-        if (!Security::validateEmail($email))          throw new Exception('Valid email is required');
-        if (strlen($password) < 8)                     throw new Exception('Password must be at least 8 characters');
+        if (!$name)                                     throw new Exception('Name is required');
+        if (!Security::validateEmail($email))           throw new Exception('Valid email is required');
+        if (strlen($password) < 8)                      throw new Exception('Password must be at least 8 characters');
         if ($phone && !Security::validatePhone($phone)) throw new Exception('Invalid phone number');
 
         $exists = $db->fetch("SELECT id FROM users WHERE email = ? LIMIT 1", [$email]);
@@ -211,6 +225,66 @@ try {
                 'redirect'  => redirectForRole($role),
                 'user_type' => $role,
             ]
+        ]);
+        exit;
+    }
+
+    // ── Forgot Password ────────────────────────────────────────────────────
+    // NOTE: This handler was completely missing before — JS called it but PHP
+    // had no case, causing another 'Unknown action' on the forgot-password form.
+    if ($action === 'forgot-password') {
+        $csrfToken = $body['csrf_token'] ?? '';
+        if (!Security::validateCSRFToken($csrfToken)) {
+            echo json_encode(['success' => false, 'message' => 'Invalid security token. Please refresh and try again.']);
+            exit;
+        }
+
+        $email = Security::sanitize($body['email'] ?? '');
+        if (!Security::validateEmail($email)) {
+            echo json_encode(['success' => false, 'message' => 'Please enter a valid email address.']);
+            exit;
+        }
+
+        // Always return the same success message whether the email exists or not
+        // (prevents email enumeration attacks)
+        $user = $db->fetch("SELECT id, name FROM users WHERE email = ? AND status = 'active' LIMIT 1", [$email]);
+
+        if ($user) {
+            // Generate a secure reset token valid for 1 hour
+            $token   = bin2hex(random_bytes(32));
+            $expires = date('Y-m-d H:i:s', time() + 3600);
+
+            // Store token in DB (add password_resets table if not present — see note below)
+            try {
+                $db->query(
+                    "INSERT INTO password_resets (user_id, token, expires_at, created_at)
+                     VALUES (?, ?, ?, NOW())
+                     ON DUPLICATE KEY UPDATE token = VALUES(token), expires_at = VALUES(expires_at), created_at = NOW()",
+                    [$user['id'], hash('sha256', $token), $expires]
+                );
+
+                // Send reset email
+                $resetLink = rtrim(getenv('APP_URL') ?: 'https://sadgurubharadwaja.org', '/') . '/reset-password.html?token=' . urlencode($token);
+
+                if (function_exists('mail')) {
+                    $subject = 'Password Reset - Sadguru Bharadwaja Seva Mandali Bangalore Trust';
+                    $html    = "<p>Hello {$user['name']},</p>"
+                             . "<p>A password reset was requested for your account. Click the link below to set a new password:</p>"
+                             . "<p><a href='{$resetLink}'>{$resetLink}</a></p>"
+                             . "<p>This link expires in 1 hour. If you didn't request this, ignore this email.</p>"
+                             . "<p>Warm regards,<br>SDSMBT Team</p>";
+                    $headers = "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\nFrom: noreply@sadgurubharadwaja.org";
+                    mail($email, $subject, $html, $headers);
+                }
+            } catch (Exception $ignored) {
+                // Don't expose DB errors — fall through to the generic success response
+            }
+        }
+
+        // Generic response — never reveal whether the email exists
+        echo json_encode([
+            'success' => true,
+            'message' => 'If an account with that email exists, a password reset link has been sent.'
         ]);
         exit;
     }

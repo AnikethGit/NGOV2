@@ -142,8 +142,13 @@
     }
 
     // ── API call ────────────────────────────────────────────────────────────
+    // FIX: Do NOT append ?action= to the URL for POST requests.
+    // The action is already inside the JSON body which auth.php reads via
+    // file_get_contents('php://input'). Appending it to the query string
+    // caused Hostinger's PHP to route some requests into the GET handler
+    // branch, returning 'Unknown action'.
     async function authRequest(action, payload) {
-        const res = await fetch('api/auth.php?action=' + action, {
+        const res = await fetch('api/auth.php', {
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({ ...payload, action })
@@ -174,7 +179,6 @@
                 const data = await authRequest('login', payload);
                 if (data.success) {
                     showMessage('loginForm', data.message, 'success');
-                    // Use server-provided redirect; fall back to client-side role mapping
                     const dest = data.data?.redirect || redirectForRole(data.data?.user_type || data.data?.user?.role || 'donor');
                     setTimeout(() => { window.location.href = dest; }, 800);
                 } else {
