@@ -2,6 +2,10 @@
 /**
  * api/auth.php
  * Handles: login, register, logout, check (session), update-profile, forgot-password
+ *
+ * Column reference (must match database/schema.sql exactly):
+ *   users.password_hash  (NOT users.password)
+ *   users.user_type      (NOT users.role)
  */
 
 header('Content-Type: application/json');
@@ -16,7 +20,7 @@ require_once '../includes/database.php';
 require_once '../includes/security.php';
 require_once '../includes/logger.php';
 
-// ── Session: must match csrf-token.php exactly so both files share one session
+// ── Session: must match csrf-token.php + security.php exactly
 if (session_status() === PHP_SESSION_NONE) {
     session_name('NGOV2_SESSION');
 
@@ -35,7 +39,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Helper: resolve redirect URL from role
+// Helper: resolve redirect URL from user_type
 // ─────────────────────────────────────────────────────────────────────────────
 function redirectForRole(string $role): string {
     switch ($role) {
@@ -46,14 +50,14 @@ function redirectForRole(string $role): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET actions (check-session, check, logout)
+// GET: check-session, check, logout
 // ─────────────────────────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $action = $_GET['action'] ?? '';
 
     if ($action === 'check' || $action === 'check-session') {
         if (!empty($_SESSION['logged_in'])) {
-            $role = $_SESSION['user_role'] ?? 'donor';
+            $role = $_SESSION['user_role'] ?? 'user';
             echo json_encode([
                 'success'   => true,
                 'logged_in' => true,
@@ -84,7 +88,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         exit;
     }
 
-    // Any other GET action is not supported
     echo json_encode(['success' => false, 'message' => 'Unknown action']);
     exit;
 }
@@ -98,8 +101,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Decode JSON body — auth-enhanced.js sends JSON, not form-encoded.
-// FIX: action is read from body only (JS no longer appends ?action= to URL).
 $raw    = file_get_contents('php://input');
 $body   = json_decode($raw, true);
 if (!is_array($body)) $body = [];
@@ -126,9 +127,13 @@ try {
             exit;
         }
 
-        $user = $db->fetch("SELECT * FROM users WHERE email = ? LIMIT 1", [$email]);
+        // Schema column is password_hash, user_type (not password, role)
+        $user = $db->fetch(
+            "SELECT id, name, email, phone, password_hash, user_type, status FROM users WHERE email = ? LIMIT 1",
+            [$email]
+        );
 
-        if (!$user || !password_verify($password, $user['password'])) {
+        if (!$user || !password_verify($password, $user['password_hash'])) {
             $_SESSION['login_attempts'] = $attempts + 1;
             if ($_SESSION['login_attempts'] >= 5) {
                 $_SESSION['login_lockout'] = time() + 900;
@@ -144,16 +149,16 @@ try {
 
         unset($_SESSION['login_attempts'], $_SESSION['login_lockout']);
 
-        $role = $user['role'] ?? 'donor';
+        $role = $user['user_type'] ?? 'user';
         session_regenerate_id(true);
         $_SESSION['logged_in']    = true;
         $_SESSION['user_id']      = $user['id'];
-        $_SESSION['user_name']    = $user['name'] ?? $user['full_name'] ?? '';
+        $_SESSION['user_name']    = $user['name'] ?? '';
         $_SESSION['user_email']   = $user['email'];
         $_SESSION['user_role']    = $role;
-        $_SESSION['user_phone']   = $user['phone']      ?? '';
-        $_SESSION['user_address'] = $user['address']    ?? '';
-        $_SESSION['user_pan']     = $user['pan_number'] ?? '';
+        $_SESSION['user_phone']   = $user['phone']   ?? '';
+        $_SESSION['user_address'] = '';
+        $_SESSION['user_pan']     = '';
 
         $logger = new Logger();
         $logger->log($user['id'], 'login', 'User logged in', 'user', $user['id']);
@@ -166,7 +171,7 @@ try {
                 'user_type' => $role,
                 'user' => [
                     'id'    => $user['id'],
-                    'name'  => $_SESSION['user_name'],
+                    'name'  => $user['name'] ?? '',
                     'email' => $user['email'],
                     'role'  => $role,
                 ]
@@ -187,8 +192,11 @@ try {
         $email     = Security::sanitize($body['email']     ?? '');
         $password  = $body['password']  ?? '';
         $phone     = Security::sanitize($body['phone']     ?? '');
-        $requested = $body['user_type'] ?? 'donor';
-        $role      = in_array($requested, ['donor', 'volunteer']) ? $requested : 'donor';
+        // user_type ENUM: 'user', 'volunteer', 'admin'
+        // JS sends 'donor' — map it to 'user' to match schema ENUM
+        $requested = $body['user_type'] ?? $body['role'] ?? 'user';
+        $typeMap   = ['donor' => 'user', 'user' => 'user', 'volunteer' => 'volunteer'];
+        $userType  = $typeMap[$requested] ?? 'user';
 
         if (!$name)                                     throw new Exception('Name is required');
         if (!Security::validateEmail($email))           throw new Exception('Valid email is required');
@@ -200,12 +208,13 @@ try {
 
         $hashed = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
         $userId = $db->insert('users', [
-            'name'     => $name,
-            'email'    => $email,
-            'password' => $hashed,
-            'phone'    => $phone,
-            'role'     => $role,
-            'status'   => 'active',
+            'name'          => $name,
+            'email'         => $email,
+            'password_hash' => $hashed,   // schema column name
+            'phone'         => $phone,
+            'user_type'     => $userType, // schema column name
+            'status'        => 'active',
+            'newsletter'    => (int)($body['newsletter'] ?? 0),
         ]);
 
         session_regenerate_id(true);
@@ -213,7 +222,7 @@ try {
         $_SESSION['user_id']    = $userId;
         $_SESSION['user_name']  = $name;
         $_SESSION['user_email'] = $email;
-        $_SESSION['user_role']  = $role;
+        $_SESSION['user_role']  = $userType;
 
         $logger = new Logger();
         $logger->log($userId, 'register', 'New user registered', 'user', $userId);
@@ -222,16 +231,14 @@ try {
             'success' => true,
             'message' => 'Account created successfully! Redirecting...',
             'data' => [
-                'redirect'  => redirectForRole($role),
-                'user_type' => $role,
+                'redirect'  => redirectForRole($userType),
+                'user_type' => $userType,
             ]
         ]);
         exit;
     }
 
     // ── Forgot Password ────────────────────────────────────────────────────
-    // NOTE: This handler was completely missing before — JS called it but PHP
-    // had no case, causing another 'Unknown action' on the forgot-password form.
     if ($action === 'forgot-password') {
         $csrfToken = $body['csrf_token'] ?? '';
         if (!Security::validateCSRFToken($csrfToken)) {
@@ -245,43 +252,39 @@ try {
             exit;
         }
 
-        // Always return the same success message whether the email exists or not
-        // (prevents email enumeration attacks)
-        $user = $db->fetch("SELECT id, name FROM users WHERE email = ? AND status = 'active' LIMIT 1", [$email]);
+        $user = $db->fetch(
+            "SELECT id, name FROM users WHERE email = ? AND status = 'active' LIMIT 1",
+            [$email]
+        );
 
         if ($user) {
-            // Generate a secure reset token valid for 1 hour
             $token   = bin2hex(random_bytes(32));
             $expires = date('Y-m-d H:i:s', time() + 3600);
-
-            // Store token in DB (add password_resets table if not present — see note below)
             try {
                 $db->query(
-                    "INSERT INTO password_resets (user_id, token, expires_at, created_at)
-                     VALUES (?, ?, ?, NOW())
-                     ON DUPLICATE KEY UPDATE token = VALUES(token), expires_at = VALUES(expires_at), created_at = NOW()",
-                    [$user['id'], hash('sha256', $token), $expires]
+                    "INSERT INTO password_resets (email, token, expires_at, created_at)
+                     VALUES (?, ?, ?, NOW())",
+                    [$email, hash('sha256', $token), $expires]
                 );
 
-                // Send reset email
-                $resetLink = rtrim(getenv('APP_URL') ?: 'https://sadgurubharadwaja.org', '/') . '/reset-password.html?token=' . urlencode($token);
+                $resetLink = rtrim(getenv('APP_URL') ?: 'https://sadgurubharadwaja.org', '/')
+                           . '/reset-password.html?token=' . urlencode($token);
 
                 if (function_exists('mail')) {
-                    $subject = 'Password Reset - Sadguru Bharadwaja Seva Mandali Bangalore Trust';
+                    $subject = 'Password Reset — Sadguru Bharadwaja Seva Mandali Bangalore Trust';
                     $html    = "<p>Hello {$user['name']},</p>"
-                             . "<p>A password reset was requested for your account. Click the link below to set a new password:</p>"
+                             . "<p>Click below to reset your password (link expires in 1 hour):</p>"
                              . "<p><a href='{$resetLink}'>{$resetLink}</a></p>"
-                             . "<p>This link expires in 1 hour. If you didn't request this, ignore this email.</p>"
+                             . "<p>If you didn't request this, please ignore this email.</p>"
                              . "<p>Warm regards,<br>SDSMBT Team</p>";
-                    $headers = "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\nFrom: noreply@sadgurubharadwaja.org";
-                    mail($email, $subject, $html, $headers);
+                    mail($email, $subject, $html,
+                        "MIME-Version: 1.0\r\nContent-Type: text/html; charset=UTF-8\r\n"
+                        . "From: noreply@sadgurubharadwaja.org"
+                    );
                 }
-            } catch (Exception $ignored) {
-                // Don't expose DB errors — fall through to the generic success response
-            }
+            } catch (Exception $ignored) {}
         }
 
-        // Generic response — never reveal whether the email exists
         echo json_encode([
             'success' => true,
             'message' => 'If an account with that email exists, a password reset link has been sent.'
@@ -289,7 +292,7 @@ try {
         exit;
     }
 
-    // ── Update profile ─────────────────────────────────────────────────────
+    // ── Update Profile ─────────────────────────────────────────────────────
     if ($action === 'update-profile') {
         if (empty($_SESSION['logged_in'])) {
             http_response_code(401);
