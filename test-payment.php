@@ -4,7 +4,7 @@
  * DEV ONLY — delete from server before going live.
  */
 
-define('TEST_PASSWORD', '');
+define('TEST_PASSWORD', 'ngov2test2026');
 
 session_start();
 if (!isset($_SESSION['test_auth'])) {
