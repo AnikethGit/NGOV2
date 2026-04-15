@@ -34,7 +34,7 @@ require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/database.php';
 
 $db  = Database::getInstance();
-$pdo = $db->getConnection();
+$pdo = $db->getPdo();   // ← was getConnection() which doesn't exist; getPdo() is the correct method
 $log    = [];
 $result = null;
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
@@ -55,7 +55,7 @@ if ($action === 'create_donation') {
     $donor_name  = trim($_POST['donor_name']     ?? 'Test Donor');
     $donor_email = trim($_POST['donor_email']    ?? 'test@example.com');
     $donor_phone = trim($_POST['donor_phone']    ?? '9999999999');
-    $cause       = trim($_POST['cause']          ?? 'general'); // matches DB column name
+    $cause       = trim($_POST['cause']          ?? 'general');
     $frequency   = trim($_POST['frequency']      ?? 'one-time');
 
     if ($amount < 1) { $result = ['error' => 'Amount must be ≥ ₹1']; goto render; }
@@ -74,7 +74,7 @@ if ($action === 'create_donation') {
         goto render;
     }
 
-    // Core fields (these must exist — if missing, show a clear error per field)
+    // Core fields
     $core = [
         'transaction_id' => $transaction_id,
         'donor_name'     => $donor_name,
@@ -84,7 +84,6 @@ if ($action === 'create_donation') {
     ];
 
     // Optional fields — only inserted if column exists in live table
-    // Maps: PHP value  =>  DB column name
     $optional_map = [
         'cause'                => $cause,
         'frequency'            => $frequency,
