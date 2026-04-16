@@ -19,7 +19,24 @@ require_once '../includes/database.php';
 require_once '../includes/security.php';
 require_once '../includes/logger.php';
 
-if (session_status() === PHP_SESSION_NONE) session_start();
+// Start shared NGOV2_SESSION so CSRF token from api/csrf-token.php is visible here
+if (session_status() === PHP_SESSION_NONE) {
+    session_name('NGOV2_SESSION');
+
+    $is_https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+             || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+             || (!empty($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443);
+
+    session_set_cookie_params([
+        'lifetime' => 7200,
+        'path'     => '/',
+        'secure'   => $is_https,
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+
+    session_start();
+}
 
 // ── GET: user history ────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['action'] ?? '') === 'user-history') {
