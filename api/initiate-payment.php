@@ -12,7 +12,11 @@ require_once '../includes/PaytmChecksum.php';
 
 header('Content-Type: application/json');
 
-if (session_status() === PHP_SESSION_NONE) session_start();
+// NOTE: Do NOT call session_start() here.
+// Security::validateCSRFToken() will internally start the shared
+// NGOV2_SESSION (via Security::ensureSession) using the same cookie
+// settings as api/csrf-token.php, so it can see the token that was
+// previously stored in the session.
 
 // CSRF check
 $csrfToken = $_POST['csrf_token'] ?? '';
