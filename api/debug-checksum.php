@@ -10,7 +10,7 @@ $paytm_params = [
     'MID'              => PAYTM_MID,
     'WEBSITE'          => PAYTM_WEBSITE,
     'CHANNEL_ID'       => 'WEB',
-    'INDUSTRY_TYPE_ID' => 'Ecommerce',
+    'INDUSTRY_TYPE_ID' => 'Retail',
     'ORDER_ID'         => 'DEBUG_' . time(),
     'CUST_ID'          => 'CUST_DEBUG_1',
     'TXN_AMOUNT'       => '1.00',
@@ -41,12 +41,11 @@ $hasSpace = strpos($checksum, ' ') !== false;
 </style>
 </head>
 <body>
-<h2>Paytm Live Form Debug</h2>
+<h2>Paytm Debug — INDUSTRY_TYPE_ID: Retail</h2>
 
 <div class="info">
   <strong>CHECKSUMHASH:</strong> <?= htmlspecialchars($checksum) ?><br>
-  <strong>Length:</strong> <?= $len ?> chars 
-    <?= $len > 80 ? '<span class="ok">✔ AES format (expected by Paytm)</span>' : '<span class="err">✘ HMAC format (Paytm may reject)</span>' ?><br>
+  <strong>Length:</strong> <?= $len ?> chars<br>
   <strong>Has = signs:</strong> <?= $hasEq ? '<span class="ok">YES (AES base64)</span>' : '<span class="err">NO</span>' ?><br>
   <strong>Has spaces:</strong> <?= $hasSpace ? '<span class="err">YES — problem!</span>' : '<span class="ok">NO — good</span>' ?><br>
   <strong>Paytm URL:</strong> <?= htmlspecialchars($paytm_url) ?>
@@ -67,7 +66,7 @@ $hasSpace = strpos($checksum, ' ') !== false;
   <?php foreach ($paytm_params as $k => $v): ?>
     <input type="hidden" name="<?= htmlspecialchars($k) ?>" value="<?= htmlspecialchars($v) ?>">
   <?php endforeach; ?>
-  <button type="submit" class="btn">Submit ₹1 test to Paytm Gateway &rarr;</button>
+  <button type="submit" class="btn">Submit ₹1 test — INDUSTRY_TYPE_ID: Retail &rarr;</button>
 </form>
 </body>
 </html>
