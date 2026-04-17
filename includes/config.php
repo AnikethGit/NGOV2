@@ -143,6 +143,9 @@ if (!empty($env)) {
 }
 
 // Paytm Gateway Constants
+// Hosts updated per Paytm Merchant Integrations team (April 2026):
+//   OLD staging: securegw-stage.paytm.in      → NEW: securestage.paytmpayments.com
+//   OLD prod:    securegw.paytm.in             → NEW: secure.paytmpayments.com
 $paytm_env = $env['PAYTM_ENV'] ?? 'TEST';
 define('PAYTM_MID',           $env['PAYTM_MID']           ?? '');
 define('PAYTM_MERCHANT_KEY',  $env['PAYTM_MERCHANT_KEY']  ?? '');
@@ -151,11 +154,11 @@ define('PAYTM_ENV',           $paytm_env);
 define('PAYTM_CALLBACK_URL',  $env['PAYTM_CALLBACK_URL']  ?? '');
 
 if ($paytm_env === 'PROD') {
-    define('PAYTM_TXN_URL',    'https://securegw.paytm.in/theia/processTransaction');
-    define('PAYTM_STATUS_URL', 'https://securegw.paytm.in/order/status');
+    define('PAYTM_TXN_URL',    'https://secure.paytmpayments.com/theia/processTransaction');
+    define('PAYTM_STATUS_URL', 'https://secure.paytmpayments.com/order/status');
 } else {
-    define('PAYTM_TXN_URL',    'https://securegw-stage.paytm.in/theia/processTransaction');
-    define('PAYTM_STATUS_URL', 'https://securegw-stage.paytm.in/order/status');
+    define('PAYTM_TXN_URL',    'https://securestage.paytmpayments.com/theia/processTransaction');
+    define('PAYTM_STATUS_URL', 'https://securestage.paytmpayments.com/order/status');
 }
 
 // Set timezone
