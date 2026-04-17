@@ -1,9 +1,6 @@
 <?php
 /**
  * TEMPORARY DEBUG FILE — DELETE AFTER TESTING
- * Visit: https://sadgurubharadwaja.org/api/debug-checksum.php
- * This renders an actual Paytm form exactly as initiate-payment.php builds it.
- * Click "Submit to Paytm" to test the live gateway.
  */
 
 require_once '../includes/config.php';
@@ -25,50 +22,52 @@ $paytm_params = [
 $checksum = PaytmChecksum::generateSignature($paytm_params, PAYTM_MERCHANT_KEY);
 $paytm_params['CHECKSUMHASH'] = $checksum;
 $paytm_url = PAYTM_TXN_URL;
+
+$len      = strlen($checksum);
+$hasEq    = strpos($checksum, '=') !== false;
+$hasSpace = strpos($checksum, ' ') !== false;
 ?>
 <!DOCTYPE html>
 <html>
 <head><title>Paytm Debug Form</title>
 <style>
-  body { font-family: monospace; padding: 20px; background: #f0f0f0; }
-  table { border-collapse: collapse; width: 100%; margin-bottom: 20px; background: #fff; }
-  td, th { border: 1px solid #ccc; padding: 8px 12px; text-align: left; font-size: 13px; }
-  th { background: #333; color: #fff; }
-  .ok { color: green; font-weight: bold; }
-  .err { color: red; font-weight: bold; }
-  .btn { background: #0066cc; color: #fff; padding: 12px 28px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; }
+  body{font-family:monospace;padding:20px;background:#f0f0f0}
+  table{border-collapse:collapse;width:100%;margin-bottom:20px;background:#fff}
+  td,th{border:1px solid #ccc;padding:8px 12px;font-size:13px;text-align:left;word-break:break-all}
+  th{background:#333;color:#fff}
+  .ok{color:green;font-weight:bold} .err{color:red;font-weight:bold}
+  .btn{background:#0066cc;color:#fff;padding:12px 28px;border:none;border-radius:6px;font-size:16px;cursor:pointer;margin-top:10px}
+  .info{background:#fff;padding:15px;border-radius:6px;margin-bottom:20px;border-left:4px solid #0066cc}
 </style>
 </head>
 <body>
 <h2>Paytm Live Form Debug</h2>
-<p>Paytm URL: <strong><?= htmlspecialchars($paytm_url) ?></strong></p>
+
+<div class="info">
+  <strong>CHECKSUMHASH:</strong> <?= htmlspecialchars($checksum) ?><br>
+  <strong>Length:</strong> <?= $len ?> chars 
+    <?= $len > 80 ? '<span class="ok">✔ AES format (expected by Paytm)</span>' : '<span class="err">✘ HMAC format (Paytm may reject)</span>' ?><br>
+  <strong>Has = signs:</strong> <?= $hasEq ? '<span class="ok">YES (AES base64)</span>' : '<span class="err">NO</span>' ?><br>
+  <strong>Has spaces:</strong> <?= $hasSpace ? '<span class="err">YES — problem!</span>' : '<span class="ok">NO — good</span>' ?><br>
+  <strong>Paytm URL:</strong> <?= htmlspecialchars($paytm_url) ?>
+</div>
 
 <table>
-  <tr><th>Parameter</th><th>Value</th><th>Length</th><th>Check</th></tr>
-  <?php foreach ($paytm_params as $k => $v):
-    $len = strlen($v);
-    $hasIssue = (strpos($v, ' ') !== false || strpos($v, '=') !== false) && $k === 'CHECKSUMHASH';
-  ?>
+  <tr><th>Parameter</th><th>Value</th><th>Length</th></tr>
+  <?php foreach ($paytm_params as $k => $v): ?>
   <tr>
     <td><?= htmlspecialchars($k) ?></td>
-    <td style="word-break:break-all"><?= htmlspecialchars($v) ?></td>
-    <td><?= $len ?></td>
-    <td><?= $hasIssue ? '<span class="err">FAIL</span>' : '<span class="ok">OK</span>' ?></td>
+    <td><?= htmlspecialchars($v) ?></td>
+    <td><?= strlen($v) ?></td>
   </tr>
   <?php endforeach; ?>
 </table>
-
-<p>CHECKSUMHASH length: <strong><?= strlen($paytm_params['CHECKSUMHASH']) ?> chars</strong>
-  <?= strlen($paytm_params['CHECKSUMHASH']) === 68 ? '<span class="ok">✔ Correct</span>' : '<span class="err">✘ Wrong</span>' ?>
-</p>
 
 <form method="POST" action="<?= htmlspecialchars($paytm_url) ?>">
   <?php foreach ($paytm_params as $k => $v): ?>
     <input type="hidden" name="<?= htmlspecialchars($k) ?>" value="<?= htmlspecialchars($v) ?>">
   <?php endforeach; ?>
-  <button type="submit" class="btn">Submit to Paytm Gateway &rarr;</button>
+  <button type="submit" class="btn">Submit ₹1 test to Paytm Gateway &rarr;</button>
 </form>
-
-<p style="color:#999;margin-top:20px;font-size:12px">Amount: &#8377;1.00 (minimum test). Order ID: <?= htmlspecialchars($paytm_params['ORDER_ID']) ?></p>
 </body>
 </html>
