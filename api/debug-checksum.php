@@ -2,39 +2,52 @@
 /**
  * TEMPORARY DEBUG FILE — DELETE AFTER TESTING
  * Visit: https://sadgurubharadwaja.org/api/debug-checksum.php
- * This tells you exactly which PaytmChecksum version is live on the server.
  */
 
+require_once '../includes/config.php';
 require_once '../includes/PaytmChecksum.php';
 
-$test_params = [
-    'MID'        => 'TestMID123',
-    'ORDER_ID'   => 'ORDER_001',
-    'TXN_AMOUNT' => '100.00',
-    'CUST_ID'    => 'CUST_001',
+// Simulate exact same params as initiate-payment.php
+$paytm_params = [
+    'MID'              => PAYTM_MID,
+    'WEBSITE'          => PAYTM_WEBSITE,
+    'CHANNEL_ID'       => 'WEB',
+    'INDUSTRY_TYPE_ID' => 'Ecommerce',
+    'ORDER_ID'         => 'TEST_ORDER_DEBUG_001',
+    'CUST_ID'          => 'CUST_1',
+    'TXN_AMOUNT'       => '100.00',
+    'CALLBACK_URL'     => PAYTM_CALLBACK_URL,
+    'EMAIL'            => 'test@test.com',
+    'MOBILE_NO'        => '9999999999',
 ];
 
-$test_key  = 'TestKey12345678'; // 16 chars for AES test
-$checksum  = PaytmChecksum::generateSignature($test_params, $test_key);
-$length    = strlen($checksum);
-$has_space = (strpos($checksum, ' ') !== false) || (strpos($checksum, '=') !== false);
+$key      = PAYTM_MERCHANT_KEY;
+$checksum = PaytmChecksum::generateSignature($paytm_params, $key);
+$length   = strlen($checksum);
 
-// AES-CBC output is ~108 chars with base64 padding (= signs)
-// HMAC-SHA256 output is exactly 68 chars (64 hex + 4 char salt), no = signs
-$algorithm = ($length > 80) ? 'OLD (AES-128-CBC) — needs deployment update' : 'NEW (HMAC-SHA256) — correct';
+// Check param string (what gets hashed)
+ksort($paytm_params);
+$param_string = implode('|', array_map(fn($v) => is_null($v) ? '' : $v, $paytm_params));
 
 header('Content-Type: text/plain');
-echo "=== PaytmChecksum Diagnostic ===\n";
-echo "Checksum value : " . $checksum . "\n";
-echo "Length         : " . $length . " chars\n";
-echo "Has special chars (= space): " . ($has_space ? 'YES' : 'NO') . "\n";
-echo "Algorithm      : " . $algorithm . "\n\n";
+echo "=== PaytmChecksum Deep Diagnostic ===\n\n";
+echo "Merchant Key length : " . strlen($key) . " chars\n";
+echo "Merchant Key preview: " . substr($key, 0, 4) . str_repeat('*', max(0, strlen($key) - 8)) . substr($key, -4) . "\n\n";
+echo "Param pipe string   : " . $param_string . "\n\n";
+echo "CHECKSUMHASH value  : " . $checksum . "\n";
+echo "CHECKSUMHASH length : " . $length . " chars\n";
+echo "Has = signs         : " . (strpos($checksum, '=') !== false ? 'YES — problem!' : 'NO — good') . "\n";
+echo "Has spaces          : " . (strpos($checksum, ' ') !== false ? 'YES — problem!' : 'NO — good') . "\n\n";
 
-if ($length > 80) {
-    echo "ACTION NEEDED: Server is running OLD PaytmChecksum.php\n";
-    echo "Please manually upload the new includes/PaytmChecksum.php from GitHub to your server.\n";
-    echo "GitHub file: https://github.com/AnikethGit/NGOV2/blob/main/includes/PaytmChecksum.php\n";
+if ($length === 68) {
+    echo "STATUS: CORRECT — 68-char HMAC-SHA256 hash. Should be accepted by Paytm.\n";
+} elseif ($length > 80) {
+    echo "STATUS: WRONG — Still producing AES output. Check if PaytmChecksum.php was saved correctly.\n";
 } else {
-    echo "OK: Server is running the correct NEW PaytmChecksum.php\n";
-    echo "You can now test the payment flow.\n";
+    echo "STATUS: UNEXPECTED length " . $length . " — check the key and params.\n";
 }
+
+echo "\nPaytm URL: " . PAYTM_TXN_URL . "\n";
+echo "Callback : " . PAYTM_CALLBACK_URL . "\n";
+echo "WEBSITE  : " . PAYTM_WEBSITE . "\n";
+echo "ENV      : " . PAYTM_ENV . "\n";
