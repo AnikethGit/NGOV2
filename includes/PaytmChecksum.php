@@ -1,24 +1,27 @@
 <?php
 /**
  * PaytmChecksum.php
- * Updated Paytm Checksum Utility — compatible with new Paytm host:
- *   securestage.paytmpayments.com (staging)
- *   secure.paytmpayments.com (production)
- *
- * The old AES-128-CBC based library produced ~108-char hashes with
- * special characters, rejected by the new Paytm gateway.
- * This version uses HMAC-SHA256 which the new host accepts.
+ * Official Paytm Checksum Utility (AES-128-CBC)
+ * Compatible with both old and new Paytm gateway hosts.
  */
 
 class PaytmChecksum {
 
-    /**
-     * Generate checksum hash for sending to Paytm gateway.
-     *
-     * @param array|string $params  — associative array of Paytm parameters
-     * @param string       $key     — your Paytm Merchant Key
-     * @return string               — the CHECKSUMHASH value
-     */
+    public static function encrypt($input, $key) {
+        $key = html_entity_decode($key);
+        $iv  = openssl_random_pseudo_bytes(openssl_cipher_iv_length('AES-128-CBC'));
+        $encrypted = openssl_encrypt($input, 'AES-128-CBC', $key, 0, $iv);
+        return base64_encode($iv . base64_decode($encrypted));
+    }
+
+    public static function decrypt($input, $key) {
+        $key   = html_entity_decode($key);
+        $input = base64_decode($input);
+        $iv    = substr($input, 0, openssl_cipher_iv_length('AES-128-CBC'));
+        $encrypted = substr($input, openssl_cipher_iv_length('AES-128-CBC'));
+        return openssl_decrypt(base64_encode($encrypted), 'AES-128-CBC', $key, 0, $iv);
+    }
+
     public static function generateSignature($params, $key) {
         if (!is_array($params) && !is_string($params)) {
             throw new Exception("string or array expected, " . gettype($params) . " given");
@@ -29,14 +32,6 @@ class PaytmChecksum {
         return self::generateSignatureByString($params, $key);
     }
 
-    /**
-     * Verify checksum hash received from Paytm callback.
-     *
-     * @param array|string $params   — associative array of response parameters (exclude CHECKSUMHASH)
-     * @param string       $key      — your Paytm Merchant Key
-     * @param string       $checksum — CHECKSUMHASH received from Paytm
-     * @return bool
-     */
     public static function verifySignature($params, $key, $checksum) {
         if (!is_array($params) && !is_string($params)) {
             throw new Exception("string or array expected, " . gettype($params) . " given");
@@ -47,39 +42,27 @@ class PaytmChecksum {
         return self::verifySignatureByString($params, $key, $checksum);
     }
 
-    // -------------------------------------------------------------------------
-    // Private helpers
-    // -------------------------------------------------------------------------
-
     private static function generateSignatureByString($params, $key) {
         $salt = self::generateRandomString(4);
         return self::calculateChecksum($params, $key, $salt);
     }
 
     private static function verifySignatureByString($params, $key, $checksum) {
-        // Decode: last 4 chars of the hex hash are the salt
-        $salt = substr($checksum, -4);
-        $expectedChecksum = self::calculateChecksum($params, $key, $salt);
-        return hash_equals($expectedChecksum, $checksum);
+        $paytm_hash = base64_decode($checksum);
+        $salt       = substr($paytm_hash, -4);
+        return $paytm_hash == self::calculateHash($params, $salt) . $salt;
     }
 
-    /**
-     * Generate a cryptographically random 4-character salt.
-     */
     private static function generateRandomString($length) {
-        $chars  = '9876543210ZYXWVUTSRQPONMLKJIHGFEDCBAabcdefghijklmnopqrstuvwxyz';
         $random = '';
-        $max    = strlen($chars) - 1;
+        $data   = '9876543210ZYXWVUTSRQPONMLKJIHGFEDCBAabcdefghijklmnopqrstuvwxyz!@#$&_';
         for ($i = 0; $i < $length; $i++) {
-            $random .= $chars[random_int(0, $max)];
+            $random .= substr($data, (rand() % strlen($data)), 1);
         }
         return $random;
     }
 
-    /**
-     * Sort params alphabetically by key and pipe-join values.
-     */
-    private static function getStringByParams(array $params) {
+    private static function getStringByParams($params) {
         ksort($params);
         $params = array_map(function ($value) {
             return is_null($value) ? '' : $value;
@@ -87,13 +70,12 @@ class PaytmChecksum {
         return implode('|', $params);
     }
 
-    /**
-     * Compute SHA-256 HMAC of "params|salt" using the merchant key.
-     * Returns hex string + salt appended (total ~68 chars, no spaces).
-     */
+    private static function calculateHash($params, $salt) {
+        return hash('sha256', $params . '|' . $salt);
+    }
+
     private static function calculateChecksum($params, $key, $salt) {
-        $finalString = $params . '|' . $salt;
-        $hash        = hash_hmac('sha256', $finalString, $key);
-        return $hash . $salt;
+        $hashString = self::calculateHash($params, $salt);
+        return self::encrypt($hashString . $salt, $key);
     }
 }
