@@ -1,7 +1,7 @@
 <?php
 /**
  * Core Configuration Manager
- * Handles database, app settings, and Paytm credentials.
+ * Handles database, app settings, Paytm and Razorpay credentials.
  * Credentials are read from .env file — never hardcode here.
  */
 
@@ -142,10 +142,20 @@ if (!empty($env)) {
     ]);
 }
 
-// Paytm Gateway Constants
+// ============================================================
+// GATEWAY SWITCH
+// Change this ONE line to swap between gateways.
+//   'razorpay' → use Razorpay (test phase)
+//   'paytm'    → use Paytm (after test phase completes)
+// ============================================================
+define('ACTIVE_GATEWAY', 'razorpay');
+
+// ============================================================
+// Paytm Gateway Constants (unchanged — do not remove)
 // Hosts updated per Paytm Merchant Integrations team (April 2026):
 //   OLD staging: securegw-stage.paytm.in      → NEW: securestage.paytmpayments.com
 //   OLD prod:    securegw.paytm.in             → NEW: secure.paytmpayments.com
+// ============================================================
 $paytm_env = $env['PAYTM_ENV'] ?? 'TEST';
 define('PAYTM_MID',           $env['PAYTM_MID']           ?? '');
 define('PAYTM_MERCHANT_KEY',  $env['PAYTM_MERCHANT_KEY']  ?? '');
@@ -160,6 +170,14 @@ if ($paytm_env === 'PROD') {
     define('PAYTM_TXN_URL',    'https://securestage.paytmpayments.com/theia/processTransaction');
     define('PAYTM_STATUS_URL', 'https://securestage.paytmpayments.com/order/status');
 }
+
+// ============================================================
+// Razorpay Gateway Constants
+// RAZORPAY_KEY_SECRET must be added to your .env file:
+//   RAZORPAY_KEY_SECRET=your_test_secret_here
+// ============================================================
+define('RAZORPAY_KEY_ID',     'rzp_test_SbJ17DZlTzkV3g');
+define('RAZORPAY_KEY_SECRET', $env['RAZORPAY_KEY_SECRET'] ?? '');
 
 // Set timezone
 date_default_timezone_set(Config::app('timezone'));
