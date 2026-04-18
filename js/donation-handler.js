@@ -1,8 +1,13 @@
 /**
  * Donation Form Handler
- * Step 1: POST to api/donations.php  → saves record, returns transaction_id
- * Step 2: POST to api/initiate-payment.php → returns Paytm params
- * Step 3: Auto-submits a hidden form to Paytm's gateway URL
+ *
+ * GATEWAY ROUTING (controlled by ACTIVE_GATEWAY in includes/config.php):
+ *   'razorpay' → Step 1: Save record → Step 2: Create Razorpay order → Step 3: Open Razorpay modal → Step 4: Verify
+ *   'paytm'    → Step 1: Save record → Step 2: Initiate Paytm → Step 3: Auto-submit to Paytm URL
+ *
+ * The active gateway is injected by donate.html via:
+ *   <script>window.ACTIVE_GATEWAY = '<?php echo ACTIVE_GATEWAY; ?>';</script>
+ * If that variable is missing we default to 'razorpay' for the test phase.
  */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -10,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
     loadCSRFToken();
 });
 
-// ── CSRF token ────────────────────────────────────────────────────────────────
+// ── CSRF token ────────────────────────────────────────────────────────────────────────────
 async function loadCSRFToken() {
     try {
         const res  = await fetch('api/csrf-token.php');
@@ -23,7 +28,7 @@ async function loadCSRFToken() {
     }
 }
 
-// ── Form initialisation ───────────────────────────────────────────────────────
+// ── Form initialisation ───────────────────────────────────────────────────────────────────────────
 function initializeDonationForm() {
     const form = document.getElementById('donationForm');
     if (!form) return;
@@ -69,7 +74,7 @@ function initializeDonationForm() {
     form.addEventListener('submit', handleDonationSubmit);
 }
 
-// ── Summary panel ─────────────────────────────────────────────────────────────
+// ── Summary panel ─────────────────────────────────────────────────────────────────────────────
 function updateSummary() {
     const cause     = document.getElementById('selected_cause').value;
     const amount    = document.getElementById('donation_amount').value;
@@ -90,7 +95,7 @@ function updateSummary() {
     el('summary-frequency', { 'one-time': 'One Time', 'monthly': 'Monthly', 'yearly': 'Yearly' }[frequency] || 'One Time');
 }
 
-// ── Main submit handler ───────────────────────────────────────────────────────
+// ── Main submit handler ───────────────────────────────────────────────────────────────────────────
 async function handleDonationSubmit(e) {
     e.preventDefault();
     const form         = e.target;
@@ -104,7 +109,7 @@ async function handleDonationSubmit(e) {
     showLoadingOverlay();
 
     try {
-        // ── Step 1: Save donation record ──────────────────────────────────────
+        // ── Step 1: Save donation record (shared by both gateways) ───────────────────
         const formData = new FormData(form);
         const saveRes  = await fetch('api/donations.php', { method: 'POST', body: formData });
         const saveData = await saveRes.json();
@@ -115,39 +120,45 @@ async function handleDonationSubmit(e) {
 
         const transactionId = saveData.transaction_id;
 
-        // ── Step 2: Initiate Paytm payment ────────────────────────────────────
-        // Reload CSRF token (the session token may have been consumed)
-        const csrfRes  = await fetch('api/csrf-token.php');
-        const csrfData = await csrfRes.json();
-        const freshCsrf = csrfData.csrf_token || '';
+        // ── Step 2: Route to correct gateway ────────────────────────────────────────
+        const gateway = (window.ACTIVE_GATEWAY || 'razorpay').toLowerCase();
 
-        const payParams = new FormData();
-        payParams.append('transaction_id', transactionId);
-        payParams.append('csrf_token',     freshCsrf);
+        if (gateway === 'razorpay') {
+            hideLoadingOverlay();
+            await initiateRazorpayPayment(transactionId, submitButton, originalText);
+        } else {
+            // ── PAYTM FLOW (original, completely unchanged) ───────────────────────
+            const csrfRes  = await fetch('api/csrf-token.php');
+            const csrfData = await csrfRes.json();
+            const freshCsrf = csrfData.csrf_token || '';
 
-        const payRes  = await fetch('api/initiate-payment.php', { method: 'POST', body: payParams });
-        const payData = await payRes.json();
+            const payParams = new FormData();
+            payParams.append('transaction_id', transactionId);
+            payParams.append('csrf_token',     freshCsrf);
 
-        if (!payData.success) {
-            throw new Error(payData.message || 'Payment initiation failed. Please try again.');
+            const payRes  = await fetch('api/initiate-payment.php', { method: 'POST', body: payParams });
+            const payData = await payRes.json();
+
+            if (!payData.success) {
+                throw new Error(payData.message || 'Payment initiation failed. Please try again.');
+            }
+
+            const paytmForm = document.createElement('form');
+            paytmForm.method  = 'POST';
+            paytmForm.action  = payData.paytm_url;
+            paytmForm.style.display = 'none';
+
+            Object.entries(payData.paytm_params).forEach(([key, value]) => {
+                const input = document.createElement('input');
+                input.type  = 'hidden';
+                input.name  = key;
+                input.value = value;
+                paytmForm.appendChild(input);
+            });
+
+            document.body.appendChild(paytmForm);
+            paytmForm.submit();
         }
-
-        // ── Step 3: Auto-submit Paytm form ────────────────────────────────────
-        const paytmForm = document.createElement('form');
-        paytmForm.method  = 'POST';
-        paytmForm.action  = payData.paytm_url;
-        paytmForm.style.display = 'none';
-
-        Object.entries(payData.paytm_params).forEach(([key, value]) => {
-            const input = document.createElement('input');
-            input.type  = 'hidden';
-            input.name  = key;
-            input.value = value;
-            paytmForm.appendChild(input);
-        });
-
-        document.body.appendChild(paytmForm);
-        paytmForm.submit(); // Redirects user to Paytm gateway
 
     } catch (err) {
         console.error('Donation error:', err);
@@ -158,7 +169,93 @@ async function handleDonationSubmit(e) {
     }
 }
 
-// ── Validation ────────────────────────────────────────────────────────────────
+// ── RAZORPAY FLOW ──────────────────────────────────────────────────────────────────────────────
+async function initiateRazorpayPayment(transactionId, submitButton, originalText) {
+    // Step A: Create Razorpay order on server
+    const params = new FormData();
+    params.append('transaction_id', transactionId);
+
+    const orderRes  = await fetch('api/razorpay-create-order.php', { method: 'POST', body: params });
+    const orderData = await orderRes.json();
+
+    if (!orderData.success) {
+        throw new Error(orderData.message || 'Could not create payment order. Please try again.');
+    }
+
+    // Step B: Open Razorpay checkout modal
+    const options = {
+        key:         orderData.key_id,
+        amount:      orderData.amount_paise,
+        currency:    'INR',
+        name:        'Sri Dutta Sai Manga Bharadwaja Trust',
+        description: 'Donation',
+        order_id:    orderData.razorpay_order_id,
+        prefill: {
+            name:    orderData.donor_name,
+            email:   orderData.donor_email,
+            contact: orderData.donor_phone,
+        },
+        theme: { color: '#01696f' },
+        modal: {
+            ondismiss: function () {
+                showNotification('Payment was cancelled. You can try again.', 'info');
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+            }
+        },
+        handler: async function (response) {
+            // Step C: Verify payment on server
+            showLoadingOverlay();
+            const verifyParams = new FormData();
+            verifyParams.append('razorpay_order_id',   response.razorpay_order_id);
+            verifyParams.append('razorpay_payment_id', response.razorpay_payment_id);
+            verifyParams.append('razorpay_signature',  response.razorpay_signature);
+            verifyParams.append('transaction_id',      transactionId);
+
+            try {
+                const verifyRes  = await fetch('api/razorpay-verify-payment.php', { method: 'POST', body: verifyParams });
+                const verifyData = await verifyRes.json();
+
+                hideLoadingOverlay();
+
+                if (verifyData.success) {
+                    window.location.href = verifyData.redirect;
+                } else {
+                    showNotification(verifyData.message || 'Payment verification failed. Please contact support.', 'error');
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalText;
+                }
+            } catch (verifyErr) {
+                hideLoadingOverlay();
+                showNotification('Verification error. Please contact support with your transaction ID: ' + transactionId, 'error');
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+            }
+        }
+    };
+
+    // Load Razorpay script dynamically if not already loaded
+    if (!window.Razorpay) {
+        await new Promise((resolve, reject) => {
+            const script  = document.createElement('script');
+            script.src    = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.onload  = resolve;
+            script.onerror = () => reject(new Error('Failed to load Razorpay checkout. Check your internet connection.'));
+            document.head.appendChild(script);
+        });
+    }
+
+    const rzp = new window.Razorpay(options);
+    rzp.on('payment.failed', function (response) {
+        hideLoadingOverlay();
+        showNotification('Payment failed: ' + (response.error.description || 'Unknown error'), 'error');
+        submitButton.disabled = false;
+        submitButton.innerHTML = originalText;
+    });
+    rzp.open();
+}
+
+// ── Validation ───────────────────────────────────────────────────────────────────────────────
 function validateDonationForm(form) {
     const name   = form.querySelector('#donor_name')?.value.trim();
     const email  = form.querySelector('#donor_email')?.value.trim();
@@ -177,7 +274,7 @@ function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// ── UI helpers ────────────────────────────────────────────────────────────────
+// ── UI helpers ───────────────────────────────────────────────────────────────────────────────
 function showLoadingOverlay() {
     document.getElementById('loadingOverlay')?.classList.remove('hidden');
 }
