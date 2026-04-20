@@ -53,27 +53,39 @@ try {
     $mobile      = preg_replace('/[^0-9]/', '', $donation['donor_phone'] ?? '');
     $email       = $donation['donor_email'] ?? '';
 
-    // Build Paytm parameter array
-    $paytm_params = [
-        'MID'              => PAYTM_MID,
-        'WEBSITE'          => PAYTM_WEBSITE,
-        'CHANNEL_ID'       => 'WEB',
-        'INDUSTRY_TYPE_ID' => 'Ecommerce',
-        'ORDER_ID'         => $transaction_id,
-        'CUST_ID'          => $customer_id,
-        'TXN_AMOUNT'       => $amount,
-        'CALLBACK_URL'     => PAYTM_CALLBACK_URL,
-        'EMAIL'            => $email,
-        'MOBILE_NO'        => $mobile,
+    // Build Paytm parameter body (v2 JSON format)
+    $paytmParams = [
+        'body' => [
+            'requestType'   => 'Payment',
+            'mid'           => PAYTM_MID,
+            'websiteName'   => PAYTM_WEBSITE,
+            'orderId'       => $transaction_id,
+            'callbackUrl'   => PAYTM_CALLBACK_URL,
+            'txnAmount'     => [
+                'value'    => $amount,
+                'currency' => 'INR',
+            ],
+            'userInfo'      => [
+                'custId'   => $customer_id,
+                'mobile'   => $mobile,
+                'email'    => $email,
+            ],
+        ]
     ];
 
-    // Generate Checksum
-    $checksum_hash = PaytmChecksum::generateSignature($paytm_params, PAYTM_MERCHANT_KEY);
-    $paytm_params['CHECKSUMHASH'] = $checksum_hash;
+    // Generate checksum using json_encode of body — as per Paytm instructions
+    $checksum = PaytmChecksum::generateSignature(
+        json_encode($paytmParams['body'], JSON_UNESCAPED_SLASHES),
+        PAYTM_MERCHANT_KEY
+    );
+
+    $paytmParams['head'] = [
+        'signature' => $checksum
+    ];
 
     echo json_encode([
         'success'      => true,
-        'paytm_params' => $paytm_params,
+        'paytm_params' => $paytmParams,
         'paytm_url'    => PAYTM_TXN_URL,
         'order_id'     => $transaction_id,
         'amount'       => $amount
