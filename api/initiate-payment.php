@@ -1,26 +1,23 @@
 <?php
 /**
  * api/initiate-payment.php
- * Initiates a Paytm payment after donation record is created.
- * Called by donation-handler.js after successful form submission.
+ * Paytm v3 Integration — Initiate Transaction API
+ *
+ * Flow:
+ *  1. Fetch donation from DB (never trust client amount)
+ *  2. Build JSON body + generate checksum (Paytm's snippet)
+ *  3. Call /theia/api/v1/initiateTransaction via cURL
+ *  4. Return txnToken + mid + orderId to frontend
+ *  5. Frontend loads Paytm JS SDK and opens inline popup
  */
 
 require_once '../includes/config.php';
 require_once '../includes/database.php';
-require_once '../includes/security.php';
 require_once '../includes/PaytmChecksum.php';
 
 header('Content-Type: application/json');
 
-// IMPORTANT:
-// We already validate CSRF when the donation is first created in api/donations.php.
-// This endpoint is called immediately afterwards from the same page + same
-// browser session. Because of Hostinger's proxy/session peculiarities, the
-// second CSRF check has been flaky, blocking payments.
-//
-// To unblock real-world testing, we only enforce that a non-empty token is
-// present here. The primary protection remains on donations.php.
-
+// Light CSRF presence check (primary validation is on donations.php)
 $csrfToken = $_POST['csrf_token'] ?? '';
 if (empty($csrfToken)) {
     http_response_code(403);
@@ -48,47 +45,106 @@ try {
         exit;
     }
 
-    $amount      = number_format((float)$donation['amount'], 2, '.', '');
+    $amount      = number_format((float) $donation['amount'], 2, '.', '');
     $customer_id = 'CUST_' . ($donation['user_id'] ?? $donation['id']);
     $mobile      = preg_replace('/[^0-9]/', '', $donation['donor_phone'] ?? '');
     $email       = $donation['donor_email'] ?? '';
 
-    // Build Paytm parameter body (v2 JSON format)
-    $paytmParams = [
-        'body' => [
-            'requestType'   => 'Payment',
-            'mid'           => PAYTM_MID,
-            'websiteName'   => PAYTM_WEBSITE,
-            'orderId'       => $transaction_id,
-            'callbackUrl'   => PAYTM_CALLBACK_URL,
-            'txnAmount'     => [
-                'value'    => $amount,
-                'currency' => 'INR',
-            ],
-            'userInfo'      => [
-                'custId'   => $customer_id,
-                'mobile'   => $mobile,
-                'email'    => $email,
-            ],
-        ]
+    // ── Step 1: Build request body ────────────────────────────────────────────
+    $paytmParams = [];
+
+    $paytmParams['body'] = [
+        'requestType' => 'Payment',
+        'mid'         => PAYTM_MID,
+        'websiteName' => PAYTM_WEBSITE,
+        'orderId'     => $transaction_id,
+        'callbackUrl' => PAYTM_CALLBACK_URL,
+        'txnAmount'   => [
+            'value'    => $amount,
+            'currency' => 'INR',
+        ],
+        'userInfo' => [
+            'custId' => $customer_id,
+            'mobile' => $mobile,
+            'email'  => $email,
+        ],
     ];
 
-    // Generate checksum using json_encode of body — as per Paytm instructions
+    // ── Step 2: Generate checksum (Paytm official snippet) ────────────────────
     $checksum = PaytmChecksum::generateSignature(
         json_encode($paytmParams['body'], JSON_UNESCAPED_SLASHES),
         PAYTM_MERCHANT_KEY
     );
 
     $paytmParams['head'] = [
-        'signature' => $checksum
+        'signature' => $checksum,
     ];
 
+    // ── Step 3: Call Paytm initiateTransaction API via cURL ───────────────────
+    // Staging:    https://securestage.paytmpayments.com/theia/api/v1/initiateTransaction?mid=MID&orderId=ORDER_ID
+    // Production: https://secure.paytmpayments.com/theia/api/v1/initiateTransaction?mid=MID&orderId=ORDER_ID
+    $apiBase = (PAYTM_ENV === 'PROD')
+        ? 'https://secure.paytmpayments.com'
+        : 'https://securestage.paytmpayments.com';
+
+    $apiUrl  = $apiBase . '/theia/api/v1/initiateTransaction'
+             . '?mid=' . urlencode(PAYTM_MID)
+             . '&orderId=' . urlencode($transaction_id);
+
+    $postBody = json_encode($paytmParams, JSON_UNESCAPED_SLASHES);
+
+    $ch = curl_init($apiUrl);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => $postBody,
+        CURLOPT_HTTPHEADER     => [
+            'Content-Type: application/json',
+            'Content-Length: ' . strlen($postBody),
+        ],
+        CURLOPT_SSL_VERIFYPEER => true,
+        CURLOPT_TIMEOUT        => 30,
+    ]);
+
+    $response   = curl_exec($ch);
+    $curl_error = curl_error($ch);
+    $http_code  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    if ($curl_error) {
+        error_log('Paytm cURL error: ' . $curl_error);
+        echo json_encode(['success' => false, 'message' => 'Network error contacting Paytm. Please try again.']);
+        exit;
+    }
+
+    $result = json_decode($response, true);
+
+    error_log('Paytm initiateTransaction response [' . $http_code . ']: ' . $response);
+
+    // ── Step 4: Extract txnToken ──────────────────────────────────────────────
+    $resultStatus = $result['body']['resultInfo']['resultStatus'] ?? '';
+    $resultCode   = $result['body']['resultInfo']['resultCode']   ?? '';
+    $resultMsg    = $result['body']['resultInfo']['resultMsg']    ?? 'Unknown error';
+    $txnToken     = $result['body']['txnToken']                   ?? '';
+
+    if ($resultStatus !== 'S' || empty($txnToken)) {
+        error_log('Paytm initiateTransaction failed: ' . $resultMsg . ' (code: ' . $resultCode . ')');
+        echo json_encode([
+            'success' => false,
+            'message' => 'Paytm error: ' . $resultMsg . ' (code: ' . $resultCode . ')',
+        ]);
+        exit;
+    }
+
+    // ── Step 5: Return token to frontend ──────────────────────────────────────
     echo json_encode([
         'success'      => true,
-        'paytm_params' => $paytmParams,
-        'paytm_url'    => PAYTM_TXN_URL,
+        'txnToken'     => $txnToken,
+        'mid'          => PAYTM_MID,
         'order_id'     => $transaction_id,
-        'amount'       => $amount
+        'amount'       => $amount,
+        'callback_url' => PAYTM_CALLBACK_URL,
+        'env'          => PAYTM_ENV,
     ]);
 
 } catch (Exception $e) {

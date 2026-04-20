@@ -3,7 +3,7 @@
  *
  * GATEWAY ROUTING (controlled by ACTIVE_GATEWAY in includes/config.php):
  *   'razorpay' → Step 1: Save record → Step 2: Create Razorpay order → Step 3: Open Razorpay modal → Step 4: Verify
- *   'paytm'    → Step 1: Save record → Step 2: Initiate Paytm → Step 3: Auto-submit to Paytm URL
+ *   'paytm'    → Step 1: Save record → Step 2: initiateTransaction (cURL) → Step 3: Load Paytm JS SDK → Step 4: Open inline popup
  *
  * The active gateway is injected by donate.html via:
  *   <script>window.ACTIVE_GATEWAY = '<?php echo ACTIVE_GATEWAY; ?>';</script>
@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
     loadCSRFToken();
 });
 
-// ── CSRF token ────────────────────────────────────────────────────────────────────────────
+// ── CSRF token ────────────────────────────────────────────────────────────────
 async function loadCSRFToken() {
     try {
         const res  = await fetch('api/csrf-token.php');
@@ -28,12 +28,11 @@ async function loadCSRFToken() {
     }
 }
 
-// ── Form initialisation ───────────────────────────────────────────────────────────────────────────
+// ── Form initialisation ───────────────────────────────────────────────────────
 function initializeDonationForm() {
     const form = document.getElementById('donationForm');
     if (!form) return;
 
-    // Cause buttons
     document.querySelectorAll('.cause-btn').forEach(btn => {
         btn.addEventListener('click', function () {
             document.querySelectorAll('.cause-btn').forEach(b => b.classList.remove('active'));
@@ -43,7 +42,6 @@ function initializeDonationForm() {
         });
     });
 
-    // Preset amount buttons
     document.querySelectorAll('.amount-btn').forEach(btn => {
         btn.addEventListener('click', function () {
             document.querySelectorAll('.amount-btn').forEach(b => b.classList.remove('active'));
@@ -54,7 +52,6 @@ function initializeDonationForm() {
         });
     });
 
-    // Custom amount input
     const customInput = document.getElementById('customAmount');
     if (customInput) {
         customInput.addEventListener('input', function () {
@@ -66,7 +63,6 @@ function initializeDonationForm() {
         });
     }
 
-    // Frequency radios
     document.querySelectorAll('input[name="frequency"]').forEach(r =>
         r.addEventListener('change', updateSummary)
     );
@@ -74,7 +70,7 @@ function initializeDonationForm() {
     form.addEventListener('submit', handleDonationSubmit);
 }
 
-// ── Summary panel ─────────────────────────────────────────────────────────────────────────────
+// ── Summary panel ─────────────────────────────────────────────────────────────
 function updateSummary() {
     const cause     = document.getElementById('selected_cause').value;
     const amount    = document.getElementById('donation_amount').value;
@@ -87,15 +83,15 @@ function updateSummary() {
     }
 
     const fmt = n => Number(n).toLocaleString('en-IN');
-    const el = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+    const el  = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
 
-    el('summary-amount',    '₹' + fmt(amount));
-    el('summary-total',     '₹' + fmt(amount));
-    el('tax-deduction',     '₹' + fmt(Math.round(Number(amount) * 0.5)));
+    el('summary-amount',    '\u20B9' + fmt(amount));
+    el('summary-total',     '\u20B9' + fmt(amount));
+    el('tax-deduction',     '\u20B9' + fmt(Math.round(Number(amount) * 0.5)));
     el('summary-frequency', { 'one-time': 'One Time', 'monthly': 'Monthly', 'yearly': 'Yearly' }[frequency] || 'One Time');
 }
 
-// ── Main submit handler ───────────────────────────────────────────────────────────────────────────
+// ── Main submit handler ───────────────────────────────────────────────────────
 async function handleDonationSubmit(e) {
     e.preventDefault();
     const form         = e.target;
@@ -109,7 +105,7 @@ async function handleDonationSubmit(e) {
     showLoadingOverlay();
 
     try {
-        // ── Step 1: Save donation record (shared by both gateways) ───────────────────
+        // ── Step 1: Save donation record (shared by both gateways) ────────────
         const formData = new FormData(form);
         const saveRes  = await fetch('api/donations.php', { method: 'POST', body: formData });
         const saveData = await saveRes.json();
@@ -120,44 +116,14 @@ async function handleDonationSubmit(e) {
 
         const transactionId = saveData.transaction_id;
 
-        // ── Step 2: Route to correct gateway ────────────────────────────────────────
+        // ── Step 2: Route to correct gateway ─────────────────────────────────
         const gateway = (window.ACTIVE_GATEWAY || 'razorpay').toLowerCase();
 
         if (gateway === 'razorpay') {
             hideLoadingOverlay();
             await initiateRazorpayPayment(transactionId, submitButton, originalText);
         } else {
-            // ── PAYTM FLOW (original, completely unchanged) ───────────────────────
-            const csrfRes  = await fetch('api/csrf-token.php');
-            const csrfData = await csrfRes.json();
-            const freshCsrf = csrfData.csrf_token || '';
-
-            const payParams = new FormData();
-            payParams.append('transaction_id', transactionId);
-            payParams.append('csrf_token',     freshCsrf);
-
-            const payRes  = await fetch('api/initiate-payment.php', { method: 'POST', body: payParams });
-            const payData = await payRes.json();
-
-            if (!payData.success) {
-                throw new Error(payData.message || 'Payment initiation failed. Please try again.');
-            }
-
-            const paytmForm = document.createElement('form');
-            paytmForm.method  = 'POST';
-            paytmForm.action  = payData.paytm_url;
-            paytmForm.style.display = 'none';
-
-            Object.entries(payData.paytm_params).forEach(([key, value]) => {
-                const input = document.createElement('input');
-                input.type  = 'hidden';
-                input.name  = key;
-                input.value = value;
-                paytmForm.appendChild(input);
-            });
-
-            document.body.appendChild(paytmForm);
-            paytmForm.submit();
+            await initiatePaytmPayment(transactionId, submitButton, originalText);
         }
 
     } catch (err) {
@@ -169,9 +135,100 @@ async function handleDonationSubmit(e) {
     }
 }
 
-// ── RAZORPAY FLOW ──────────────────────────────────────────────────────────────────────────────
+// ── PAYTM FLOW (v3 — JS SDK inline popup) ────────────────────────────────────
+async function initiatePaytmPayment(transactionId, submitButton, originalText) {
+
+    // Step A: Get fresh CSRF + call initiate-payment.php to get txnToken
+    const csrfRes   = await fetch('api/csrf-token.php');
+    const csrfData  = await csrfRes.json();
+    const freshCsrf = csrfData.csrf_token || '';
+
+    const payParams = new FormData();
+    payParams.append('transaction_id', transactionId);
+    payParams.append('csrf_token',     freshCsrf);
+
+    const payRes  = await fetch('api/initiate-payment.php', { method: 'POST', body: payParams });
+    const payData = await payRes.json();
+
+    if (!payData.success) {
+        throw new Error(payData.message || 'Payment initiation failed. Please try again.');
+    }
+
+    const { txnToken, mid, order_id, amount, env } = payData;
+
+    // Step B: Load Paytm JS Checkout SDK dynamically
+    const sdkBase = (env === 'PROD')
+        ? 'https://secure.paytmpayments.com'
+        : 'https://securestage.paytmpayments.com';
+
+    await loadScript(`${sdkBase}/merchantpgpui/checkoutjs/merchants/${mid}.js`);
+
+    // Step C: Open Paytm inline checkout popup
+    hideLoadingOverlay();
+
+    const config = {
+        root: '',                   // empty string = popup mode (not embedded)
+        flow: 'DEFAULT',
+        merchant: {
+            mid:         mid,
+            redirect:    false,     // keep user on page; use handler callbacks
+        },
+        data: {
+            orderId:   order_id,
+            token:     txnToken,
+            tokenType: 'TXN_TOKEN',
+            amount:    amount,
+        },
+        handler: {
+            notifyMerchant: function (eventName, data) {
+                console.log('Paytm event:', eventName, data);
+
+                if (eventName === 'APP_CLOSED') {
+                    // User closed the popup without paying
+                    showNotification('Payment was cancelled. You can try again.', 'info');
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalText;
+                }
+            },
+            transactionStatus: function (data) {
+                // Called after payment attempt (success or failure)
+                console.log('Paytm transactionStatus:', data);
+
+                window.Paytm.CheckoutJS.close();
+
+                if (data.STATUS === 'TXN_SUCCESS') {
+                    // Redirect to success page — callback.php handles DB update
+                    window.location.href = `payment-success.html?txn=${encodeURIComponent(order_id)}&status=success&amount=${encodeURIComponent(amount)}`;
+                } else if (data.STATUS === 'PENDING') {
+                    window.location.href = `payment-success.html?txn=${encodeURIComponent(order_id)}&status=pending`;
+                } else {
+                    showNotification(
+                        'Payment failed: ' + (data.RESPMSG || 'Unknown error') + '. Please try again.',
+                        'error'
+                    );
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalText;
+                }
+            },
+        },
+    };
+
+    if (window.Paytm && window.Paytm.CheckoutJS) {
+        window.Paytm.CheckoutJS.init(config)
+            .then(() => window.Paytm.CheckoutJS.invoke())
+            .catch(err => {
+                console.error('Paytm CheckoutJS error:', err);
+                showNotification('Could not open payment window. Please try again.', 'error');
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+            });
+    } else {
+        throw new Error('Paytm Checkout SDK failed to load. Please refresh and try again.');
+    }
+}
+
+// ── RAZORPAY FLOW ──────────────────────────────────────────────────────────────
 async function initiateRazorpayPayment(transactionId, submitButton, originalText) {
-    // Step A: Create Razorpay order on server
     const params = new FormData();
     params.append('transaction_id', transactionId);
 
@@ -182,7 +239,6 @@ async function initiateRazorpayPayment(transactionId, submitButton, originalText
         throw new Error(orderData.message || 'Could not create payment order. Please try again.');
     }
 
-    // Step B: Open Razorpay checkout modal
     const options = {
         key:         orderData.key_id,
         amount:      orderData.amount_paise,
@@ -204,7 +260,6 @@ async function initiateRazorpayPayment(transactionId, submitButton, originalText
             }
         },
         handler: async function (response) {
-            // Step C: Verify payment on server
             showLoadingOverlay();
             const verifyParams = new FormData();
             verifyParams.append('razorpay_order_id',   response.razorpay_order_id);
@@ -215,7 +270,6 @@ async function initiateRazorpayPayment(transactionId, submitButton, originalText
             try {
                 const verifyRes  = await fetch('api/razorpay-verify-payment.php', { method: 'POST', body: verifyParams });
                 const verifyData = await verifyRes.json();
-
                 hideLoadingOverlay();
 
                 if (verifyData.success) {
@@ -234,16 +288,7 @@ async function initiateRazorpayPayment(transactionId, submitButton, originalText
         }
     };
 
-    // Load Razorpay script dynamically if not already loaded
-    if (!window.Razorpay) {
-        await new Promise((resolve, reject) => {
-            const script  = document.createElement('script');
-            script.src    = 'https://checkout.razorpay.com/v1/checkout.js';
-            script.onload  = resolve;
-            script.onerror = () => reject(new Error('Failed to load Razorpay checkout. Check your internet connection.'));
-            document.head.appendChild(script);
-        });
-    }
+    await loadScript('https://checkout.razorpay.com/v1/checkout.js');
 
     const rzp = new window.Razorpay(options);
     rzp.on('payment.failed', function (response) {
@@ -255,18 +300,30 @@ async function initiateRazorpayPayment(transactionId, submitButton, originalText
     rzp.open();
 }
 
-// ── Validation ───────────────────────────────────────────────────────────────────────────────
+// ── Shared script loader ──────────────────────────────────────────────────────
+function loadScript(src) {
+    return new Promise((resolve, reject) => {
+        if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+        const script    = document.createElement('script');
+        script.src      = src;
+        script.onload   = resolve;
+        script.onerror  = () => reject(new Error('Failed to load script: ' + src));
+        document.head.appendChild(script);
+    });
+}
+
+// ── Validation ────────────────────────────────────────────────────────────────
 function validateDonationForm(form) {
     const name   = form.querySelector('#donor_name')?.value.trim();
     const email  = form.querySelector('#donor_email')?.value.trim();
     const amount = parseFloat(form.querySelector('#donation_amount')?.value);
     const terms  = form.querySelector('#terms')?.checked;
 
-    if (!name)                         { showNotification('Please enter your full name', 'error');                          return false; }
-    if (!email || !isValidEmail(email)) { showNotification('Please enter a valid email address', 'error');                   return false; }
-    if (!amount || amount < 1)          { showNotification('Please select or enter a donation amount', 'error');            return false; }
-    if (amount > 1000000)               { showNotification('Maximum donation amount is ₹10,00,000', 'error');               return false; }
-    if (!terms)                         { showNotification('Please accept the terms and conditions', 'error');              return false; }
+    if (!name)                          { showNotification('Please enter your full name', 'error');                return false; }
+    if (!email || !isValidEmail(email)) { showNotification('Please enter a valid email address', 'error');        return false; }
+    if (!amount || amount < 1)          { showNotification('Please select or enter a donation amount', 'error'); return false; }
+    if (amount > 1000000)               { showNotification('Maximum donation amount is \u20B910,00,000', 'error'); return false; }
+    if (!terms)                         { showNotification('Please accept the terms and conditions', 'error');    return false; }
     return true;
 }
 
@@ -274,7 +331,7 @@ function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// ── UI helpers ───────────────────────────────────────────────────────────────────────────────
+// ── UI helpers ────────────────────────────────────────────────────────────────
 function showLoadingOverlay() {
     document.getElementById('loadingOverlay')?.classList.remove('hidden');
 }
@@ -299,14 +356,13 @@ function showNotification(message, type = 'info') {
         animation:slideIn 0.25s ease;font-size:14px;font-family:inherit;`;
     n.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
         <span>${message}</span>
-        <button onclick="this.closest('div').parentElement.remove()" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;line-height:1;">×</button>
+        <button onclick="this.closest('div').parentElement.remove()" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;line-height:1;">&times;</button>
     </div>`;
 
     container.appendChild(n);
     setTimeout(() => n.isConnected && n.remove(), 5500);
 }
 
-// Slide-in animation
 (function () {
     const s = document.createElement('style');
     s.textContent = '@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}';
