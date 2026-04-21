@@ -276,7 +276,7 @@
                         <input type="hidden" name="csrf_token" id="csrf_token" value="">
 
                         <!-- Submit Button -->
-                        <button type="submit" class="btn btn-primary btn-large donate-submit" disabled>
+                        <button type="submit" class="btn btn-primary btn-large donate-submit">
                             <i class="fas fa-credit-card"></i>
                             Proceed to Payment
                         </button>
@@ -643,6 +643,10 @@
 
     <!-- Scripts -->
     <script src="js/main.js"></script>
+    <script>
+        // Force Paytm as active gateway on this page
+        window.ACTIVE_GATEWAY = 'paytm';
+    </script>
     <script src="js/donation-handler.js"></script>
     <script>
         // Initialize donation page
