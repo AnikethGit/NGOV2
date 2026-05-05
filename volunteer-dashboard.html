@@ -26,7 +26,6 @@
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family:'Inter','Poppins',sans-serif; background:var(--bg); color:var(--text); }
 
-        /* Top Bar */
         .dash-header {
             background:var(--surface);
             border-bottom:1px solid var(--border);
@@ -53,10 +52,8 @@
         }
         .btn-logout:hover { background:#fee2e2; color:#dc2626; border-color:#fecaca; }
 
-        /* Layout */
         .dash-layout { display:flex; min-height:calc(100vh - 64px); }
 
-        /* Sidebar */
         .dash-sidebar {
             width:220px; background:var(--surface);
             border-right:1px solid var(--border);
@@ -77,13 +74,11 @@
             letter-spacing:.08em; color:var(--text-muted); padding:18px 24px 6px;
         }
 
-        /* Main */
         .dash-main { flex:1; padding:32px; overflow-y:auto; }
         .dash-greeting { margin-bottom:28px; }
         .dash-greeting h1 { font-size:24px; font-weight:700; }
         .dash-greeting p  { color:var(--text-muted); font-size:14px; margin-top:4px; }
 
-        /* KPI */
         .kpi-grid {
             display:grid;
             grid-template-columns:repeat(auto-fill,minmax(200px,1fr));
@@ -106,7 +101,6 @@
         .kpi-value { font-size:22px; font-weight:700; }
         .kpi-label { font-size:12px; color:var(--text-muted); margin-top:2px; }
 
-        /* Cards */
         .card {
             background:var(--surface); border:1px solid var(--border);
             border-radius:var(--radius); overflow:hidden; margin-bottom:24px;
@@ -118,7 +112,6 @@
         .card-header h2 { font-size:16px; font-weight:600; }
         .card-body { padding:22px; }
 
-        /* Task list */
         .task-list { list-style:none; }
         .task-item {
             display:flex; align-items:flex-start; gap:14px;
@@ -136,7 +129,6 @@
         .task-title  { font-weight:600; margin-bottom:2px; }
         .task-detail { color:var(--text-muted); font-size:13px; }
 
-        /* Badge */
         .badge {
             display:inline-flex; align-items:center;
             padding:3px 10px; border-radius:999px;
@@ -146,7 +138,6 @@
         .badge-pending { background:#fef9c3; color:#854d0e; }
         .badge-new     { background:#dbeafe; color:#1e40af; }
 
-        /* Profile card */
         .profile-card {
             display:flex; align-items:center; gap:20px;
             padding:22px; background:var(--surface);
@@ -167,7 +158,6 @@
             padding:4px 12px; border-radius:999px; font-size:13px; font-weight:600;
         }
 
-        /* Responsive */
         @media (max-width:768px) {
             .dash-sidebar { display:none; }
             .dash-main { padding:20px; }
@@ -178,7 +168,6 @@
 </head>
 <body>
 
-<!-- Header -->
 <header class="dash-header">
     <a href="index.html" class="dash-brand">
         <img src="images/LogoNGO.png" alt="Logo">
@@ -191,7 +180,6 @@
 </header>
 
 <div class="dash-layout">
-    <!-- Sidebar -->
     <aside class="dash-sidebar">
         <nav class="sidebar-nav">
             <div class="sidebar-section">Volunteer</div>
@@ -206,9 +194,7 @@
         </nav>
     </aside>
 
-    <!-- Main -->
     <main class="dash-main">
-        <!-- Profile -->
         <div class="profile-card" id="profile">
             <div class="avatar" id="avatarInitial">V</div>
             <div>
@@ -218,7 +204,6 @@
             </div>
         </div>
 
-        <!-- KPI -->
         <div class="kpi-grid">
             <div class="kpi-card">
                 <div class="kpi-icon teal"><i class="fas fa-clock"></i></div>
@@ -238,37 +223,13 @@
             </div>
         </div>
 
-        <!-- Tasks -->
         <div class="card" id="tasks">
             <div class="card-header">
                 <h2><i class="fas fa-tasks" style="color:var(--primary);margin-right:8px"></i>My Tasks</h2>
             </div>
             <div class="card-body">
                 <ul class="task-list">
-                    <li class="task-item">
-                        <span class="task-status done"></span>
-                        <div>
-                            <div class="task-title">Distribute food packets at shelter</div>
-                            <div class="task-detail">Completed &nbsp;·&nbsp; 12 Apr 2026</div>
-                        </div>
-                        <span class="badge badge-success" style="margin-left:auto">Done</span>
-                    </li>
-                    <li class="task-item">
-                        <span class="task-status pending"></span>
-                        <div>
-                            <div class="task-title">Help organise blood donation camp</div>
-                            <div class="task-detail">Scheduled &nbsp;·&nbsp; 20 Apr 2026</div>
-                        </div>
-                        <span class="badge badge-pending" style="margin-left:auto">Upcoming</span>
-                    </li>
-                    <li class="task-item">
-                        <span class="task-status new"></span>
-                        <div>
-                            <div class="task-title">Website content review</div>
-                            <div class="task-detail">New assignment &nbsp;·&nbsp; Assign to yourself</div>
-                        </div>
-                        <span class="badge badge-new" style="margin-left:auto">New</span>
-                    </li>
+                    <!-- Filled by JS from api/volunteer-tasks.php -->
                 </ul>
             </div>
         </div>
@@ -277,24 +238,6 @@
 
 <script src="js/main.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const token = sessionStorage.getItem('auth_token') || localStorage.getItem('auth_token');
-    const user  = JSON.parse(sessionStorage.getItem('user_data') || localStorage.getItem('user_data') || 'null');
-
-    if (!token || !user) {
-        window.location.href = 'login.html';
-        return;
-    }
-
-    const name = user.name || user.email || 'Volunteer';
-    document.getElementById('userName').textContent    = name;
-    document.getElementById('profileName').textContent = name;
-    document.getElementById('profileEmail').textContent = user.email || '';
-    document.getElementById('avatarInitial').textContent = name.charAt(0).toUpperCase();
-
-    document.getElementById('dash-greeting-date');
-});
-
 function logout() {
     sessionStorage.clear();
     localStorage.removeItem('auth_token');
@@ -302,6 +245,7 @@ function logout() {
     window.location.href = 'login.html';
 }
 </script>
-    <script src="js/theme-switcher.js"></script>
+<script src="js/volunteer-dashboard.js"></script>
+<script src="js/theme-switcher.js"></script>
 </body>
 </html>
