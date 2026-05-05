@@ -148,7 +148,7 @@ if (!empty($env)) {
 //   'razorpay' → use Razorpay (test phase)
 //   'paytm'    → use Paytm (after test phase completes)
 // ============================================================
-define('ACTIVE_GATEWAY', 'paytm');
+define('ACTIVE_GATEWAY', 'razorpay');
 
 // ============================================================
 // Paytm Gateway Constants (unchanged — do not remove)
