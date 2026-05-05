@@ -3,7 +3,7 @@
  * api/donations.php (updated)
  * POST: saves a new donation record
  * GET ?action=user-history: returns all donations for logged-in user
- *   – matches by user_id OR donor_email so pre-registration donations appear
+ *   – matches by user_id OR donor_email OR donor_phone so pre-registration donations appear
  *   – also back-fills user_id on those rows for future speed
  */
 
@@ -48,26 +48,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['action'] ?? '') === 'user-hi
     }
 
     $userId = $_SESSION['user_id'];
-    $email  = $_SESSION['user_email'];
+    $email  = $_SESSION['user_email'] ?? null;
+    $phone  = $_SESSION['user_phone'] ?? null;
 
     try {
         $db = Database::getInstance();
 
-        // Back-fill: assign user_id to any donations made with this email before registration
-        $db->query(
-            "UPDATE donations SET user_id = ? WHERE donor_email = ? AND user_id IS NULL",
-            [$userId, $email]
-        );
+        // Back-fill: assign user_id to any donations made with this email or phone before registration
+        if ($email || $phone) {
+            $params = [$userId];
+            $where  = [];
 
-        // Fetch all donations matching user_id OR email (covers any edge-cases)
+            if ($email) {
+                $where[]  = 'donor_email = ?';
+                $params[] = $email;
+            }
+            if ($phone) {
+                $where[]  = 'donor_phone = ?';
+                $params[] = $phone;
+            }
+
+            $db->query(
+                'UPDATE donations SET user_id = ? WHERE user_id IS NULL AND (' . implode(' OR ', $where) . ')',
+                $params
+            );
+        }
+
+        // Fetch all donations matching user_id OR email OR phone (covers any edge-cases)
+        $conds  = ['user_id = ?'];
+        $params = [$userId];
+
+        if ($email) {
+            $conds[]  = 'donor_email = ?';
+            $params[] = $email;
+        }
+        if ($phone) {
+            $conds[]  = 'donor_phone = ?';
+            $params[] = $phone;
+        }
+
         $donations = $db->fetchAll(
-            "SELECT id, transaction_id, donor_name, donor_email, amount,
+            'SELECT id, transaction_id, donor_name, donor_email, amount,
                     cause AS cause_name, payment_status, payment_mode,
                     created_at
              FROM donations
-             WHERE user_id = ? OR donor_email = ?
-             ORDER BY created_at DESC",
-            [$userId, $email]
+             WHERE ' . implode(' OR ', $conds) . '
+             ORDER BY created_at DESC',
+            $params
         );
 
         echo json_encode(['success' => true, 'data' => $donations]);
@@ -121,13 +148,15 @@ try {
     $db     = Database::getInstance();
     $userId = $_SESSION['user_id'] ?? null;
 
-    // If not logged in, try to match an existing user by email so donations link
+    // If not logged in, try to match an existing user by email or phone so donations link
     if (!$userId) {
         $matched = $db->fetch(
-            "SELECT id FROM users WHERE email = ? LIMIT 1",
-            [$donorEmail]
+            'SELECT id FROM users WHERE email = ? OR phone = ? LIMIT 1',
+            [$donorEmail, $donorPhone]
         );
-        if ($matched) $userId = $matched['id'];
+        if ($matched) {
+            $userId = $matched['id'];
+        }
     }
 
     $donationData = [
