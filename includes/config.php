@@ -176,8 +176,9 @@ if ($paytm_env === 'PROD') {
 // RAZORPAY_KEY_SECRET must be added to your .env file:
 //   RAZORPAY_KEY_SECRET=your_test_secret_here
 // ============================================================
-define('RAZORPAY_KEY_ID',     $env['RAZORPAY_KEY_ID']     ?? '');
-define('RAZORPAY_KEY_SECRET', $env['RAZORPAY_KEY_SECRET'] ?? '');
+define('RAZORPAY_KEY_ID',       $env['RAZORPAY_KEY_ID']       ?? '');
+define('RAZORPAY_KEY_SECRET',   $env['RAZORPAY_KEY_SECRET']   ?? '');
+define('RAZORPAY_WEBHOOK_SECRET',$env['RAZORPAY_WEBHOOK_SECRET'] ?? '');
 
 // Set timezone
 date_default_timezone_set(Config::app('timezone'));
