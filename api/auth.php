@@ -293,6 +293,45 @@ try {
         exit;
     }
 
+    // ── RESET PASSWORD ───────────────────────────────────────────────
+    if ($action === 'reset-password') {
+        $token       = trim($body['token']        ?? $_POST['token']        ?? '');
+        $newPassword = trim($body['new_password'] ?? $_POST['new_password'] ?? '');
+
+        if (empty($token) || empty($newPassword)) {
+            echo json_encode(['success' => false, 'message' => 'Token and new password are required']);
+            exit;
+        }
+
+        if (strlen($newPassword) < 8) {
+            echo json_encode(['success' => false, 'message' => 'Password must be at least 8 characters']);
+            exit;
+        }
+
+        $hashedToken = hash('sha256', $token);
+        $user = $db->fetch(
+            "SELECT id FROM users WHERE password_reset_token = ? AND password_reset_expires > NOW()",
+            [$hashedToken]
+        );
+
+        if (!$user) {
+            echo json_encode(['success' => false, 'message' => 'Invalid or expired reset link. Please request a new one.']);
+            exit;
+        }
+
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+        $db->query(
+            "UPDATE users SET password = ?, password_reset_token = NULL, password_reset_expires = NULL, updated_at = NOW() WHERE id = ?",
+            [$hashedPassword, $user['id']]
+        );
+
+        $logger = new Logger();
+        $logger->log($user['id'], 'password_reset', 'Password reset via token', 'user', $user['id']);
+
+        echo json_encode(['success' => true, 'message' => 'Password reset successfully. You can now log in.']);
+        exit;
+    }
+
     // ── UPDATE PROFILE ───────────────────────────────────────────────
     if ($action === 'update-profile') {
         if (empty($_SESSION['logged_in'])) {
