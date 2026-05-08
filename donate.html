@@ -597,8 +597,21 @@
     <!-- Scripts -->
     <script src="js/main.js"></script>
     <script>
-        // Force Razorpay as active gateway on this page
-        window.ACTIVE_GATEWAY = 'razorpay';
+        // Load active gateway from config dynamically — do NOT hardcode here
+        (function () {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', 'api/gateway-config.php', false); // sync: must resolve before donation-handler.js runs
+            try {
+                xhr.send();
+                if (xhr.status === 200) {
+                    var cfg = JSON.parse(xhr.responseText);
+                    window.ACTIVE_GATEWAY = cfg.gateway || 'razorpay';
+                    if (cfg.razorpay_key_id) window.RAZORPAY_KEY_ID = cfg.razorpay_key_id;
+                }
+            } catch (e) {
+                window.ACTIVE_GATEWAY = 'razorpay'; // safe fallback
+            }
+        })();
     </script>
     <script src="js/donation-handler.js"></script>
     <script>

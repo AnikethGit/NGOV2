@@ -6,7 +6,7 @@
  */
 
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Origin: https://sadgurubharadwaja.org');
 
 require_once '../includes/config.php';
 require_once '../includes/database.php';
