@@ -126,7 +126,7 @@ try {
     $donorPan     = strtoupper(Security::sanitize($_POST['donor_pan'] ?? ''));
     $donorAddress = Security::sanitize($_POST['donor_address'] ?? '');
     $amount       = floatval($_POST['amount'] ?? 0);
-    $cause        = Security::sanitize($_POST['cause']         ?? 'general');
+    $cause        = Security::sanitize($_POST['cause']         ?? 'general-fund');
     $frequency    = Security::sanitize($_POST['frequency']     ?? 'one-time');
     $isAnonymous  = isset($_POST['anonymous']) ? 1 : 0;
     $wantsUpdates = isset($_POST['updates'])   ? 1 : 0;
@@ -139,8 +139,8 @@ try {
     if ($donorPhone && !Security::validatePhone($donorPhone)) throw new Exception('Invalid phone number');
     if ($donorPan   && !Security::validatePAN($donorPan))     throw new Exception('Invalid PAN number format');
 
-    $validCauses = ['general', 'poor-feeding', 'education', 'medical', 'disaster'];
-    if (!in_array($cause, $validCauses)) $cause = 'general';
+    $validCauses = ['general-fund', 'poor-feeding', 'education', 'medical', 'disaster'];
+    if (!in_array($cause, $validCauses)) $cause = 'general-fund';
 
     $transactionId = 'TXN_' . date('Ymd') . '_' . strtoupper(substr(uniqid(), -8));
     $taxExemption  = $amount * 0.5;
@@ -171,7 +171,7 @@ try {
         'cause'                => $cause,
         'frequency'            => $frequency,
         'payment_status'       => 'pending',
-        'payment_method'       => 'Paytm',
+        'payment_method'       => ucfirst(ACTIVE_GATEWAY),
         'is_anonymous'         => $isAnonymous,
         'is_recurring'         => ($frequency !== 'one-time') ? 1 : 0,
         'tax_exemption_amount' => $taxExemption,
