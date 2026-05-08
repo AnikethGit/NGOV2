@@ -981,6 +981,46 @@ select.form-control {
     margin-bottom: var(--space-4);
 }
 
+/* Cause tooltip */
+.cause-btn {
+    position: relative;
+}
+
+.cause-tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color-text, #1a1a1a);
+    color: #fff;
+    font-size: 0.78rem;
+    font-weight: 400;
+    line-height: 1.5;
+    text-align: left;
+    padding: 10px 13px;
+    border-radius: 8px;
+    width: 220px;
+    z-index: 100;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+    pointer-events: none;
+}
+
+.cause-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--color-text, #1a1a1a);
+}
+
+.cause-btn:hover .cause-tooltip,
+.cause-btn:focus .cause-tooltip {
+    display: block;
+}
+
 /* Amount Selection */
 .amount-selection {
     display: grid;

@@ -139,7 +139,7 @@ try {
     if ($donorPhone && !Security::validatePhone($donorPhone)) throw new Exception('Invalid phone number');
     if ($donorPan   && !Security::validatePAN($donorPan))     throw new Exception('Invalid PAN number format');
 
-    $validCauses = ['general-fund', 'poor-feeding', 'education', 'medical', 'disaster'];
+    $validCauses = ['general-fund', 'shirdi-annadanam', 'ganagapur-annadanam', 'corpus-fund'];
     if (!in_array($cause, $validCauses)) $cause = 'general-fund';
 
     $transactionId = 'TXN_' . date('Ymd') . '_' . strtoupper(substr(uniqid(), -8));
