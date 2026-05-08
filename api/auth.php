@@ -321,7 +321,7 @@ try {
 
         $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
         $db->query(
-            "UPDATE users SET password = ?, password_reset_token = NULL, password_reset_expires = NULL, updated_at = NOW() WHERE id = ?",
+            "UPDATE users SET password_hash = ?, password_reset_token = NULL, password_reset_expires = NULL, updated_at = NOW() WHERE id = ?",
             [$hashedPassword, $user['id']]
         );
 

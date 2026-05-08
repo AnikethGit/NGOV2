@@ -172,6 +172,7 @@ try {
         'frequency'            => $frequency,
         'payment_status'       => 'pending',
         'payment_method'       => ucfirst(ACTIVE_GATEWAY),
+        'payment_gateway'      => strtolower(ACTIVE_GATEWAY),
         'is_anonymous'         => $isAnonymous,
         'is_recurring'         => ($frequency !== 'one-time') ? 1 : 0,
         'tax_exemption_amount' => $taxExemption,
