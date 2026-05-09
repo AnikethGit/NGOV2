@@ -38,81 +38,102 @@
   --color-gray-200-rgb: 245, 245, 245;
 
   /* ================================================================
-     FORCED DARK THEME — applied unconditionally to ALL visitors.
-     The @media (prefers-color-scheme: dark) block has been removed
-     so the OS/browser preference is ignored entirely.
+     LIGHT MODE — warm neutral devotional palette (default for all).
+     Dark mode overrides are applied via @media (prefers-color-scheme: dark)
+     after the :root block, respecting the user's OS preference automatically.
      ================================================================ */
 
-  /* Background color tokens (Dark Mode) */
-  --color-bg-1: rgba(33, 128, 141, 0.15);
-  --color-bg-2: rgba(168, 75, 47, 0.15);
-  --color-bg-3: rgba(41, 150, 161, 0.15);
-  --color-bg-4: rgba(192, 21, 47, 0.15);
-  --color-bg-5: rgba(19, 52, 59, 0.20);
-  --color-bg-6: rgba(94, 82, 64, 0.15);
-  --color-bg-7: rgba(50, 184, 198, 0.12);
-  --color-bg-8: rgba(29, 116, 128, 0.15);
+  /* Accent / semantic background tints */
+  --color-bg-1: rgba(201, 107, 10, 0.07);   /* saffron tint */
+  --color-bg-2: rgba(123, 28, 46, 0.07);    /* maroon tint */
+  --color-bg-3: rgba(30, 92, 138, 0.07);    /* blue tint */
+  --color-bg-4: rgba(201, 107, 10, 0.11);
+  --color-bg-5: rgba(30, 92, 138, 0.09);
+  --color-bg-6: rgba(184, 134, 11, 0.07);   /* gold tint */
+  --color-bg-7: rgba(201, 107, 10, 0.05);
+  --color-bg-8: rgba(30, 92, 138, 0.07);
 
-  /* Semantic Color Tokens (Dark Mode — always active) */
-  --color-background: var(--color-charcoal-700);
-  --color-surface: var(--color-charcoal-800);
-  --color-text: var(--color-gray-200);
-  --color-text-secondary: rgba(var(--color-gray-300-rgb), 0.7);
-  --color-primary: var(--color-teal-300);
-  --color-primary-hover: var(--color-teal-400);
-  --color-primary-active: var(--color-teal-800);
-  --color-secondary: rgba(var(--color-gray-400-rgb), 0.15);
-  --color-secondary-hover: rgba(var(--color-gray-400-rgb), 0.25);
-  --color-secondary-active: rgba(var(--color-gray-400-rgb), 0.3);
-  --color-border: rgba(var(--color-gray-400-rgb), 0.3);
-  --color-error: var(--color-red-400);
-  --color-success: var(--color-teal-300);
-  --color-warning: var(--color-orange-400);
-  --color-info: var(--color-gray-300);
-  --color-focus-ring: rgba(var(--color-teal-300-rgb), 0.4);
-  --color-btn-primary-text: var(--color-slate-900);
-  --color-card-border: rgba(var(--color-gray-400-rgb), 0.2);
-  --color-card-border-inner: rgba(var(--color-gray-400-rgb), 0.15);
-  --shadow-inset-sm: inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.15);
-  --button-border-secondary: rgba(var(--color-gray-400-rgb), 0.2);
-  --color-border-secondary: rgba(var(--color-gray-400-rgb), 0.2);
-  --color-select-caret: rgba(var(--color-gray-200-rgb), 0.8);
+  /* ── Semantic Color Tokens — Light Mode ─────────────────────── */
+  --color-background:        #FAF7F2;          /* warm off-white beige */
+  --color-surface:           #FFFFFF;
+  --color-text:              #2C2A27;          /* dark charcoal */
+  --color-text-secondary:    #5A5550;          /* medium charcoal */
+
+  /* Primary = saffron/golden-orange → Donate button & key CTAs */
+  --color-primary:           #C96B0A;
+  --color-primary-hover:     #B05C08;
+  --color-primary-active:    #8F4A06;
+  --color-primary-rgb:       201, 107, 10;
+
+  /* Secondary UI = deep blue/teal → header bg, Get Help, nav */
+  --color-secondary-ui:      #1E5C8A;
+  --color-secondary-hover:   #174D77;
+  --color-secondary-active:  rgba(30, 92, 138, 0.15);
+  --color-secondary:         rgba(30, 92, 138, 0.08);
+
+  /* Devotional accents */
+  --color-maroon:            #7B1C2E;          /* deep maroon — headings, labels */
+  --color-gold:              #B8860B;          /* gold — sacred small details */
+  --color-header-bg:         #1E5C8A;          /* sticky header always deep blue */
+
+  --color-border:            #E2D9CF;
+  --color-border-secondary:  #D5CAC0;
+  --color-card-border:       #EAE3D8;
+  --color-card-border-inner: rgba(94, 82, 64, 0.10);
+
+  --color-error:             #C0152F;
+  --color-success:           #1A7A4A;
+  --color-warning:           #A05C00;
+  --color-info:              #1E5C8A;
+  --color-focus-ring:        rgba(30, 92, 138, 0.35);
+
+  --color-btn-primary-text:  #1A0800;          /* dark text on saffron button */
+  --color-btn-nav-text:      #FFFFFF;          /* white text in header */
+  --shadow-inset-sm:         inset 0 1px 0 rgba(255,255,255,0.6),
+                             inset 0 -1px 0 rgba(0,0,0,0.06);
+  --button-border-secondary: rgba(94, 82, 64, 0.25);
+  --color-select-caret:      rgba(44, 42, 39, 0.8);
 
   /* Common style patterns */
   --focus-ring: 0 0 0 3px var(--color-focus-ring);
-  --focus-outline: 2px solid var(--color-primary);
-  --status-bg-opacity: 0.15;
-  --status-border-opacity: 0.25;
-  --select-caret-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23134252' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  --select-caret-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23f5f5f5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  --focus-outline: 2px solid var(--color-secondary-ui);
+  --status-bg-opacity: 0.12;
+  --status-border-opacity: 0.22;
+  --select-caret-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232C2A27' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  --select-caret-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23EDE8DF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
 
   /* RGB versions for status/overlay use */
-  --color-success-rgb: var(--color-teal-300-rgb);
-  --color-error-rgb: var(--color-red-400-rgb);
-  --color-warning-rgb: var(--color-orange-400-rgb);
-  --color-info-rgb: var(--color-gray-300-rgb);
+  --color-success-rgb: 26, 122, 74;
+  --color-error-rgb:   192, 21, 47;
+  --color-warning-rgb: 160, 92, 0;
+  --color-info-rgb:    30, 92, 138;
 
-  /* Typography */
-  --font-family-base: "FKGroteskNeue", "Geist", "Inter", -apple-system,
+  /* ── Typography — WCAG-friendly, comfortable for all ages ───── */
+  /* Google Fonts: Inter (body) + Lora (headings) loaded in HTML.  */
+  --font-family-base:   "Inter", "Poppins", system-ui, -apple-system,
     BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-family-mono: "Berkeley Mono", ui-monospace, SFMono-Regular, Menlo,
+  --font-family-serif:  "Lora", "Georgia", "Times New Roman", serif;
+  --font-family-mono:   ui-monospace, SFMono-Regular, Menlo,
     Monaco, Consolas, monospace;
-  --font-size-xs: 11px;
-  --font-size-sm: 12px;
-  --font-size-base: 14px;
-  --font-size-md: 14px;
-  --font-size-lg: 16px;
-  --font-size-xl: 18px;
-  --font-size-2xl: 20px;
-  --font-size-3xl: 24px;
-  --font-size-4xl: 30px;
-  --font-weight-normal: 400;
-  --font-weight-medium: 500;
-  --font-weight-semibold: 550;
-  --font-weight-bold: 600;
-  --line-height-tight: 1.2;
-  --line-height-normal: 1.5;
+
+  /* Font-size scale — min 16px body, clear H1–H4 hierarchy */
+  --font-size-xs:   13px;   /* captions, labels */
+  --font-size-sm:   14px;   /* secondary captions */
+  --font-size-base: 17px;   /* body — desktop */
+  --font-size-md:   17px;
+  --font-size-lg:   19px;   /* lead text / h5 */
+  --font-size-xl:   22px;   /* h4 */
+  --font-size-2xl:  23px;   /* h3 */
+  --font-size-3xl:  30px;   /* h2 */
+  --font-size-4xl:  44px;   /* h1 */
+
+  --font-weight-normal:   400;
+  --font-weight-medium:   500;
+  --font-weight-semibold: 600;
+  --font-weight-bold:     700;
+  --line-height-tight:    1.25;
+  --line-height-normal:   1.55;
+  --line-height-relaxed:  1.65;
   --letter-spacing-tight: -0.01em;
 
   /* Spacing */
@@ -158,98 +179,75 @@
 }
 
 /* ================================================================
-   NOTE: @media (prefers-color-scheme: dark) intentionally removed.
-   Dark mode is the only mode — all visitors see the same theme.
-   The [data-color-scheme] data attributes below are kept as-is
-   in case a theme toggle is ever added in the future.
+   DARK MODE — triggered automatically by OS/browser preference.
+   WCAG AA contrast ≥ 4.5:1 maintained for all normal text.
    ================================================================ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background:        #18140F;          /* very dark warm brown */
+    --color-surface:           #231E17;
+    --color-text:              #EDE8DF;          /* warm off-white */
+    --color-text-secondary:    #A89F93;
 
-/* Data attribute overrides (kept for future use) */
-[data-color-scheme="dark"] {
-  --color-bg-1: rgba(33, 128, 141, 0.15);
-  --color-bg-2: rgba(168, 75, 47, 0.15);
-  --color-bg-3: rgba(41, 150, 161, 0.15);
-  --color-bg-4: rgba(192, 21, 47, 0.15);
-  --color-bg-5: rgba(19, 52, 59, 0.20);
-  --color-bg-6: rgba(94, 82, 64, 0.15);
-  --color-bg-7: rgba(50, 184, 198, 0.12);
-  --color-bg-8: rgba(29, 116, 128, 0.15);
+    /* Saffron — lightened for dark bg, still with dark text */
+    --color-primary:           #E8890F;
+    --color-primary-hover:     #D07B0A;
+    --color-primary-active:    #B86B08;
+    --color-primary-rgb:       232, 137, 15;
 
-  --color-background: var(--color-charcoal-700);
-  --color-surface: var(--color-charcoal-800);
-  --color-text: var(--color-gray-200);
-  --color-text-secondary: rgba(var(--color-gray-300-rgb), 0.7);
-  --color-primary: var(--color-teal-300);
-  --color-primary-hover: var(--color-teal-400);
-  --color-primary-active: var(--color-teal-800);
-  --color-secondary: rgba(var(--color-gray-400-rgb), 0.15);
-  --color-secondary-hover: rgba(var(--color-gray-400-rgb), 0.25);
-  --color-secondary-active: rgba(var(--color-gray-400-rgb), 0.3);
-  --color-border: rgba(var(--color-gray-400-rgb), 0.3);
-  --color-error: var(--color-red-400);
-  --color-success: var(--color-teal-300);
-  --color-warning: var(--color-orange-400);
-  --color-info: var(--color-gray-300);
-  --color-focus-ring: rgba(var(--color-teal-300-rgb), 0.4);
-  --color-btn-primary-text: var(--color-slate-900);
-  --color-card-border: rgba(var(--color-gray-400-rgb), 0.15);
-  --color-card-border-inner: rgba(var(--color-gray-400-rgb), 0.15);
-  --shadow-inset-sm: inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.15);
-  --color-border-secondary: rgba(var(--color-gray-400-rgb), 0.2);
-  --color-select-caret: rgba(var(--color-gray-200-rgb), 0.8);
+    /* Blue/teal — lightened for dark bg */
+    --color-secondary-ui:      #2C7BB0;
+    --color-secondary-hover:   #256A9A;
+    --color-secondary-active:  rgba(44, 123, 176, 0.20);
+    --color-secondary:         rgba(44, 123, 176, 0.12);
 
-  --focus-ring: 0 0 0 3px var(--color-focus-ring);
-  --focus-outline: 2px solid var(--color-primary);
-  --status-bg-opacity: 0.15;
-  --status-border-opacity: 0.25;
-  --select-caret-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23134252' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  --select-caret-dark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23f5f5f5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    /* Devotional accents */
+    --color-maroon:            #E05070;          /* lightened for dark bg */
+    --color-gold:              #D4A820;
+    --color-header-bg:         #0F2D47;          /* deep navy for dark mode */
 
-  --color-success-rgb: var(--color-teal-300-rgb);
-  --color-error-rgb: var(--color-red-400-rgb);
-  --color-warning-rgb: var(--color-orange-400-rgb);
-  --color-info-rgb: var(--color-gray-300-rgb);
-}
+    --color-border:            #3A3028;
+    --color-border-secondary:  #4A3D30;
+    --color-card-border:       #322A20;
+    --color-card-border-inner: rgba(255, 255, 255, 0.06);
 
-[data-color-scheme="light"] {
-  --color-brown-600-rgb: 94, 82, 64;
-  --color-teal-500-rgb: 33, 128, 141;
-  --color-slate-900-rgb: 19, 52, 59;
+    --color-error:             #F05060;
+    --color-success:           #3ABF74;
+    --color-warning:           #E89520;
+    --color-info:              #4A9FD0;
+    --color-focus-ring:        rgba(44, 123, 176, 0.45);
 
-  --color-bg-1: rgba(33, 128, 141, 0.08);
-  --color-bg-2: rgba(168, 75, 47, 0.08);
-  --color-bg-3: rgba(41, 150, 161, 0.08);
-  --color-bg-4: rgba(192, 21, 47, 0.08);
-  --color-bg-5: rgba(19, 52, 59, 0.08);
-  --color-bg-6: rgba(94, 82, 64, 0.08);
-  --color-bg-7: rgba(50, 184, 198, 0.08);
-  --color-bg-8: rgba(29, 116, 128, 0.08);
+    --color-btn-primary-text:  #0A0500;          /* dark text on lighter saffron */
+    --color-btn-nav-text:      #FFFFFF;
+    --shadow-inset-sm:         inset 0 1px 0 rgba(255,255,255,0.08),
+                               inset 0 -1px 0 rgba(0,0,0,0.25);
+    --button-border-secondary: rgba(255, 255, 255, 0.15);
+    --color-select-caret:      rgba(237, 232, 223, 0.8);
 
-  --color-background: var(--color-cream-50);
-  --color-surface: var(--color-cream-100);
-  --color-text: var(--color-slate-900);
-  --color-text-secondary: var(--color-slate-500);
-  --color-primary: var(--color-teal-500);
-  --color-primary-hover: var(--color-teal-600);
-  --color-primary-active: var(--color-teal-700);
-  --color-secondary: rgba(var(--color-brown-600-rgb), 0.12);
-  --color-secondary-hover: rgba(var(--color-brown-600-rgb), 0.2);
-  --color-secondary-active: rgba(var(--color-brown-600-rgb), 0.25);
-  --color-border: rgba(var(--color-brown-600-rgb), 0.2);
-  --color-btn-primary-text: var(--color-cream-50);
-  --color-card-border: rgba(var(--color-brown-600-rgb), 0.12);
-  --color-card-border-inner: rgba(var(--color-brown-600-rgb), 0.12);
-  --color-error: var(--color-red-500);
-  --color-success: var(--color-teal-500);
-  --color-warning: var(--color-orange-500);
-  --color-info: var(--color-slate-500);
-  --color-focus-ring: rgba(var(--color-teal-500-rgb), 0.4);
+    --focus-ring: 0 0 0 3px var(--color-focus-ring);
+    --focus-outline: 2px solid var(--color-secondary-ui);
+    --status-bg-opacity: 0.15;
+    --status-border-opacity: 0.25;
 
-  --color-success-rgb: var(--color-teal-500-rgb);
-  --color-error-rgb: var(--color-red-500-rgb);
-  --color-warning-rgb: var(--color-orange-500-rgb);
-  --color-info-rgb: var(--color-slate-500-rgb);
+    --color-success-rgb: 58, 191, 116;
+    --color-error-rgb:   240, 80, 96;
+    --color-warning-rgb: 232, 149, 32;
+    --color-info-rgb:    74, 159, 208;
+
+    --color-bg-1: rgba(232, 137, 15, 0.12);
+    --color-bg-2: rgba(224, 80, 112, 0.12);
+    --color-bg-3: rgba(44, 123, 176, 0.12);
+    --color-bg-4: rgba(232, 137, 15, 0.15);
+    --color-bg-5: rgba(44, 123, 176, 0.12);
+    --color-bg-6: rgba(212, 168, 32, 0.10);
+    --color-bg-7: rgba(232, 137, 15, 0.08);
+    --color-bg-8: rgba(44, 123, 176, 0.10);
+
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.18);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.25), 0 1px 2px rgba(0, 0, 0, 0.18);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.30), 0 2px 4px -1px rgba(0, 0, 0, 0.18);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.35), 0 4px 6px -2px rgba(0, 0, 0, 0.18);
+  }
 }
 
 /* Base styles */
@@ -263,7 +261,7 @@ html {
   box-sizing: border-box;
   /* Forces browser-native UI (scrollbars, inputs, date pickers)
      to render in dark style on ALL devices, regardless of OS theme */
-  color-scheme: dark;
+  color-scheme: light dark;
 }
 
 body {
@@ -285,17 +283,18 @@ h4,
 h5,
 h6 {
   margin: 0;
-  font-weight: var(--font-weight-semibold);
+  font-family: var(--font-family-serif);
+  font-weight: var(--font-weight-bold);
   line-height: var(--line-height-tight);
-  color: var(--color-text);
+  color: var(--color-maroon);
   letter-spacing: var(--letter-spacing-tight);
 }
 
 h1 {
-  font-size: var(--font-size-4xl);
+  font-size: clamp(32px, 5vw, var(--font-size-4xl));
 }
 h2 {
-  font-size: var(--font-size-3xl);
+  font-size: clamp(24px, 3.5vw, var(--font-size-3xl));
 }
 h3 {
   font-size: var(--font-size-2xl);
@@ -305,9 +304,11 @@ h4 {
 }
 h5 {
   font-size: var(--font-size-lg);
+  font-family: var(--font-family-base);
 }
 h6 {
   font-size: var(--font-size-md);
+  font-family: var(--font-family-base);
 }
 
 p {
@@ -724,20 +725,20 @@ body {
    ================================================================= */
 
 h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-family-base);
-    font-weight: var(--font-weight-semibold);
+    font-family: var(--font-family-serif);
+    font-weight: var(--font-weight-bold);
     line-height: var(--line-height-tight);
-    color: var(--color-text);
+    color: var(--color-maroon);
     margin-bottom: var(--space-16);
     letter-spacing: var(--letter-spacing-tight);
 }
 
-h1 { font-size: var(--font-size-4xl); }
-h2 { font-size: var(--font-size-3xl); }
+h1 { font-size: clamp(32px, 5vw, var(--font-size-4xl)); }
+h2 { font-size: clamp(24px, 3.5vw, var(--font-size-3xl)); }
 h3 { font-size: var(--font-size-2xl); }
-h4 { font-size: var(--font-size-xl); }
-h5 { font-size: var(--font-size-lg); }
-h6 { font-size: var(--font-size-md); }
+h4 { font-size: var(--font-size-xl); font-family: var(--font-family-base); color: var(--color-text); }
+h5 { font-size: var(--font-size-lg); font-family: var(--font-family-base); color: var(--color-text); }
+h6 { font-size: var(--font-size-md); font-family: var(--font-family-base); color: var(--color-text); }
 
 p {
     margin-bottom: var(--space-16);
@@ -791,13 +792,13 @@ a:hover {
    ================================================================= */
 
 .header {
-    background: var(--color-surface);
-    border-bottom: 1px solid var(--color-border);
+    background: var(--color-header-bg);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.10);
     position: sticky;
     top: 0;
     z-index: 1020;
     transition: all var(--duration-normal) var(--ease-standard);
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.20);
 }
 
 .navbar {
@@ -820,7 +821,7 @@ a:hover {
     align-items: center;
     gap: var(--space-8);
     text-decoration: none;
-    color: var(--color-text);
+    color: #FFFFFF;
     z-index: 1022;
     position: relative;
 }
@@ -835,7 +836,7 @@ a:hover {
 .logo-text {
     font-size: var(--font-size-lg);
     font-weight: var(--font-weight-bold);
-    color: var(--color-text);
+    color: #FFFFFF;
     white-space: nowrap;
 }
 
@@ -849,7 +850,7 @@ a:hover {
 .nav-link {
     position: relative;
     padding: var(--space-8) 0;
-    color: var(--color-text);
+    color: rgba(255, 255, 255, 0.90);
     font-weight: var(--font-weight-medium);
     font-size: var(--font-size-md);
     text-decoration: none;
@@ -859,7 +860,7 @@ a:hover {
 
 .nav-link:hover,
 .nav-link.active {
-    color: var(--color-primary);
+    color: #FFFFFF;
 }
 
 .nav-link::after {
@@ -869,7 +870,7 @@ a:hover {
     left: 0;
     width: 0;
     height: 2px;
-    background: var(--color-primary);
+    background: var(--color-gold);
     transition: width var(--duration-normal) var(--ease-standard);
 }
 
@@ -945,7 +946,7 @@ a:hover {
         left: 0;
         right: 0;
         bottom: 0;
-        background: var(--color-surface);
+        background: var(--color-header-bg);
         flex-direction: column;
         align-items: stretch;
         justify-content: flex-start;
@@ -983,7 +984,8 @@ a:hover {
 
     .nav-link:hover,
     .nav-link:active {
-        background: var(--color-secondary);
+        background: rgba(255, 255, 255, 0.10);
+        color: #FFFFFF !important;
     }
 
     .nav-link::after {
