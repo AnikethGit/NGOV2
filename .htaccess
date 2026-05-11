@@ -1,0 +1,98 @@
+# ============================================================
+# Enable Gzip / Deflate Compression
+# ============================================================
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css
+    AddOutputFilterByType DEFLATE text/javascript application/javascript application/x-javascript
+    AddOutputFilterByType DEFLATE application/json application/xml application/xhtml+xml
+    AddOutputFilterByType DEFLATE image/svg+xml font/ttf font/otf application/font-woff application/font-woff2
+</IfModule>
+
+# ============================================================
+# Browser Caching (Cache-Control headers)
+# ============================================================
+<IfModule mod_expires.c>
+    ExpiresActive On
+
+    # HTML — short cache so updates propagate quickly
+    ExpiresByType text/html                  "access plus 1 hour"
+
+    # CSS & JS — cache for 1 week (bust by filename versioning if needed)
+    ExpiresByType text/css                   "access plus 1 week"
+    ExpiresByType application/javascript     "access plus 1 week"
+    ExpiresByType text/javascript            "access plus 1 week"
+
+    # Images — long cache
+    ExpiresByType image/jpeg                 "access plus 1 month"
+    ExpiresByType image/png                  "access plus 1 month"
+    ExpiresByType image/gif                  "access plus 1 month"
+    ExpiresByType image/webp                 "access plus 1 month"
+    ExpiresByType image/svg+xml              "access plus 1 month"
+    ExpiresByType image/x-icon              "access plus 1 year"
+
+    # Fonts — long cache
+    ExpiresByType font/ttf                   "access plus 1 year"
+    ExpiresByType font/otf                   "access plus 1 year"
+    ExpiresByType font/woff                  "access plus 1 year"
+    ExpiresByType font/woff2                 "access plus 1 year"
+    ExpiresByType application/font-woff      "access plus 1 year"
+    ExpiresByType application/font-woff2     "access plus 1 year"
+</IfModule>
+
+# ============================================================
+# Cache-Control headers (supplement mod_expires)
+# ============================================================
+<IfModule mod_headers.c>
+    # Revalidate HTML every visit
+    <FilesMatch "\.(html|htm)$">
+        Header set Cache-Control "public, max-age=3600, must-revalidate"
+    </FilesMatch>
+
+    # CSS and JS — 1 week
+    <FilesMatch "\.(css|js)$">
+        Header set Cache-Control "public, max-age=604800, stale-while-revalidate=86400"
+    </FilesMatch>
+
+    # Images — 1 month
+    <FilesMatch "\.(jpg|jpeg|png|gif|webp|svg|ico)$">
+        Header set Cache-Control "public, max-age=2592000, stale-while-revalidate=86400"
+    </FilesMatch>
+
+    # Fonts — 1 year
+    <FilesMatch "\.(ttf|otf|woff|woff2|eot)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+
+    # Security headers (free wins)
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# ============================================================
+# Serve WebP images to browsers that support them
+# (Place .webp versions alongside originals with same base name)
+# ============================================================
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # If browser accepts WebP and a .webp version exists, serve it
+    RewriteCond %{HTTP_ACCEPT} image/webp
+    RewriteCond %{REQUEST_FILENAME} \.(jpe?g|png)$
+    RewriteCond %{REQUEST_FILENAME}.webp -f
+    RewriteRule ^ %{REQUEST_URI}.webp [L,T=image/webp]
+</IfModule>
+
+<IfModule mod_headers.c>
+    <FilesMatch "\.(jpe?g|png)$">
+        Header append Vary Accept
+    </FilesMatch>
+</IfModule>
+
+# ============================================================
+# Disable ETags (avoids weak validators duplicating Last-Modified)
+# ============================================================
+<IfModule mod_headers.c>
+    Header unset ETag
+</IfModule>
+FileETag None
