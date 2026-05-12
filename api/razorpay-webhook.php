@@ -11,6 +11,7 @@
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/database.php';
 require_once __DIR__ . '/../includes/logger.php';
+require_once __DIR__ . '/../includes/receipt-service.php';
 
 // ── Only accept POST ─────────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -75,9 +76,9 @@ if ($eventName === 'payment.captured') {
     if ($donation && $donation['payment_status'] === 'pending') {
         $db->query(
             'UPDATE donations
-             SET payment_status = ?, razorpay_payment_id = ?, payment_gateway = ?, updated_at = NOW()
+             SET payment_status = ?, razorpay_payment_id = ?, payment_gateway = ?, payment_mode = ?, updated_at = NOW()
              WHERE razorpay_order_id = ?',
-            ['completed', $rzpPayId, 'razorpay', $rzpOrdId]
+            ['completed', $rzpPayId, 'razorpay', 'Online', $rzpOrdId]
         );
         $logger->log(
             $donation['user_id'],
@@ -88,6 +89,37 @@ if ($eventName === 'payment.captured') {
             ['razorpay_payment_id' => $rzpPayId, 'razorpay_order_id' => $rzpOrdId]
         );
         error_log("[Razorpay Webhook] Donation {$donation['id']} marked completed via webhook");
+
+        // Dispatch receipt only if verify-payment.php hasn't already done so (idempotency via receipt_number)
+        $fresh = $db->fetch('SELECT * FROM donations WHERE id = ? LIMIT 1', [$donation['id']]);
+        if ($fresh && empty($fresh['receipt_number'])) {
+            try {
+                $user = [];
+                if (!empty($fresh['user_id'])) {
+                    $row = $db->fetch(
+                        'SELECT id, full_name, email, phone, address, pan_number FROM users WHERE id = ? LIMIT 1',
+                        [$fresh['user_id']]
+                    );
+                    if ($row) {
+                        $user = $row;
+                        $user['name'] = $row['full_name'] ?? '';
+                    }
+                }
+                if (empty($user)) {
+                    $user = [
+                        'name'       => $fresh['donor_name']    ?? 'Donor',
+                        'full_name'  => $fresh['donor_name']    ?? 'Donor',
+                        'email'      => $fresh['donor_email']   ?? '',
+                        'phone'      => $fresh['donor_phone']   ?? '',
+                        'pan_number' => $fresh['donor_pan']     ?? '',
+                        'address'    => $fresh['donor_address'] ?? '',
+                    ];
+                }
+                ReceiptService::dispatch($fresh, $user);
+            } catch (Throwable $e) {
+                error_log('[Razorpay Webhook] ReceiptService error: ' . $e->getMessage());
+            }
+        }
     }
 
     http_response_code(200);

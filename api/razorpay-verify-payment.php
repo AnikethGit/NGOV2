@@ -2,13 +2,14 @@
 /**
  * Razorpay Payment Verification
  * Called by donation-handler.js after Razorpay checkout modal closes successfully.
- * Verifies HMAC-SHA256 signature, updates donation status, returns redirect URL.
+ * Verifies HMAC-SHA256 signature, updates donation status, dispatches receipt email, returns redirect URL.
  */
 
 header('Content-Type: application/json');
 
 require_once '../includes/config.php';
 require_once '../includes/database.php';
+require_once '../includes/receipt-service.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -49,13 +50,49 @@ try {
     $db = Database::getInstance();
     $db->query(
         'UPDATE donations
-         SET payment_status = ?, payment_gateway = ?, razorpay_payment_id = ?, updated_at = NOW()
+         SET payment_status = ?, payment_gateway = ?, razorpay_payment_id = ?, payment_mode = ?, updated_at = NOW()
          WHERE transaction_id = ?',
-        ['completed', 'razorpay', $razorpay_payment_id, $transaction_id]
+        ['completed', 'razorpay', $razorpay_payment_id, 'Online', $transaction_id]
     );
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => 'DB update failed: ' . $e->getMessage()]);
     exit;
+}
+
+// Dispatch donation receipt (email + SMS) after successful payment
+try {
+    $donation = $db->fetch('SELECT * FROM donations WHERE transaction_id = ? LIMIT 1', [$transaction_id]);
+
+    if ($donation) {
+        $user = [];
+        if (!empty($donation['user_id'])) {
+            $row = $db->fetch(
+                'SELECT id, full_name, email, phone, address, pan_number FROM users WHERE id = ? LIMIT 1',
+                [$donation['user_id']]
+            );
+            if ($row) {
+                $user = $row;
+                $user['name'] = $row['full_name'] ?? '';
+            }
+        }
+
+        // Guest donation — use fields stored on the donation row
+        if (empty($user)) {
+            $user = [
+                'name'       => $donation['donor_name']    ?? 'Donor',
+                'full_name'  => $donation['donor_name']    ?? 'Donor',
+                'email'      => $donation['donor_email']   ?? '',
+                'phone'      => $donation['donor_phone']   ?? '',
+                'pan_number' => $donation['donor_pan']     ?? '',
+                'address'    => $donation['donor_address'] ?? '',
+            ];
+        }
+
+        ReceiptService::dispatch($donation, $user);
+    }
+} catch (Throwable $e) {
+    // Never let receipt dispatch block the response
+    error_log('[razorpay-verify] ReceiptService error: ' . $e->getMessage());
 }
 
 echo json_encode([
