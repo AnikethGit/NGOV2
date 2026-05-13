@@ -8,7 +8,7 @@
  *   per_page      int    Results per page (default 20, max 100; ignored when export=1)
  *   status        str    payment_status filter: completed|pending|failed
  *   cause         str    cause column value filter
- *   payment_mode  str    payment_mode column filter: upi|card|netbanking|cash|cheque|dd
+ *   payment_method str   payment_method column filter: Razorpay|Paytm|Cash|Cheque|DD
  *   amount_range  str    e.g. "0-1000", "1000-5000", "5000-10000", "10000+"
  *   from          date   created_at >= YYYY-MM-DD
  *   to            date   created_at <= YYYY-MM-DD
@@ -53,7 +53,7 @@ try {
 
     $status      = trim($_GET['status']       ?? '');
     $cause       = trim($_GET['cause']        ?? '');
-    $paymentMode = trim($_GET['payment_mode'] ?? '');
+    $paymentMethod = trim($_GET['payment_method'] ?? '');
     $search      = trim($_GET['search']       ?? '');
     $from        = trim($_GET['from']         ?? '');
     $to          = trim($_GET['to']           ?? '');
@@ -72,9 +72,9 @@ try {
         $where[]  = 'cause = ?';
         $params[] = $cause;
     }
-    if ($paymentMode !== '') {
-        $where[]  = 'payment_mode = ?';
-        $params[] = $paymentMode;
+    if ($paymentMethod !== '') {
+        $where[]  = 'payment_method = ?';
+        $params[] = $paymentMethod;
     }
     if ($search !== '') {
         $where[]  = '(donor_name LIKE ? OR donor_email LIKE ? OR donor_phone LIKE ? OR transaction_id LIKE ?)';
@@ -123,7 +123,8 @@ try {
 
     $rows = $db->fetchAll(
         "SELECT id, transaction_id, donor_name, donor_email, donor_phone,
-                pan_number, amount, cause, payment_status, payment_mode, created_at
+                donor_pan, amount, cause, payment_method, payment_status,
+                razorpay_order_id, razorpay_payment_id, created_at
          FROM donations
          {$whereSql}
          ORDER BY created_at DESC

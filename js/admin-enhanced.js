@@ -112,17 +112,19 @@ function exportExcel(rows, columns, filename) {
 
 // ── Donation export columns ───────────────────────────────────────────────────
 const DONATION_EXPORT_COLS = [
-  { label: 'ID',              key: 'id' },
-  { label: 'Transaction ID',  key: 'transaction_id' },
-  { label: 'Donor Name',      key: 'donor_name' },
-  { label: 'Email',           key: 'donor_email' },
-  { label: 'Phone',           key: 'donor_phone' },
-  { label: 'PAN',             key: 'pan_number' },
-  { label: 'Amount (INR)',    key: 'amount' },
-  { label: 'Cause',           key: 'cause' },
-  { label: 'Payment Mode',    key: 'payment_mode' },
-  { label: 'Status',          key: 'payment_status' },
-  { label: 'Date',            fn: r => adminFmtDate(r.created_at) },
+  { label: 'ID',                  key: 'id' },
+  { label: 'Transaction ID',      key: 'transaction_id' },
+  { label: 'Donor Name',          key: 'donor_name' },
+  { label: 'Email',               key: 'donor_email' },
+  { label: 'Phone',               key: 'donor_phone' },
+  { label: 'PAN',                 key: 'donor_pan' },
+  { label: 'Amount (INR)',        key: 'amount' },
+  { label: 'Cause',               key: 'cause' },
+  { label: 'Payment Method',      key: 'payment_method' },
+  { label: 'Status',              key: 'payment_status' },
+  { label: 'Razorpay Order ID',   key: 'razorpay_order_id' },
+  { label: 'Razorpay Payment ID', key: 'razorpay_payment_id' },
+  { label: 'Date',                fn: r => adminFmtDate(r.created_at) },
 ];
 
 // ── Auth guard ───────────────────────────────────────────────────────────────
@@ -343,25 +345,25 @@ async function loadAdminDonations(page = 1) {
 
   const status = document.getElementById('donationStatusFilter')?.value      || '';
   const cause  = document.getElementById('donationCauseFilter')?.value       || '';
-  const mode   = document.getElementById('donationPaymentModeFilter')?.value || '';
-  const range  = document.getElementById('donationAmountFilter')?.value      || '';
-  const from   = document.getElementById('donationDateFrom')?.value          || '';
-  const to     = document.getElementById('donationDateTo')?.value            || '';
+  const method = document.getElementById('donationPaymentMethodFilter')?.value || '';
+  const range  = document.getElementById('donationAmountFilter')?.value        || '';
+  const from   = document.getElementById('donationDateFrom')?.value            || '';
+  const to     = document.getElementById('donationDateTo')?.value              || '';
   const search = adminDonationsState.search || '';
 
   const params = new URLSearchParams({
     page: String(page), per_page: String(adminDonationsState.perPage),
   });
-  if (status) params.append('status',       status);
-  if (cause)  params.append('cause',        cause);
-  if (mode)   params.append('payment_mode', mode);
-  if (range)  params.append('amount_range', range);
-  if (from)   params.append('from',         from);
-  if (to)     params.append('to',           to);
-  if (search) params.append('search',       search);
+  if (status) params.append('status',         status);
+  if (cause)  params.append('cause',          cause);
+  if (method) params.append('payment_method', method);
+  if (range)  params.append('amount_range',   range);
+  if (from)   params.append('from',           from);
+  if (to)     params.append('to',             to);
+  if (search) params.append('search',         search);
 
   const tbody = document.getElementById('donationsTableBody');
-  if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading donations…</td></tr>`;
+  if (tbody) tbody.innerHTML = `<tr><td colspan="11" class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading donations…</td></tr>`;
 
   try {
     const res  = await fetch(`api/admin-donations.php?${params}`, { credentials: 'include' });
@@ -373,7 +375,7 @@ async function loadAdminDonations(page = 1) {
     renderAdminDonationsTable(data.data || []);
     renderPagination('donationsPagination', data.pagination || {}, loadAdminDonations);
   } catch (e) {
-    if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="loading-spinner">${escHtml(e.message)}</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="11" class="loading-spinner">${escHtml(e.message)}</td></tr>`;
     adminShowToast('Failed to load donations: ' + e.message, 'error');
   } finally {
     adminDonationsState.loading = false;
@@ -392,21 +394,28 @@ function renderAdminDonationsTable(rows) {
   };
 
   if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="7" class="no-data"><div class="no-data-content"><i class="fas fa-heart"></i><p>No donations found for the selected filters.</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11" class="no-data"><div class="no-data-content"><i class="fas fa-heart"></i><p>No donations found for the selected filters.</p></div></td></tr>`;
     return;
   }
 
+  const mono = v => v ? `<small style="font-family:monospace;font-size:11px">${escHtml(v)}</small>` : '<span style="color:var(--color-text-secondary)">—</span>';
+
   tbody.innerHTML = rows.map(d => `
     <tr>
-      <td><small style="font-family:monospace">${escHtml(d.transaction_id || String(d.id))}</small></td>
+      <td>${mono(d.transaction_id)}</td>
       <td>
         <div class="donor-info">
           <strong>${escHtml(d.donor_name || '—')}</strong>
           <small>${escHtml(d.donor_email || '')}</small>
+          ${d.donor_phone ? `<small>${escHtml(d.donor_phone)}</small>` : ''}
         </div>
       </td>
+      <td>${mono(d.donor_pan)}</td>
       <td><span class="amount">${adminFmtRs(d.amount)}</span></td>
       <td>${escHtml(causeLabels[d.cause] || d.cause || '—')}</td>
+      <td>${escHtml(d.payment_method || '—')}</td>
+      <td>${mono(d.razorpay_order_id)}</td>
+      <td>${mono(d.razorpay_payment_id)}</td>
       <td>${adminStatusBadge(d.payment_status)}</td>
       <td>${adminFmtDate(d.created_at)}</td>
       <td>
@@ -422,7 +431,7 @@ function renderAdminDonationsTable(rows) {
 
 function initDonationsTab() {
   // Dropdowns + date pickers → reload table on change
-  ['donationStatusFilter','donationCauseFilter','donationPaymentModeFilter',
+  ['donationStatusFilter','donationCauseFilter','donationPaymentMethodFilter',
    'donationAmountFilter','donationDateFrom','donationDateTo'].forEach(id => {
     document.getElementById(id)?.addEventListener('change', () => loadAdminDonations(1));
   });
@@ -439,7 +448,7 @@ function initDonationsTab() {
 
   // Clear filters
   document.getElementById('clearDonationFilters')?.addEventListener('click', () => {
-    ['donationStatusFilter','donationCauseFilter','donationPaymentModeFilter',
+    ['donationStatusFilter','donationCauseFilter','donationPaymentMethodFilter',
      'donationAmountFilter'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
@@ -533,20 +542,20 @@ async function doExport() {
 
   if (scope === 'current') {
     // Mirror all active filters
-    const status = document.getElementById('donationStatusFilter')?.value      || '';
-    const cause  = document.getElementById('donationCauseFilter')?.value       || '';
-    const mode   = document.getElementById('donationPaymentModeFilter')?.value || '';
-    const range  = document.getElementById('donationAmountFilter')?.value      || '';
-    const from   = document.getElementById('donationDateFrom')?.value          || '';
-    const to     = document.getElementById('donationDateTo')?.value            || '';
+    const status = document.getElementById('donationStatusFilter')?.value         || '';
+    const cause  = document.getElementById('donationCauseFilter')?.value          || '';
+    const method = document.getElementById('donationPaymentMethodFilter')?.value  || '';
+    const range  = document.getElementById('donationAmountFilter')?.value         || '';
+    const from   = document.getElementById('donationDateFrom')?.value             || '';
+    const to     = document.getElementById('donationDateTo')?.value               || '';
     const search = adminDonationsState.search || '';
-    if (status) params.append('status',       status);
-    if (cause)  params.append('cause',        cause);
-    if (mode)   params.append('payment_mode', mode);
-    if (range)  params.append('amount_range', range);
-    if (from)   params.append('from',         from);
-    if (to)     params.append('to',           to);
-    if (search) params.append('search',       search);
+    if (status) params.append('status',         status);
+    if (cause)  params.append('cause',          cause);
+    if (method) params.append('payment_method', method);
+    if (range)  params.append('amount_range',   range);
+    if (from)   params.append('from',           from);
+    if (to)     params.append('to',             to);
+    if (search) params.append('search',         search);
 
   } else if (scope === 'date-range') {
     const from = document.getElementById('exportDateFrom')?.value || '';

@@ -543,15 +543,14 @@
                                 </select>
                             </div>
                             <div class="filter-group">
-                                <label>Payment Mode</label>
-                                <select id="donationPaymentModeFilter">
-                                    <option value="">All Modes</option>
-                                    <option value="upi">UPI</option>
-                                    <option value="card">Card</option>
-                                    <option value="netbanking">Net Banking</option>
-                                    <option value="cash">Cash</option>
-                                    <option value="cheque">Cheque</option>
-                                    <option value="dd">Demand Draft</option>
+                                <label>Payment Method</label>
+                                <select id="donationPaymentMethodFilter">
+                                    <option value="">All Methods</option>
+                                    <option value="Razorpay">Razorpay</option>
+                                    <option value="Paytm">Paytm</option>
+                                    <option value="Cash">Cash</option>
+                                    <option value="Cheque">Cheque</option>
+                                    <option value="DD">Demand Draft</option>
                                 </select>
                             </div>
                             <div class="filter-group">
@@ -585,10 +584,14 @@
                         <table class="data-table" id="donationsTable">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
+                                    <th>Transaction ID</th>
                                     <th>Donor Details</th>
+                                    <th>PAN</th>
                                     <th>Amount</th>
                                     <th>Cause</th>
+                                    <th>Method</th>
+                                    <th>Razorpay Order ID</th>
+                                    <th>Razorpay Payment ID</th>
                                     <th>Status</th>
                                     <th>Date</th>
                                     <th>Actions</th>
