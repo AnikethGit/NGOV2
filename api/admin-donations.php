@@ -1,17 +1,21 @@
 <?php
 /**
  * Admin Donations API
- * GET  api/admin-donations.php?action=list  — paginated, filtered donation list (admin only)
+ * GET  api/admin-donations.php  — paginated, filtered donation list (admin only)
  *
  * Query params (all optional):
  *   page          int    Page number (default 1)
- *   per_page      int    Results per page (default 20, max 100)
+ *   per_page      int    Results per page (default 20, max 100; ignored when export=1)
  *   status        str    payment_status filter: completed|pending|failed
  *   cause         str    cause column value filter
+ *   payment_mode  str    payment_mode column filter: upi|card|netbanking|cash|cheque|dd
  *   amount_range  str    e.g. "0-1000", "1000-5000", "5000-10000", "10000+"
  *   from          date   created_at >= YYYY-MM-DD
  *   to            date   created_at <= YYYY-MM-DD
- *   search        str    matches donor_name, donor_email or transaction_id
+ *   month         int    1-12  filter to a specific calendar month (use with year)
+ *   year          int    e.g. 2024  filter to a specific calendar year
+ *   search        str    matches donor_name, donor_email, donor_phone or transaction_id
+ *   export        int    set to 1 to bypass pagination (up to 5000 rows)
  */
 
 if (ob_get_level() === 0) ob_start();
@@ -42,14 +46,20 @@ if (empty($_SESSION['logged_in']) || ($_SESSION['user_role'] ?? '') !== 'admin')
 }
 
 try {
-    $page    = max(1, (int)($_GET['page']     ?? 1));
-    $perPage = max(1, min(100, (int)($_GET['per_page'] ?? 20)));
-    $status  = trim($_GET['status']  ?? '');
-    $cause   = trim($_GET['cause']   ?? '');
-    $search  = trim($_GET['search']  ?? '');
-    $from    = trim($_GET['from']    ?? '');
-    $to      = trim($_GET['to']      ?? '');
-    $range   = trim($_GET['amount_range'] ?? '');
+    $isExport = !empty($_GET['export']) && (int)$_GET['export'] === 1;
+    $page     = max(1, (int)($_GET['page']     ?? 1));
+    // Export: allow up to 5000 rows; normal: max 100 per page
+    $perPage  = $isExport ? 5000 : max(1, min(100, (int)($_GET['per_page'] ?? 20)));
+
+    $status      = trim($_GET['status']       ?? '');
+    $cause       = trim($_GET['cause']        ?? '');
+    $paymentMode = trim($_GET['payment_mode'] ?? '');
+    $search      = trim($_GET['search']       ?? '');
+    $from        = trim($_GET['from']         ?? '');
+    $to          = trim($_GET['to']           ?? '');
+    $range       = trim($_GET['amount_range'] ?? '');
+    $month       = (int)($_GET['month']       ?? 0); // 1-12
+    $year        = (int)($_GET['year']        ?? 0); // e.g. 2024
 
     $where  = [];
     $params = [];
@@ -62,12 +72,14 @@ try {
         $where[]  = 'cause = ?';
         $params[] = $cause;
     }
+    if ($paymentMode !== '') {
+        $where[]  = 'payment_mode = ?';
+        $params[] = $paymentMode;
+    }
     if ($search !== '') {
-        $where[]  = '(donor_name LIKE ? OR donor_email LIKE ? OR transaction_id LIKE ?)';
+        $where[]  = '(donor_name LIKE ? OR donor_email LIKE ? OR donor_phone LIKE ? OR transaction_id LIKE ?)';
         $like     = '%' . $search . '%';
-        $params[] = $like;
-        $params[] = $like;
-        $params[] = $like;
+        $params[] = $like; $params[] = $like; $params[] = $like; $params[] = $like;
     }
     if ($from !== '') {
         $where[]  = 'DATE(created_at) >= ?';
@@ -76,6 +88,15 @@ try {
     if ($to !== '') {
         $where[]  = 'DATE(created_at) <= ?';
         $params[] = $to;
+    }
+    // Month / year shortcuts (take precedence over from/to when set)
+    if ($year > 0 && $month > 0) {
+        $where[]  = 'YEAR(created_at) = ? AND MONTH(created_at) = ?';
+        $params[] = $year;
+        $params[] = $month;
+    } elseif ($year > 0) {
+        $where[]  = 'YEAR(created_at) = ?';
+        $params[] = $year;
     }
     if ($range !== '') {
         if (substr($range, -1) === '+') {
@@ -97,12 +118,12 @@ try {
     $countRow = $db->fetch("SELECT COUNT(*) AS total FROM donations {$whereSql}", $params);
     $total    = (int)($countRow['total'] ?? 0);
 
-    $offset = ($page - 1) * $perPage;
+    $offset = $isExport ? 0 : ($page - 1) * $perPage;
     $qp     = array_merge($params, [$perPage, $offset]);
 
     $rows = $db->fetchAll(
         "SELECT id, transaction_id, donor_name, donor_email, donor_phone,
-                amount, cause, payment_status, payment_mode, created_at
+                pan_number, amount, cause, payment_status, payment_mode, created_at
          FROM donations
          {$whereSql}
          ORDER BY created_at DESC
@@ -115,7 +136,7 @@ try {
         'success'    => true,
         'data'       => $rows,
         'pagination' => [
-            'page'        => $page,
+            'page'        => $isExport ? 1 : $page,
             'per_page'    => $perPage,
             'total'       => $total,
             'total_pages' => $perPage > 0 ? (int)ceil($total / $perPage) : 1,
