@@ -205,11 +205,16 @@ function updateSidebarUser(user) {
 
 // ── Logout ───────────────────────────────────────────────────────────────────
 function initLogout() {
-  document.getElementById('logoutBtn')?.addEventListener('click', async e => {
+  async function doAdminLogout(e) {
     e.preventDefault();
     try { await fetch('api/auth.php?action=logout', { credentials: 'include' }); } catch {}
     window.location.href = 'login.html';
-  });
+  }
+
+  // Top-bar Logout button (primary trigger)
+  document.getElementById('logoutBtn')?.addEventListener('click', doAdminLogout);
+  // Sidebar user-dropdown Logout link (secondary trigger)
+  document.getElementById('sidebarUserLogout')?.addEventListener('click', doAdminLogout);
 
   // User dropdown toggle (CSS shows .user-dropdown.active, so toggle 'active')
   document.querySelector('.user-menu-toggle')?.addEventListener('click', () => {
