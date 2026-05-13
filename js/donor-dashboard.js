@@ -414,21 +414,25 @@ function populateProfile(user) {
 function initProfileDropdown() {
   const toggle = document.querySelector('.dropdown-toggle');
   const menu   = document.querySelector('.dropdown-menu');
-  if (!toggle || !menu) return;
+  if (toggle && menu) {
+    toggle.addEventListener('click', e => {
+      e.stopPropagation();
+      menu.classList.toggle('open');
+    });
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.profile-dropdown')) menu.classList.remove('open');
+    });
+  }
 
-  toggle.addEventListener('click', e => {
-    e.stopPropagation();
-    menu.classList.toggle('open');
-  });
-  document.addEventListener('click', () => menu.classList.remove('open'));
-
-  document.querySelector('.logout-btn')?.addEventListener('click', async () => {
+  async function doLogout() {
     try {
       await fetch('api/auth.php?action=logout', { credentials: 'include' });
-    } finally {
-      window.location.href = 'index.html';
-    }
-  });
+    } catch {}
+    window.location.href = 'login.html';
+  }
+
+  document.querySelector('.logout-btn')?.addEventListener('click', doLogout);
+  document.getElementById('sidebarLogoutBtn')?.addEventListener('click', doLogout);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

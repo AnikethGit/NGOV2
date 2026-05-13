@@ -211,9 +211,14 @@ function initLogout() {
     window.location.href = 'login.html';
   });
 
-  // User dropdown toggle
+  // User dropdown toggle (CSS shows .user-dropdown.active, so toggle 'active')
   document.querySelector('.user-menu-toggle')?.addEventListener('click', () => {
-    document.querySelector('.user-dropdown')?.classList.toggle('open');
+    document.querySelector('.user-dropdown')?.classList.toggle('active');
+  });
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.user-profile')) {
+      document.querySelector('.user-dropdown')?.classList.remove('active');
+    }
   });
 }
 
