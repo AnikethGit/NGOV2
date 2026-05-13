@@ -412,9 +412,14 @@
         // ── Logout ───────────────────────────────────────────────────────
         if (logoutBtn) {
             logoutBtn.addEventListener('click', function () {
-                fetch('api/auth.php?action=logout', { method: 'POST' })
-                    .catch(function () {})
-                    .finally(function () {
+                // auth.php handles logout via GET (action=logout lives in the GET block)
+                fetch('api/auth.php?action=logout', { credentials: 'include' })
+                    .then(function () {
+                        window.currentUser = null;
+                        window.location.href = 'login.html';
+                    })
+                    .catch(function () {
+                        // API unreachable — clear local state and redirect anyway
                         window.currentUser = null;
                         window.location.href = 'login.html';
                     });
