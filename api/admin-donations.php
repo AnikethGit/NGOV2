@@ -123,7 +123,7 @@ try {
 
     $rows = $db->fetchAll(
         "SELECT id, transaction_id, donor_name, donor_email, donor_phone,
-                donor_pan, amount, cause, payment_method, payment_status,
+                donor_pan, donor_address, amount, cause, payment_method, payment_status,
                 razorpay_order_id, razorpay_payment_id, created_at
          FROM donations
          {$whereSql}
