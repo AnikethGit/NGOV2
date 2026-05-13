@@ -78,13 +78,52 @@ function exportCSV(rows, columns, filename) {
     const v = c.key ? (r[c.key] ?? '') : (c.fn ? c.fn(r) : '');
     return `"${String(v).replace(/"/g, '""')}"`;
   }))];
-  const blob = new Blob([lines.map(l => l.join(',')).join('\n')], { type: 'text/csv' });
+  const blob = new Blob(['﻿' + lines.map(l => l.join(',')).join('\n')], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href     = URL.createObjectURL(blob);
   a.download = filename;
   a.click();
   URL.revokeObjectURL(a.href);
 }
+
+// ── Excel export helper (SheetJS) ────────────────────────────────────────────
+function exportExcel(rows, columns, filename) {
+  if (!rows.length) { adminShowToast('No data to export.', 'warning'); return; }
+  if (typeof XLSX === 'undefined') {
+    adminShowToast('Excel library not loaded. Try CSV instead.', 'error');
+    return;
+  }
+  const header = columns.map(c => c.label);
+  const data   = [header, ...rows.map(r => columns.map(c =>
+    c.key ? (r[c.key] ?? '') : (c.fn ? c.fn(r) : '')
+  ))];
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  // Auto column widths
+  ws['!cols'] = columns.map((_, i) => ({
+    wch: Math.max(columns[i].label.length, ...rows.map(r => {
+      const v = columns[i].key ? String(r[columns[i].key] ?? '') : String(columns[i].fn ? columns[i].fn(r) : '');
+      return v.length;
+    })) + 2,
+  }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Donations');
+  XLSX.writeFile(wb, filename);
+}
+
+// ── Donation export columns ───────────────────────────────────────────────────
+const DONATION_EXPORT_COLS = [
+  { label: 'ID',              key: 'id' },
+  { label: 'Transaction ID',  key: 'transaction_id' },
+  { label: 'Donor Name',      key: 'donor_name' },
+  { label: 'Email',           key: 'donor_email' },
+  { label: 'Phone',           key: 'donor_phone' },
+  { label: 'PAN',             key: 'pan_number' },
+  { label: 'Amount (INR)',    key: 'amount' },
+  { label: 'Cause',           key: 'cause' },
+  { label: 'Payment Mode',    key: 'payment_mode' },
+  { label: 'Status',          key: 'payment_status' },
+  { label: 'Date',            fn: r => adminFmtDate(r.created_at) },
+];
 
 // ── Auth guard ───────────────────────────────────────────────────────────────
 async function adminCheckAuth() {
@@ -302,22 +341,24 @@ async function loadAdminDonations(page = 1) {
   if (adminDonationsState.loading) return;
   adminDonationsState.loading = true;
 
-  const status = document.getElementById('donationStatusFilter')?.value || '';
-  const cause  = document.getElementById('donationCauseFilter')?.value  || '';
-  const range  = document.getElementById('donationAmountFilter')?.value || '';
-  const from   = document.getElementById('donationDateFrom')?.value     || '';
-  const to     = document.getElementById('donationDateTo')?.value       || '';
+  const status = document.getElementById('donationStatusFilter')?.value      || '';
+  const cause  = document.getElementById('donationCauseFilter')?.value       || '';
+  const mode   = document.getElementById('donationPaymentModeFilter')?.value || '';
+  const range  = document.getElementById('donationAmountFilter')?.value      || '';
+  const from   = document.getElementById('donationDateFrom')?.value          || '';
+  const to     = document.getElementById('donationDateTo')?.value            || '';
   const search = adminDonationsState.search || '';
 
   const params = new URLSearchParams({
-    action: 'list', page: String(page), per_page: String(adminDonationsState.perPage),
+    page: String(page), per_page: String(adminDonationsState.perPage),
   });
-  if (status) params.append('status', status);
-  if (cause)  params.append('cause',  cause);
+  if (status) params.append('status',       status);
+  if (cause)  params.append('cause',        cause);
+  if (mode)   params.append('payment_mode', mode);
   if (range)  params.append('amount_range', range);
-  if (from)   params.append('from',   from);
-  if (to)     params.append('to',     to);
-  if (search) params.append('search', search);
+  if (from)   params.append('from',         from);
+  if (to)     params.append('to',           to);
+  if (search) params.append('search',       search);
 
   const tbody = document.getElementById('donationsTableBody');
   if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Loading donations…</td></tr>`;
@@ -380,13 +421,26 @@ function renderAdminDonationsTable(rows) {
 }
 
 function initDonationsTab() {
-  ['donationStatusFilter','donationCauseFilter','donationAmountFilter',
-   'donationDateFrom','donationDateTo'].forEach(id => {
+  // Dropdowns + date pickers → reload table on change
+  ['donationStatusFilter','donationCauseFilter','donationPaymentModeFilter',
+   'donationAmountFilter','donationDateFrom','donationDateTo'].forEach(id => {
     document.getElementById(id)?.addEventListener('change', () => loadAdminDonations(1));
   });
 
-  document.getElementById('clearFilters')?.addEventListener('click', () => {
-    ['donationStatusFilter','donationCauseFilter','donationAmountFilter'].forEach(id => {
+  // Donor search: debounced text input
+  let _donorSearchTimer;
+  document.getElementById('donationDonorSearch')?.addEventListener('input', e => {
+    clearTimeout(_donorSearchTimer);
+    _donorSearchTimer = setTimeout(() => {
+      adminDonationsState.search = e.target.value.trim();
+      loadAdminDonations(1);
+    }, 350);
+  });
+
+  // Clear filters
+  document.getElementById('clearDonationFilters')?.addEventListener('click', () => {
+    ['donationStatusFilter','donationCauseFilter','donationPaymentModeFilter',
+     'donationAmountFilter'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
@@ -394,28 +448,148 @@ function initDonationsTab() {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
+    const search = document.getElementById('donationDonorSearch');
+    if (search) search.value = '';
     adminDonationsState.search = '';
     loadAdminDonations(1);
   });
 
-  document.getElementById('exportDonations')?.addEventListener('click', () => {
-    exportCSV(adminDonationsState._allRows, [
-      { label: 'ID',             key: 'id' },
-      { label: 'Transaction ID', key: 'transaction_id' },
-      { label: 'Donor Name',     key: 'donor_name' },
-      { label: 'Email',          key: 'donor_email' },
-      { label: 'Phone',          key: 'donor_phone' },
-      { label: 'Amount (INR)',   key: 'amount' },
-      { label: 'Cause',          key: 'cause' },
-      { label: 'Status',         key: 'payment_status' },
-      { label: 'Payment Mode',   key: 'payment_mode' },
-      { label: 'Date',           fn: r => adminFmtDate(r.created_at) },
-    ], 'donations.csv');
-  });
+  // Export button → show modal
+  document.getElementById('exportDonations')?.addEventListener('click', () => showExportModal());
 
   document.getElementById('addDonation')?.addEventListener('click', () => {
     adminShowToast('To record a donation, use the Donate page or import directly into the database.', 'info');
   });
+
+  initExportModal();
+}
+
+// ── Export modal ──────────────────────────────────────────────────────────────
+
+function initExportModal() {
+  const modal  = document.getElementById('exportModal');
+  if (!modal) return;
+
+  // Populate year dropdowns
+  const curYear = new Date().getFullYear();
+  const years   = Array.from({ length: 6 }, (_, i) => curYear - i);
+  ['exportYearMonthly','exportYearYearly'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    sel.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+  });
+
+  // Set current month default
+  const monthSel = document.getElementById('exportMonth');
+  if (monthSel) monthSel.value = String(new Date().getMonth() + 1);
+
+  // Scope selector shows/hides extra controls
+  document.getElementById('exportScope')?.addEventListener('change', updateExportScopeUI);
+  updateExportScopeUI();
+
+  // Close buttons
+  ['exportModalClose','exportModalCancel'].forEach(id => {
+    document.getElementById(id)?.addEventListener('click', () => closeExportModal());
+  });
+  modal.addEventListener('click', e => { if (e.target === modal) closeExportModal(); });
+
+  // Confirm → fetch all & download
+  document.getElementById('exportModalConfirm')?.addEventListener('click', async () => {
+    const btn = document.getElementById('exportModalConfirm');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Fetching…';
+    try {
+      await doExport();
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-download"></i> Download';
+    }
+  });
+}
+
+function updateExportScopeUI() {
+  const scope = document.getElementById('exportScope')?.value || 'current';
+  document.getElementById('exportScopeDateRange').style.display = scope === 'date-range' ? '' : 'none';
+  document.getElementById('exportScopeMonthly').style.display   = scope === 'monthly'    ? '' : 'none';
+  document.getElementById('exportScopeYearly').style.display    = scope === 'yearly'     ? '' : 'none';
+}
+
+function showExportModal() {
+  const modal = document.getElementById('exportModal');
+  if (modal) { modal.style.display = 'flex'; updateExportScopeUI(); }
+}
+
+function closeExportModal() {
+  const modal = document.getElementById('exportModal');
+  if (modal) modal.style.display = 'none';
+}
+
+async function doExport() {
+  const format = document.querySelector('input[name="exportFormat"]:checked')?.value || 'csv';
+  const scope  = document.getElementById('exportScope')?.value || 'current';
+
+  // Build query params based on scope
+  const params = new URLSearchParams({ export: '1' });
+
+  if (scope === 'current') {
+    // Mirror all active filters
+    const status = document.getElementById('donationStatusFilter')?.value      || '';
+    const cause  = document.getElementById('donationCauseFilter')?.value       || '';
+    const mode   = document.getElementById('donationPaymentModeFilter')?.value || '';
+    const range  = document.getElementById('donationAmountFilter')?.value      || '';
+    const from   = document.getElementById('donationDateFrom')?.value          || '';
+    const to     = document.getElementById('donationDateTo')?.value            || '';
+    const search = adminDonationsState.search || '';
+    if (status) params.append('status',       status);
+    if (cause)  params.append('cause',        cause);
+    if (mode)   params.append('payment_mode', mode);
+    if (range)  params.append('amount_range', range);
+    if (from)   params.append('from',         from);
+    if (to)     params.append('to',           to);
+    if (search) params.append('search',       search);
+
+  } else if (scope === 'date-range') {
+    const from = document.getElementById('exportDateFrom')?.value || '';
+    const to   = document.getElementById('exportDateTo')?.value   || '';
+    if (from) params.append('from', from);
+    if (to)   params.append('to',   to);
+
+  } else if (scope === 'monthly') {
+    const month = document.getElementById('exportMonth')?.value        || '';
+    const year  = document.getElementById('exportYearMonthly')?.value  || '';
+    if (month) params.append('month', month);
+    if (year)  params.append('year',  year);
+
+  } else if (scope === 'yearly') {
+    const year = document.getElementById('exportYearYearly')?.value || '';
+    if (year) params.append('year', year);
+  }
+
+  try {
+    const res  = await fetch(`api/admin-donations.php?${params}`, { credentials: 'include' });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message || 'Failed to fetch data');
+
+    const rows = data.data || [];
+    if (!rows.length) {
+      adminShowToast('No donations found for the selected scope.', 'warning');
+      return;
+    }
+
+    const timestamp = new Date().toISOString().slice(0,10);
+    const basename  = `donations_${scope}_${timestamp}`;
+
+    if (format === 'xlsx') {
+      exportExcel(rows, DONATION_EXPORT_COLS, `${basename}.xlsx`);
+    } else {
+      exportCSV(rows, DONATION_EXPORT_COLS, `${basename}.csv`);
+    }
+
+    adminShowToast(`Exported ${rows.length} row${rows.length !== 1 ? 's' : ''} as ${format.toUpperCase()}.`, 'success');
+    closeExportModal();
+  } catch (e) {
+    adminShowToast('Export failed: ' + e.message, 'error');
+  }
 }
 
 // ════════════════════════════════════════════════════════════

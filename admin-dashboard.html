@@ -506,7 +506,7 @@
                         </div>
                         <div class="header-actions">
                             <button class="btn btn-outline" id="exportDonations">
-                                <i class="fas fa-download"></i>
+                                <i class="fas fa-file-export"></i>
                                 Export
                             </button>
                             <button class="btn btn-primary" id="addDonation">
@@ -519,6 +519,10 @@
                     <!-- Enhanced Filters Section -->
                     <div class="filters-section">
                         <div class="filters">
+                            <div class="filter-group" style="grid-column:span 2">
+                                <label>Search Donor</label>
+                                <input type="text" id="donationDonorSearch" placeholder="Name, email, phone or transaction ID…">
+                            </div>
                             <div class="filter-group">
                                 <label>Status</label>
                                 <select id="donationStatusFilter">
@@ -532,20 +536,31 @@
                                 <label>Cause</label>
                                 <select id="donationCauseFilter">
                                     <option value="">All Causes</option>
-                                    <option value="general">General Fund</option>
-                                    <option value="poor-feeding">Poor Feeding</option>
-                                    <option value="education">Education</option>
-                                    <option value="medical">Medical</option>
-                                    <option value="disaster">Disaster Relief</option>
+                                    <option value="general-fund">General Fund</option>
+                                    <option value="shirdi-annadanam">Shirdi Annadanam</option>
+                                    <option value="ganagapur-annadanam">Ganagapur Annadanam</option>
+                                    <option value="corpus-fund">Corpus Fund</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Payment Mode</label>
+                                <select id="donationPaymentModeFilter">
+                                    <option value="">All Modes</option>
+                                    <option value="upi">UPI</option>
+                                    <option value="card">Card</option>
+                                    <option value="netbanking">Net Banking</option>
+                                    <option value="cash">Cash</option>
+                                    <option value="cheque">Cheque</option>
+                                    <option value="dd">Demand Draft</option>
                                 </select>
                             </div>
                             <div class="filter-group">
                                 <label>Amount Range</label>
                                 <select id="donationAmountFilter">
                                     <option value="">All Amounts</option>
-                                    <option value="0-1000">₹0 - ₹1,000</option>
-                                    <option value="1000-5000">₹1,000 - ₹5,000</option>
-                                    <option value="5000-10000">₹5,000 - ₹10,000</option>
+                                    <option value="0-1000">₹0 – ₹1,000</option>
+                                    <option value="1000-5000">₹1,000 – ₹5,000</option>
+                                    <option value="5000-10000">₹5,000 – ₹10,000</option>
                                     <option value="10000+">₹10,000+</option>
                                 </select>
                             </div>
@@ -559,7 +574,9 @@
                             </div>
                             <div class="filter-group">
                                 <label>&nbsp;</label>
-                                <button class="btn btn-outline" id="clearFilters">Clear Filters</button>
+                                <button class="btn btn-outline" id="clearDonationFilters">
+                                    <i class="fas fa-times"></i> Clear Filters
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -795,7 +812,86 @@
         </main>
     </div>
 
+    <!-- Export Modal -->
+    <div id="exportModal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.45);align-items:center;justify-content:center;">
+        <div style="background:var(--color-surface,#fff);border-radius:12px;padding:32px;width:min(480px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.25);position:relative;">
+            <button id="exportModalClose" title="Close"
+                style="position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--color-text-secondary,#64748b);">×</button>
+            <h3 style="font-size:17px;font-weight:700;margin-bottom:20px;"><i class="fas fa-file-export" style="margin-right:8px;color:#21808d"></i>Export Donations</h3>
+
+            <!-- Format -->
+            <div style="margin-bottom:18px;">
+                <label style="font-size:13px;font-weight:600;display:block;margin-bottom:8px;">Format</label>
+                <div style="display:flex;gap:12px;">
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;">
+                        <input type="radio" name="exportFormat" value="csv" checked> CSV (.csv)
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;">
+                        <input type="radio" name="exportFormat" value="xlsx"> Excel (.xlsx)
+                    </label>
+                </div>
+            </div>
+
+            <!-- Scope -->
+            <div style="margin-bottom:18px;">
+                <label style="font-size:13px;font-weight:600;display:block;margin-bottom:8px;">Scope</label>
+                <select id="exportScope" style="width:100%;padding:9px 12px;border:1px solid var(--color-border,#e2e8f0);border-radius:6px;font-size:14px;background:var(--color-surface,#fff);color:var(--color-text,#0f172a);">
+                    <option value="current">Current filters (all pages)</option>
+                    <option value="date-range">Custom date range</option>
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                </select>
+            </div>
+
+            <!-- Scope-specific controls -->
+            <div id="exportScopeDateRange" style="display:none;margin-bottom:18px;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div>
+                        <label style="font-size:13px;font-weight:500;display:block;margin-bottom:6px;">From</label>
+                        <input type="date" id="exportDateFrom" style="width:100%;padding:8px 10px;border:1px solid var(--color-border,#e2e8f0);border-radius:6px;font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:13px;font-weight:500;display:block;margin-bottom:6px;">To</label>
+                        <input type="date" id="exportDateTo" style="width:100%;padding:8px 10px;border:1px solid var(--color-border,#e2e8f0);border-radius:6px;font-size:13px;">
+                    </div>
+                </div>
+            </div>
+            <div id="exportScopeMonthly" style="display:none;margin-bottom:18px;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div>
+                        <label style="font-size:13px;font-weight:500;display:block;margin-bottom:6px;">Month</label>
+                        <select id="exportMonth" style="width:100%;padding:8px 10px;border:1px solid var(--color-border,#e2e8f0);border-radius:6px;font-size:13px;">
+                            <option value="1">January</option><option value="2">February</option>
+                            <option value="3">March</option><option value="4">April</option>
+                            <option value="5">May</option><option value="6">June</option>
+                            <option value="7">July</option><option value="8">August</option>
+                            <option value="9">September</option><option value="10">October</option>
+                            <option value="11">November</option><option value="12">December</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:13px;font-weight:500;display:block;margin-bottom:6px;">Year</label>
+                        <select id="exportYearMonthly" style="width:100%;padding:8px 10px;border:1px solid var(--color-border,#e2e8f0);border-radius:6px;font-size:13px;"></select>
+                    </div>
+                </div>
+            </div>
+            <div id="exportScopeYearly" style="display:none;margin-bottom:18px;">
+                <label style="font-size:13px;font-weight:500;display:block;margin-bottom:6px;">Year</label>
+                <select id="exportYearYearly" style="width:100%;padding:8px 10px;border:1px solid var(--color-border,#e2e8f0);border-radius:6px;font-size:13px;"></select>
+            </div>
+
+            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:24px;">
+                <button id="exportModalCancel" class="btn btn-outline">Cancel</button>
+                <button id="exportModalConfirm" class="btn btn-primary">
+                    <i class="fas fa-download"></i> Download
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
+    <!-- SheetJS for Excel export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="js/main.js"></script>
     <script src="js/admin-enhanced.js"></script>
     <script src="js/theme-switcher.js"></script>
