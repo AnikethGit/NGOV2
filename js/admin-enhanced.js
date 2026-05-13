@@ -118,6 +118,7 @@ const DONATION_EXPORT_COLS = [
   { label: 'Email',               key: 'donor_email' },
   { label: 'Phone',               key: 'donor_phone' },
   { label: 'PAN',                 key: 'donor_pan' },
+  { label: 'Address',             key: 'donor_address' },
   { label: 'Amount (INR)',        key: 'amount' },
   { label: 'Cause',               key: 'cause' },
   { label: 'Payment Method',      key: 'payment_method' },
@@ -404,7 +405,7 @@ function renderAdminDonationsTable(rows) {
   };
 
   if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="11" class="no-data"><div class="no-data-content"><i class="fas fa-heart"></i><p>No donations found for the selected filters.</p></div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="12" class="no-data"><div class="no-data-content"><i class="fas fa-heart"></i><p>No donations found for the selected filters.</p></div></td></tr>`;
     return;
   }
 
@@ -421,6 +422,7 @@ function renderAdminDonationsTable(rows) {
         </div>
       </td>
       <td>${mono(d.donor_pan)}</td>
+      <td style="max-width:160px;white-space:normal;font-size:12px">${d.donor_address ? escHtml(d.donor_address) : '<span style="color:var(--color-text-secondary)">—</span>'}</td>
       <td><span class="amount">${adminFmtRs(d.amount)}</span></td>
       <td>${escHtml(causeLabels[d.cause] || d.cause || '—')}</td>
       <td>${escHtml(d.payment_method || '—')}</td>
