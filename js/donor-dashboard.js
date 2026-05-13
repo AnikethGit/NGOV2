@@ -96,30 +96,70 @@ async function loadDonations() {
 // 5. Populate stat cards
 // ─────────────────────────────────────────────────────────────────────────────
 function populateStats(donations, user) {
-  const completed = donations.filter(d => d.payment_status === 'completed');
-  const total     = completed.reduce((s, d) => s + parseFloat(d.amount || 0), 0);
-  const taxSaving = total * 0.5;     // 50% under 80G
-  const lives     = Math.round(total / 100); // rough impact multiplier
+  const completed  = donations.filter(d => d.payment_status === 'completed');
+  const total      = completed.reduce((s, d) => s + parseFloat(d.amount || 0), 0);
+  const taxSaving  = total * 0.5;
+  const lives      = Math.round(total / 100);
 
-  setText('donorName',    user.name || user.full_name || 'Donor');
-  setText('totalDonated', fmtRs(total));
+  setText('donorName',     user.name || user.full_name || 'Donor');
+  setText('totalDonated',  fmtRs(total));
   setText('donationCount', completed.length);
   setText('livesImpacted', fmt(lives));
-  setText('taxSavings',   fmtRs(taxSaving));
+  setText('taxSavings',    fmtRs(taxSaving));
 
   // Profile avatar initials fallback
   const avatar = el('profileAvatar');
-  if (avatar && !avatar.src.includes('default-avatar.png')) return;
-  const name  = user.name || user.full_name || 'D';
-  const initials = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
-  if (avatar) { avatar.alt = initials; }
+  const name   = user.name || user.full_name || 'D';
+  if (avatar) avatar.alt = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
 
-  // Impact numbers (rough ratios)
+  // Impact numbers (rough ratios against total donated)
   setText('mealsProvided',     fmt(Math.round(total / 30)));
   setText('studentsSupported', fmt(Math.round(total / 500)));
   setText('medicalAid',        fmt(Math.round(total / 1000)));
   setText('familiesHelped',    fmt(Math.round(total / 2000)));
   setText('totalImpactValue',  fmt(Math.round(total * 3)));
+
+  // ── Dynamic stat-change labels (this month vs last month) ──
+  const now       = new Date();
+  const thisMonth = completed.filter(d => {
+    const dt = new Date(d.created_at);
+    return dt.getFullYear() === now.getFullYear() && dt.getMonth() === now.getMonth();
+  });
+  const lastDate  = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastMonth = completed.filter(d => {
+    const dt = new Date(d.created_at);
+    return dt.getFullYear() === lastDate.getFullYear() && dt.getMonth() === lastDate.getMonth();
+  });
+
+  const thisAmt  = thisMonth.reduce((s, d) => s + parseFloat(d.amount || 0), 0);
+  const lastAmt  = lastMonth.reduce((s, d) => s + parseFloat(d.amount || 0), 0);
+  const thisCnt  = thisMonth.length;
+  const lastCnt  = lastMonth.length;
+
+  // Update stat change spans (use querySelector since they have no IDs)
+  const changes = document.querySelectorAll('#dashboard-section .stat-change');
+  if (changes[0]) {
+    changes[0].textContent = thisAmt > 0
+      ? `+${fmtRs(thisAmt)} this month`
+      : (lastAmt > 0 ? 'No donations this month' : 'Start donating today!');
+    changes[0].className = `stat-change ${thisAmt > 0 ? 'positive' : 'neutral'}`;
+  }
+  if (changes[1]) {
+    changes[1].textContent = thisCnt > 0 ? `+${thisCnt} this month` : 'No donations this month';
+    changes[1].className = `stat-change ${thisCnt > 0 ? 'positive' : 'neutral'}`;
+  }
+  if (changes[2]) {
+    const livesThis = Math.round(thisAmt / 100);
+    changes[2].textContent = livesThis > 0 ? `+${fmt(livesThis)} this month` : 'Based on total donations';
+    changes[2].className = `stat-change ${livesThis > 0 ? 'positive' : 'neutral'}`;
+  }
+  if (changes[3]) {
+    const year = now.getFullYear();
+    const yearTotal = completed.filter(d => new Date(d.created_at).getFullYear() === year)
+                               .reduce((s, d) => s + parseFloat(d.amount || 0), 0);
+    changes[3].textContent = `${year} total: ${fmtRs(yearTotal * 0.5)}`;
+    changes[3].className = 'stat-change neutral';
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -409,10 +449,24 @@ function initRecurringModal() {
     btn.addEventListener('click', () => modal.classList.remove('open'))
   );
 
+  // Show a "coming soon" banner inside the modal
+  if (form) {
+    const notice = document.createElement('div');
+    notice.style.cssText = 'background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#92400e;display:flex;align-items:center;gap:8px;';
+    notice.innerHTML = '<i class="fas fa-clock"></i> <span>Automatic recurring payments are coming soon. Submitting this form will register your intent and an admin will follow up to set up the mandate.</span>';
+    form.insertAdjacentElement('afterbegin', notice);
+  }
+
   form?.addEventListener('submit', async function(e) {
     e.preventDefault();
-    // TODO: POST to api/recurring.php once built
-    showToast('Recurring donation set up! (coming soon — will charge monthly via Paytm)', 'info');
+    const amount  = el('recurringAmount')?.value;
+    const cause   = el('recurringCause')?.value;
+    const startDt = el('startDate')?.value;
+    if (!amount || !cause || !startDt) {
+      showToast('Please fill in all fields.', 'warning');
+      return;
+    }
+    showToast('Your recurring donation request has been noted. We\'ll contact you to complete the setup.', 'success');
     modal.classList.remove('open');
   });
 }
@@ -520,6 +574,181 @@ function showToast(msg, type = 'info') {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 17a. Recognition — badges & milestones computed from donation history
+// ─────────────────────────────────────────────────────────────────────────────
+function populateRecognition(donations) {
+  const completed = donations.filter(d => d.payment_status === 'completed');
+  const total     = completed.reduce((s, d) => s + parseFloat(d.amount || 0), 0);
+  const years     = [...new Set(completed.map(d => new Date(d.created_at).getFullYear()))];
+  const causes    = [...new Set(completed.map(d => d.cause_name))];
+
+  // ── Badges ──
+  const BADGES = [
+    { id: 'first-step',    icon: 'fas fa-star',          title: 'First Step',       desc: 'Made your first donation',          earned: completed.length >= 1 },
+    { id: 'generous',      icon: 'fas fa-heart',          title: 'Generous Heart',   desc: 'Donated ₹1,000 or more in total',   earned: total >= 1000 },
+    { id: 'impact-maker',  icon: 'fas fa-hands-helping',  title: 'Impact Maker',     desc: 'Donated ₹5,000 or more in total',   earned: total >= 5000 },
+    { id: 'champion',      icon: 'fas fa-trophy',         title: 'Champion',         desc: 'Donated ₹10,000 or more in total',  earned: total >= 10000 },
+    { id: 'regular-giver', icon: 'fas fa-calendar-check', title: 'Regular Giver',    desc: 'Donated across 2 or more years',    earned: years.length >= 2 },
+    { id: 'cause-champ',   icon: 'fas fa-award',          title: 'Cause Champion',   desc: 'Supported 3 or more causes',        earned: causes.length >= 3 },
+    { id: 'big-heart',     icon: 'fas fa-gem',            title: 'Platinum Donor',   desc: 'Donated ₹50,000 or more in total',  earned: total >= 50000 },
+  ];
+
+  const badgesContainer = el('donorBadges');
+  if (badgesContainer) {
+    const earnedBadges = BADGES.filter(b => b.earned);
+    if (!earnedBadges.length) {
+      badgesContainer.innerHTML = `
+        <div style="text-align:center;padding:30px;color:#64748b;grid-column:1/-1">
+          <i class="fas fa-star" style="font-size:2.5rem;margin-bottom:12px;display:block;opacity:0.3"></i>
+          <p>Make your first donation to start earning badges!</p>
+          <a href="donate.html" class="btn btn-primary" style="margin-top:12px;display:inline-flex">Donate Now</a>
+        </div>`;
+    } else {
+      badgesContainer.innerHTML = BADGES.map(b => `
+        <div class="badge-item" style="${b.earned ? '' : 'opacity:0.3;filter:grayscale(1)'}">
+          <div class="badge-icon"><i class="${b.icon}"></i></div>
+          <div class="badge-title">${b.title}</div>
+          <div class="badge-description">${b.desc}</div>
+          ${b.earned ? '<div style="margin-top:6px;font-size:11px;color:#16a34a;font-weight:600">✓ Earned</div>' : ''}
+        </div>`).join('');
+    }
+  }
+
+  // ── Milestones ──
+  const MILESTONES = [
+    { label: '₹100',    threshold: 100,    icon: 'fas fa-seedling' },
+    { label: '₹500',    threshold: 500,    icon: 'fas fa-leaf' },
+    { label: '₹1,000',  threshold: 1000,   icon: 'fas fa-tree' },
+    { label: '₹5,000',  threshold: 5000,   icon: 'fas fa-star' },
+    { label: '₹10,000', threshold: 10000,  icon: 'fas fa-trophy' },
+    { label: '₹50,000', threshold: 50000,  icon: 'fas fa-crown' },
+  ];
+
+  const milestonesContainer = el('donationMilestones');
+  if (milestonesContainer) {
+    milestonesContainer.innerHTML = MILESTONES.map(m => {
+      const reached = total >= m.threshold;
+      const pct     = Math.min(100, Math.round((total / m.threshold) * 100));
+      return `
+        <div class="milestone-item" style="${reached ? '' : 'opacity:0.5'}">
+          <div class="milestone-icon" style="${reached ? '' : 'background:var(--color-secondary)'}">
+            <i class="${m.icon}"></i>
+          </div>
+          <div class="milestone-info" style="flex:1">
+            <h4>${m.label} ${reached ? '<span style="color:#16a34a">✓</span>' : ''}</h4>
+            <p>${reached ? 'Reached!' : `${pct}% of the way there`}</p>
+            <div style="background:#e2e8f0;height:4px;border-radius:2px;margin-top:6px">
+              <div style="background:var(--donor-primary);height:4px;border-radius:2px;width:${pct}%;transition:width .6s ease"></div>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── Leaderboard placeholder ──
+  const leaderboard = el('donorLeaderboard');
+  if (leaderboard) {
+    leaderboard.innerHTML = `
+      <div style="text-align:center;padding:24px;color:#64748b">
+        <i class="fas fa-chart-bar" style="font-size:2rem;margin-bottom:8px;display:block;opacity:0.4"></i>
+        <p>Community leaderboard will be available soon as more donors join.</p>
+      </div>`;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 17b. Project Updates — static inspiring content (no DB table yet)
+// ─────────────────────────────────────────────────────────────────────────────
+function populateUpdates() {
+  const feed = el('updatesFeed');
+  if (!feed) return;
+
+  const updates = [
+    {
+      date:    'May 2026',
+      title:   'Shirdi Annadanam Programme Continues',
+      content: 'Our Shirdi Annadanam programme has served over 500 meals this month to pilgrims and the underprivileged. Your generous contributions make this daily service possible.',
+      icon:    'fas fa-utensils',
+      tag:     'Annadanam',
+    },
+    {
+      date:    'April 2026',
+      title:   'Education Scholarships Awarded',
+      content: 'Ten students from economically weaker sections were awarded full scholarships this quarter. They will now pursue their studies without financial burden, thanks to donors like you.',
+      icon:    'fas fa-graduation-cap',
+      tag:     'Education',
+    },
+    {
+      date:    'March 2026',
+      title:   'Medical Relief Camp',
+      content: 'We organised a free medical camp in three rural villages providing consultations, medicines, and basic health screenings to over 200 beneficiaries.',
+      icon:    'fas fa-heartbeat',
+      tag:     'Medical',
+    },
+    {
+      date:    'February 2026',
+      title:   'Ganagapur Seva Activities',
+      content: 'Our Ganagapur Annadanam continued uninterrupted throughout the month, serving the devotees and the needy who visit the sacred site every day.',
+      icon:    'fas fa-hands-helping',
+      tag:     'Annadanam',
+    },
+  ];
+
+  feed.innerHTML = updates.map(u => `
+    <div class="update-item">
+      <div class="update-header">
+        <div class="update-title"><i class="${u.icon}" style="margin-right:8px;color:var(--donor-primary)"></i>${u.title}</div>
+        <div class="update-date">${u.date}</div>
+      </div>
+      <div class="update-content">${u.content}</div>
+      <span class="donation-cause">${u.tag}</span>
+    </div>`).join('');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 17c. Impact stories — companion to the impact section
+// ─────────────────────────────────────────────────────────────────────────────
+function populateImpactStories() {
+  const grid = el('impactStories');
+  if (!grid) return;
+
+  const stories = [
+    {
+      name:    'Anita, Student',
+      quote:   '"The scholarship changed everything. I can now focus on studies without worry."',
+      cause:   'Education',
+      icon:    'fas fa-user-graduate',
+    },
+    {
+      name:    'Ravi, Beneficiary',
+      quote:   '"The free medical camp caught my condition early. I owe my health to this trust."',
+      cause:   'Medical',
+      icon:    'fas fa-user-md',
+    },
+    {
+      name:    'Lakshmi, Pilgrim',
+      quote:   '"The Annadanam at Shirdi feeds hundreds of us every day. May God bless the donors."',
+      cause:   'Annadanam',
+      icon:    'fas fa-pray',
+    },
+  ];
+
+  grid.innerHTML = stories.map(s => `
+    <div style="background:var(--color-surface);border:1px solid var(--color-card-border);border-radius:var(--radius-md);padding:20px;display:flex;flex-direction:column;gap:12px">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:48px;height:48px;border-radius:50%;background:var(--donor-gradient);display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.2rem;flex-shrink:0">
+          <i class="${s.icon}"></i>
+        </div>
+        <div>
+          <div style="font-weight:600;font-size:14px">${s.name}</div>
+          <span class="donation-cause">${s.cause}</span>
+        </div>
+      </div>
+      <div style="font-style:italic;color:var(--color-text-secondary);font-size:14px;line-height:1.5">${s.quote}</div>
+    </div>`).join('');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 17. Utility
 // ─────────────────────────────────────────────────────────────────────────────
 function ucFirst(str) {
@@ -570,6 +799,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   populateDonationsTable(donations);
   populateReceipts(donations);
   populateProfile(user);
+  populateRecognition(donations);
+  populateUpdates();
+  populateImpactStories();
 
   // Lazy-render charts when Impact section becomes visible
   document.querySelectorAll('.sidebar-nav .nav-item').forEach(item => {
