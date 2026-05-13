@@ -1,127 +1,31 @@
 /**
  * nav-session.js
-<<<<<<< HEAD
- * Checks login state and updates the navigation bar on every page.
- * Include this script on every public page (index, about, services, etc.)
+ *
+ * NOTE: Session management is now handled directly inside components.js.
+ * This file is kept as a lightweight shim that simply calls
+ * window.refreshNavSession() if it has been exposed, so that any page
+ * which still includes this script explicitly won't break.
+ *
+ * You do NOT need to add this file to new pages — components.js covers it.
  */
-(async function () {
-    try {
-        const res  = await fetch('api/auth.php?action=check-session');
-        const data = await res.json();
-        if (!data.success) return; // not logged in – leave defaults
-
-        const u = data.data;
-
-        // Replace Login button with user name linking to dashboard
-        const loginBtn = document.querySelector('a[href="login.html"]');
-        if (loginBtn) {
-            const firstName = u.user_name.split(' ')[0];
-            loginBtn.href      = u.user_type === 'volunteer' ? 'volunteer-dashboard.html' : 'dashboard.html';
-            loginBtn.innerHTML = `<i class="fas fa-user-circle"></i> ${firstName}`;
-            loginBtn.title     = 'Go to your dashboard';
-            // Keep existing classes so styling stays intact
-        }
-
-        // Optionally add a Logout button after it
-        const existing = document.querySelector('.nav-actions');
-        if (existing && !existing.querySelector('.btn-logout-nav')) {
-            const logoutBtn = document.createElement('button');
-            logoutBtn.className    = 'btn btn-outline btn-logout-nav';
-            logoutBtn.innerHTML    = '<i class="fas fa-sign-out-alt"></i> Logout';
-            logoutBtn.style.cursor = 'pointer';
-            logoutBtn.addEventListener('click', async () => {
-                await fetch('api/auth.php?action=logout', { method: 'POST' });
-                window.location.reload();
-            });
-            existing.appendChild(logoutBtn);
-        }
-    } catch (e) {
-        // Silently ignore – user is not logged in or API unavailable
-    }
-=======
- * Included on EVERY page (except login.html).
- * Checks session and updates the nav bar:
- *   - Logged out : shows Login button
- *   - Logged in  : shows user first-name + Dashboard link + Logout button
- */
-
 (function () {
     'use strict';
 
-    async function updateNav() {
-        try {
-            const res  = await fetch('api/auth.php?action=check-session');
-            const data = await res.json();
-
-            // Selector covers both desktop and mobile nav login buttons
-            const loginLinks = document.querySelectorAll(
-                'a[href="login.html"], a[href="./login.html"]'
-            );
-
-            if (data.success && data.data) {
-                const user      = data.data;
-                const firstName = (user.user_name || 'Account').split(' ')[0];
-                const dashboard = user.user_type === 'volunteer'
-                    ? 'volunteer-dashboard.html'
-                    : 'donor-dashboard.html';
-
-                loginLinks.forEach(link => {
-                    // Replace the login link with a dashboard link
-                    link.textContent = firstName;
-                    link.href        = dashboard;
-                    link.title       = 'Go to your dashboard';
-                    link.classList.remove('btn-outline');
-                    link.classList.add('btn-user');
-
-                    // Insert a logout button right after
-                    if (!link.nextElementSibling?.classList.contains('btn-logout')) {
-                        const logoutBtn = document.createElement('button');
-                        logoutBtn.className   = 'btn-logout btn btn-outline';
-                        logoutBtn.textContent = 'Logout';
-                        logoutBtn.style.cssText = 'margin-left:8px;cursor:pointer;font-size:inherit;';
-                        logoutBtn.addEventListener('click', handleLogout);
-                        link.insertAdjacentElement('afterend', logoutBtn);
-                    }
-                });
-
-                // Store session info globally for dashboard pages
-                window.currentUser = user;
-
-            } else {
-                // Not logged in — restore login links to default text if they were changed
-                loginLinks.forEach(link => {
-                    if (link.classList.contains('btn-user')) {
-                        link.textContent = 'Login';
-                        link.href        = 'login.html';
-                        link.classList.remove('btn-user');
-                        link.classList.add('btn-outline');
-                        link.nextElementSibling?.classList.contains('btn-logout') &&
-                            link.nextElementSibling.remove();
-                    }
-                });
-                window.currentUser = null;
-            }
-        } catch (e) {
-            console.warn('Session check failed:', e);
+    /**
+     * Refresh the nav session state.
+     * components.js exposes this as window.refreshNavSession after boot.
+     * If components.js hasn't run yet we wait for DOMContentLoaded.
+     */
+    function tryRefresh() {
+        if (typeof window.refreshNavSession === 'function') {
+            window.refreshNavSession();
         }
     }
 
-    async function handleLogout() {
-        try {
-            await fetch('api/auth.php?action=logout', { method: 'POST' });
-        } catch (e) { /* silent */ }
-        window.location.href = 'login.html';
-    }
-
-    // Run on DOM ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', updateNav);
+        document.addEventListener('DOMContentLoaded', tryRefresh);
     } else {
-        updateNav();
+        tryRefresh();
     }
 
-    // Expose for manual refresh if needed
-    window.refreshNavSession = updateNav;
-
->>>>>>> b2e5120bbcf7f0ae11b0fe0e7d3a1e7d6dfc8006
 })();
