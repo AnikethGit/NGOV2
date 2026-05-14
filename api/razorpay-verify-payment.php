@@ -50,9 +50,9 @@ try {
     $db = Database::getInstance();
     $db->query(
         'UPDATE donations
-         SET payment_status = ?, payment_gateway = ?, razorpay_payment_id = ?, payment_mode = ?, updated_at = NOW()
+         SET payment_status = ?, payment_gateway = ?, razorpay_payment_id = ?, updated_at = NOW()
          WHERE transaction_id = ?',
-        ['completed', 'razorpay', $razorpay_payment_id, 'Online', $transaction_id]
+        ['completed', 'razorpay', $razorpay_payment_id, $transaction_id]
     );
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => 'DB update failed: ' . $e->getMessage()]);
