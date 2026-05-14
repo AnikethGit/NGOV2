@@ -76,9 +76,9 @@ if ($eventName === 'payment.captured') {
     if ($donation && $donation['payment_status'] === 'pending') {
         $db->query(
             'UPDATE donations
-             SET payment_status = ?, razorpay_payment_id = ?, payment_gateway = ?, payment_mode = ?, updated_at = NOW()
+             SET payment_status = ?, razorpay_payment_id = ?, payment_gateway = ?, updated_at = NOW()
              WHERE razorpay_order_id = ?',
-            ['completed', $rzpPayId, 'razorpay', 'Online', $rzpOrdId]
+            ['completed', $rzpPayId, 'razorpay', $rzpOrdId]
         );
         $logger->log(
             $donation['user_id'],
