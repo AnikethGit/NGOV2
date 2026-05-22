@@ -86,7 +86,9 @@ class ReceiptService
         $donorName    = htmlspecialchars($d['donor_name']);
         $donorEmail   = $d['donor_email'];
         $cause        = htmlspecialchars(ucwords(str_replace('-', ' ', $d['cause'] ?? 'General')));
-        $payMode      = htmlspecialchars($d['payment_mode'] ?? 'Online');
+        $gateway      = strtolower($d['payment_gateway'] ?? '');
+        $rawMethod    = $d['payment_method'] ?? 'Online';
+        $payMode      = htmlspecialchars(($gateway === 'razorpay') ? 'Online: Razorpay' : $rawMethod);
         $date         = date('d M Y, h:i A', strtotime($d['updated_at'] ?? $d['created_at'] ?? 'now'));
         $pan          = !empty($d['donor_pan']) ? htmlspecialchars($d['donor_pan']) : 'Not provided';
         $dashboardUrl = rtrim($appUrl, '/') . '/donor-dashboard.html';
@@ -203,13 +205,47 @@ class ReceiptService
 </html>
 HTML;
 
-        $headers  = "From: {$appName} <{$fromMail}>\r\n";
-        $headers .= "Reply-To: {$fromMail}\r\n";
-        $headers .= "MIME-Version: 1.0\r\n";
-        $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-        $headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";
+        // Attempt to generate PDF receipt attachment
+        $pdfContent  = null;
+        $pdfFilename = null;
+        try {
+            require_once __DIR__ . '/PdfReceipt.php';
+            $pdfContent  = PdfReceipt::generate($d);
+            $pdfFilename = 'DonationReceipt-' . preg_replace('/[^A-Za-z0-9\-]/', '', $receipt) . '.pdf';
+        } catch (Throwable $pe) {
+            error_log('ReceiptService: PDF generation skipped — ' . $pe->getMessage());
+        }
 
-        $sent = mail($donorEmail, $subject, $html, $headers);
+        $boundary = 'SDSMBT_' . md5(uniqid('', true));
+
+        if ($pdfContent !== null) {
+            $headers  = "From: {$appName} <{$fromMail}>\r\n";
+            $headers .= "Reply-To: {$fromMail}\r\n";
+            $headers .= "MIME-Version: 1.0\r\n";
+            $headers .= "Content-Type: multipart/mixed; boundary=\"{$boundary}\"\r\n";
+            $headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";
+
+            $body  = "--{$boundary}\r\n";
+            $body .= "Content-Type: text/html; charset=UTF-8\r\n\r\n";
+            $body .= $html . "\r\n";
+            $body .= "--{$boundary}\r\n";
+            $body .= "Content-Type: application/pdf\r\n";
+            $body .= "Content-Transfer-Encoding: base64\r\n";
+            $body .= "Content-Disposition: attachment; filename=\"{$pdfFilename}\"\r\n\r\n";
+            $body .= chunk_split(base64_encode($pdfContent)) . "\r\n";
+            $body .= "--{$boundary}--";
+
+            $sent = mail($donorEmail, $subject, $body, $headers);
+        } else {
+            // Fallback: HTML-only email if PDF generation failed
+            $headers  = "From: {$appName} <{$fromMail}>\r\n";
+            $headers .= "Reply-To: {$fromMail}\r\n";
+            $headers .= "MIME-Version: 1.0\r\n";
+            $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
+            $headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";
+
+            $sent = mail($donorEmail, $subject, $html, $headers);
+        }
 
         if (!$sent) {
             error_log("ReceiptService: mail() failed for {$donorEmail}, receipt {$receipt}");
@@ -232,11 +268,14 @@ HTML;
             error_log("ReceiptService: receipt email sent to {$donorEmail}");
         }
 
-        // Admin copy
-        $adminMail    = $fromMail;
-        $adminSubject = "New Donation: {$amount} from {$d['donor_name']} — {$receipt}";
-        $adminBody    = self::buildAdminEmail($d, $amount, $receipt, $cause, $date);
-        mail($adminMail, $adminSubject, $adminBody, $headers);
+        // Admin copy (plain HTML, no attachment)
+        $adminMail     = $fromMail;
+        $adminSubject  = "New Donation: {$amount} from {$d['donor_name']} — {$receipt}";
+        $adminBody     = self::buildAdminEmail($d, $amount, $receipt, $cause, $date);
+        $adminHeaders  = "From: {$appName} <{$fromMail}>\r\n";
+        $adminHeaders .= "MIME-Version: 1.0\r\n";
+        $adminHeaders .= "Content-Type: text/html; charset=UTF-8\r\n";
+        mail($adminMail, $adminSubject, $adminBody, $adminHeaders);
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -319,7 +358,8 @@ HTML;
         $donorEmail = htmlspecialchars($d['donor_email']);
         $donorPhone = htmlspecialchars($d['donor_phone'] ?: 'Not provided');
         $txn        = htmlspecialchars($d['transaction_id']);
-        $payMode    = htmlspecialchars($d['payment_mode'] ?? 'Online');
+        $gateway    = strtolower($d['payment_gateway'] ?? '');
+        $payMode    = htmlspecialchars(($gateway === 'razorpay') ? 'Online: Razorpay' : ($d['payment_method'] ?? 'Online'));
 
         return <<<HTML
 <!DOCTYPE html><html><head><meta charset="UTF-8"></head>
