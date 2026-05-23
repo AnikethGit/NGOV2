@@ -51,65 +51,64 @@ class PdfReceipt
         $payMode = ($gateway === 'razorpay') ? 'Online: Razorpay' : ($d['payment_method'] ?? 'Online');
 
         // ── Text overlay ───────────────────────────────────────────────────────
-        // Dark blue for most fields — matches the printed blue text on the template.
-        // All coordinates are in mm from top-left corner of the A4 landscape page.
-        // Fine-tune X/Y here if print alignment drifts after real-world testing.
+        // Coordinates measured pixel-precisely from the 3503×2299 template image.
+        // Scale: 0.0848 mm/px (X)  0.0913 mm/px (Y).
+        // Font: Arial Bold 11pt, black — clearly readable over the template.
 
-        $pdf->SetFont('Arial', '', 9);
-        $pdf->SetTextColor(0, 0, 139);      // #00008B dark blue
+        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->SetTextColor(0, 0, 0);        // solid black — maximum readability
 
         // ── Left column ───────────────────────────────────────────────────────
-        // Receipt No. — sits on its own dotted line, ABOVE the QR code.
-        // QR code starts at ~y=105mm; the "Receipt No." dotted line is at ~y=100mm.
-        $pdf->SetXY(47, 100);
-        $pdf->Cell(40, 5, $receiptNo);
+        // Receipt No. — dotted line sits at y≈99mm, above the QR code (y≈105mm).
+        $pdf->SetXY(47, 99);
+        $pdf->Cell(50, 5, $receiptNo);
 
-        // ── Right column (x > 96 mm — clear of the QR code) ──────────────────
-        // Date  (far right, after "Date :")
-        $pdf->SetXY(264, 92);
-        $pdf->Cell(20, 5, $date);
+        // ── Right column (x ≥ 91 mm — clear of QR code) ──────────────────────
+        // Date  (right side, after "Date :" label which ends ~y=93mm)
+        $pdf->SetXY(237, 93);
+        $pdf->Cell(50, 5, $date);
 
-        // Amount in words — spans up to two dotted lines.
-        // Line 1: narrow space to the right of the long printed label (~40 chars).
-        // Line 2: full right-column width before "Only /-".
-        [$wordsLine1, $wordsLine2] = self::splitWords($words, 40);
+        // Amount in words — spans up to two printed dotted lines.
+        //   Line 1: space to the right of "Received with thanks a sum of Rupees in words"
+        //   Line 2: full right-column width before the printed "Only /-"
+        [$wordsLine1, $wordsLine2] = self::splitWords($words, 38);
 
-        $pdf->SetXY(164, 107);              // after "Received with thanks a sum of Rupees in words"
+        $pdf->SetXY(164, 107);
         $pdf->Cell(122, 5, $wordsLine1);
 
         if ($wordsLine2 !== '') {
-            $pdf->SetXY(96, 115);           // second dotted line, full right-column width
-            $pdf->Cell(165, 5, $wordsLine2);
+            $pdf->SetXY(91, 116);
+            $pdf->Cell(170, 5, $wordsLine2);
         }
 
-        // From Sri/Smt
-        $pdf->SetXY(132, 123);
-        $pdf->Cell(153, 5, $name);
+        // From Sri/Smt  (label ends ~x=113mm, row y=126mm)
+        $pdf->SetXY(113, 126);
+        $pdf->Cell(172, 5, $name);
 
-        // Address
-        $pdf->SetXY(118, 131);
-        $pdf->Cell(167, 5, $address);
+        // Address  (label ends ~x=110mm, row y=138mm)
+        $pdf->SetXY(110, 138);
+        $pdf->Cell(175, 5, $address);
 
-        // Aadhar / PAN No.
-        $pdf->SetXY(132, 139);
+        // Aadhar / PAN No.  (label ends ~x=130mm, row y=146mm)
+        $pdf->SetXY(130, 146);
         $pdf->Cell(52, 5, $pan);
 
-        // Mobile No.
-        $pdf->SetXY(212, 139);
-        $pdf->Cell(73, 5, $mobile);
+        // Mobile No.  (label ends ~x=220mm, same row y=146mm)
+        $pdf->SetXY(220, 146);
+        $pdf->Cell(65, 5, $mobile);
 
-        // Towards
-        $pdf->SetXY(118, 147);
-        $pdf->Cell(64, 5, $cause);
+        // Towards  (label ends ~x=115mm, row y=157mm)
+        $pdf->SetXY(115, 157);
+        $pdf->Cell(68, 5, $cause);
 
-        // By Cash / UPI / QR  (payment method value)
-        $pdf->SetXY(212, 147);
-        $pdf->Cell(73, 5, $payMode);
+        // By Cash / UPI / QR value  (label ends ~x=222mm, same row y=157mm)
+        $pdf->SetXY(222, 157);
+        $pdf->Cell(65, 5, $payMode);
 
-        // ── Rs. box (bottom-left) ─────────────────────────────────────────────
-        $pdf->SetFont('Arial', '', 9);
-        $pdf->SetXY(30, 178);
-        $pdf->Cell(70, 5, $amountStr);
+        // ── Rs. box (x=18–125mm, y=155–193mm) ───────────────────────────────
+        // "Rs." printed text ends at x≈71mm; value starts after it.
+        $pdf->SetXY(75, 175);
+        $pdf->Cell(48, 5, $amountStr);
 
         return $pdf->Output('S');
     }
