@@ -32,12 +32,14 @@ class ReceiptService
                 $donation['receipt_number'] = $receipt;
             }
 
-            // 2. Merge user info into donation array for templates
-            $donation['donor_name']  = $user['name']  ?? $user['full_name'] ?? 'Donor';
-            $donation['donor_email'] = $user['email'] ?? '';
-            $donation['donor_phone'] = $user['phone'] ?? '';
-            $donation['donor_pan']   = $user['pan_number'] ?? '';
-            $donation['donor_address'] = $user['address'] ?? '';
+            // 2. Merge user info into donation array for templates.
+            //    Prefer values already on the donation row (filled at checkout),
+            //    fall back to the user profile if the donation field is empty.
+            $donation['donor_name']    = $user['name'] ?? $user['full_name'] ?? 'Donor';
+            $donation['donor_email']   = $user['email'] ?? '';
+            $donation['donor_phone']   = $donation['donor_phone'] ?? $user['phone'] ?? '';
+            $donation['donor_pan']     = $donation['donor_pan']     ?? $user['pan_number'] ?? '';
+            $donation['donor_address'] = $donation['donor_address'] ?? $user['address']    ?? '';
 
             // 3. Send email
             if (!empty($donation['donor_email'])) {
