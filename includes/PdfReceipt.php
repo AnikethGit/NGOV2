@@ -51,92 +51,74 @@ class PdfReceipt
         $payMode = ($gateway === 'razorpay') ? 'Online: Razorpay' : ($d['payment_method'] ?? 'Online');
 
         // ── Text overlay ───────────────────────────────────────────────────────
-        // Coordinates measured pixel-precisely from the 3503×2299 template image.
-        // Scale: 0.0848 mm/px (X)  0.0913 mm/px (Y).
-        // Font: Arial Bold 11pt, black — clearly readable over the template.
+        // All positions derived from user-supplied pixel coordinates on the
+        // 3503×2299 template image (scale 0.08478 mm/px X, 0.09134 mm/px Y).
 
         $pdf->SetFont('Arial', 'B', 11);
-        $pdf->SetTextColor(0, 0, 0);        // solid black — maximum readability
+        $pdf->SetTextColor(0, 0, 0);    // solid black
 
-        // ── Left column ───────────────────────────────────────────────────────
-        // Receipt No. — dotted line sits at y≈99mm, above the QR code (y≈105mm).
-        $pdf->SetXY(47, 99);
-        $pdf->Cell(50, 5, $receiptNo);
+        // Receipt No.  px(524, 1165)
+        $pdf->SetXY(44.43, 106.42);
+        $pdf->Cell(100, 5, $receiptNo);
 
-        // ── Right column (x ≥ 91 mm — clear of QR code) ──────────────────────
-        // Date  (right side, after "Date :" label which ends ~y=93mm)
-        $pdf->SetXY(237, 93);
-        $pdf->Cell(50, 5, $date);
+        // Date  px(2919, 1066)
+        $pdf->SetXY(247.49, 97.37);
+        $pdf->Cell(46, 5, $date);
 
-        // Amount in words — spans up to two printed dotted lines.
-        //   Line 1: space to the right of "Received with thanks a sum of Rupees in words"
-        //   Line 2: full right-column width before the printed "Only /-"
-        [$wordsLine1, $wordsLine2] = self::splitWords($words, 38);
-
-        $pdf->SetXY(164, 107);
-        $pdf->Cell(122, 5, $wordsLine1);
-
-        if ($wordsLine2 !== '') {
-            $pdf->SetXY(91, 116);
-            $pdf->Cell(170, 5, $wordsLine2);
-        }
-
-        // From Sri/Smt  (label ends ~x=113mm, row y=126mm)
-        $pdf->SetXY(113, 126);
-        $pdf->Cell(172, 5, $name);
-
-        // Address  (label ends ~x=110mm, row y=138mm)
-        $pdf->SetXY(110, 138);
-        $pdf->Cell(175, 5, $address);
-
-        // Aadhar / PAN No.  (label ends ~x=130mm, row y=146mm)
-        $pdf->SetXY(130, 146);
-        $pdf->Cell(52, 5, $pan);
-
-        // Mobile No.  (label ends ~x=220mm, same row y=146mm)
-        $pdf->SetXY(220, 146);
-        $pdf->Cell(65, 5, $mobile);
-
-        // Towards  (label ends ~x=115mm, row y=157mm)
-        $pdf->SetXY(115, 157);
-        $pdf->Cell(68, 5, $cause);
-
-        // By Cash / UPI / QR value  (label ends ~x=222mm, same row y=157mm)
-        $pdf->SetXY(222, 157);
-        $pdf->Cell(65, 5, $payMode);
-
-        // ── Rs. box (x=18–125mm, y=155–193mm) ───────────────────────────────
-        // "Rs." printed text ends at x≈71mm; value starts after it.
-        $pdf->SetXY(75, 175);
-        $pdf->Cell(48, 5, $amountStr);
-
-        return $pdf->Output('S');
-    }
-
-    // ── Helpers ────────────────────────────────────────────────────────────────
-
-    /**
-     * Split amount-in-words string so the first chunk fits in $limit characters.
-     * Returns [line1, line2].
-     */
-    private static function splitWords(string $words, int $limit): array
-    {
-        if (strlen($words) <= $limit) {
-            return [$words, ''];
-        }
-        $parts = explode(' ', $words);
+        // Amount in words — two dotted lines.
+        //   Line 1 starts at px(2094,1232), max end px(3277,1232) → 100.30 mm wide.
+        //   Line 2 starts at px(885, 1353) if overflow.
+        $line1MaxW = 100.30;
+        $parts     = explode(' ', $words);
         $line1 = '';
         $line2 = '';
         foreach ($parts as $word) {
             $test = $line1 === '' ? $word : $line1 . ' ' . $word;
-            if (strlen($test) <= $limit) {
+            if ($pdf->GetStringWidth($test) <= $line1MaxW) {
                 $line1 = $test;
             } else {
                 $line2 .= ($line2 === '' ? '' : ' ') . $word;
             }
         }
-        return [$line1, $line2];
+        $pdf->SetXY(177.54, 112.54);
+        $pdf->Cell(100.30, 5, $line1);
+        if ($line2 !== '') {
+            $pdf->SetXY(75.03, 123.59);
+            $pdf->Cell(185, 5, $line2);
+        }
+
+        // From Sri/Smt  px(1226, 1477)
+        $pdf->SetXY(103.95, 134.92);
+        $pdf->Cell(181, 5, $name);
+
+        // Address  px(1102, 1594)
+        $pdf->SetXY(93.43, 145.60);
+        $pdf->Cell(191, 5, $address);
+
+        // Aadhar / PAN No.  px(1268, 1711)
+        $pdf->SetXY(107.51, 156.29);
+        $pdf->Cell(95, 5, $pan);
+
+        // Mobile No.  px(2501, 1711)
+        $pdf->SetXY(212.05, 156.29);
+        $pdf->Cell(80, 5, $mobile);
+
+        // Towards / Cause  px(1094, 1828)
+        $pdf->SetXY(92.75, 166.98);
+        $pdf->Cell(140, 5, $cause);
+
+        // Payment method  px(2873, 1828)
+        $pdf->SetXY(243.59, 166.98);
+        $pdf->Cell(50, 5, $payMode);
+
+        // Rs. amount  px(935, 2203)
+        $pdf->SetXY(79.27, 201.23);
+        $pdf->Cell(60, 5, $amountStr);
+
+        return $pdf->Output('S');
     }
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
 
     /**
      * Convert a rupee amount to Indian-English words.
