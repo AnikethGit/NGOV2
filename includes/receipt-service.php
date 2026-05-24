@@ -86,7 +86,11 @@ class ReceiptService
         $receipt      = htmlspecialchars($d['receipt_number']);
         $txn          = htmlspecialchars($d['transaction_id']);
         $donorName    = htmlspecialchars($d['donor_name']);
-        $donorEmail   = $d['donor_email'];
+        $donorEmail   = filter_var(trim($d['donor_email'] ?? ''), FILTER_VALIDATE_EMAIL) ?: '';
+        if ($donorEmail === '') {
+            error_log("ReceiptService: invalid or missing donor email — email skipped for receipt {$receipt}");
+            return;
+        }
         $cause        = htmlspecialchars(ucwords(str_replace('-', ' ', $d['cause'] ?? 'General')));
         $gateway      = strtolower($d['payment_gateway'] ?? '');
         $rawMethod    = $d['payment_method'] ?? 'Online';
@@ -95,7 +99,7 @@ class ReceiptService
         $pan          = !empty($d['donor_pan']) ? htmlspecialchars($d['donor_pan']) : 'Not provided';
         $dashboardUrl = rtrim($appUrl, '/') . '/donor-dashboard.html';
 
-        $subject = "Donation Receipt #{$receipt} — {$appName}";
+        $subject = self::encodeSubject("Donation Receipt #{$receipt} — {$appName}");
 
         $html = <<<HTML
 <!DOCTYPE html>
@@ -225,11 +229,11 @@ HTML;
             $headers .= "Reply-To: {$fromMail}\r\n";
             $headers .= "MIME-Version: 1.0\r\n";
             $headers .= "Content-Type: multipart/mixed; boundary=\"{$boundary}\"\r\n";
-            $headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";
 
             $body  = "--{$boundary}\r\n";
-            $body .= "Content-Type: text/html; charset=UTF-8\r\n\r\n";
-            $body .= $html . "\r\n";
+            $body .= "Content-Type: text/html; charset=UTF-8\r\n";
+            $body .= "Content-Transfer-Encoding: base64\r\n\r\n";
+            $body .= chunk_split(base64_encode($html));
             $body .= "--{$boundary}\r\n";
             $body .= "Content-Type: application/pdf\r\n";
             $body .= "Content-Transfer-Encoding: base64\r\n";
@@ -244,9 +248,9 @@ HTML;
             $headers .= "Reply-To: {$fromMail}\r\n";
             $headers .= "MIME-Version: 1.0\r\n";
             $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-            $headers .= "X-Mailer: PHP/" . phpversion() . "\r\n";
+            $headers .= "Content-Transfer-Encoding: base64\r\n";
 
-            $sent = mail($donorEmail, $subject, $html, $headers);
+            $sent = mail($donorEmail, $subject, chunk_split(base64_encode($html)), $headers);
         }
 
         if (!$sent) {
@@ -272,12 +276,15 @@ HTML;
 
         // Admin copy (plain HTML, no attachment)
         $adminMail     = $fromMail;
-        $adminSubject  = "New Donation: {$amount} from {$d['donor_name']} — {$receipt}";
+        $adminSubject  = self::encodeSubject("New Donation: {$amount} from {$d['donor_name']} — {$receipt}");
         $adminBody     = self::buildAdminEmail($d, $amount, $receipt, $cause, $date);
         $adminHeaders  = "From: {$appName} <{$fromMail}>\r\n";
         $adminHeaders .= "MIME-Version: 1.0\r\n";
         $adminHeaders .= "Content-Type: text/html; charset=UTF-8\r\n";
-        mail($adminMail, $adminSubject, $adminBody, $adminHeaders);
+        $adminHeaders .= "Content-Transfer-Encoding: base64\r\n";
+        if (!mail($adminMail, $adminSubject, chunk_split(base64_encode($adminBody)), $adminHeaders)) {
+            error_log("ReceiptService: admin notification email failed for receipt {$receipt}");
+        }
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -349,6 +356,23 @@ HTML;
         } else {
             error_log("ReceiptService: SMS failed for {$phone}: " . ($resp['message'][0] ?? $raw));
         }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // RFC 2047 subject encoder — required for any non-ASCII characters
+    // (₹, —, emoji, accented letters, etc.) in email subjects.
+    // ──────────────────────────────────────────────────────────────────────────
+    private static function encodeSubject(string $s): string
+    {
+        if (!preg_match('/[^\x20-\x7E]/', $s)) {
+            return $s; // Pure ASCII — no encoding needed
+        }
+        // Split into 45-byte chunks so each encoded word stays under 75 chars
+        $chunks = str_split($s, 45);
+        return implode("\r\n ", array_map(
+            fn($c) => '=?UTF-8?B?' . base64_encode($c) . '?=',
+            $chunks
+        ));
     }
 
     // ──────────────────────────────────────────────────────────────────────────
