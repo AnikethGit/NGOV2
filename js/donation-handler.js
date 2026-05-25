@@ -243,7 +243,7 @@ async function initiateRazorpayPayment(transactionId, submitButton, originalText
         key:         orderData.key_id,
         amount:      orderData.amount_paise,
         currency:    'INR',
-        name:        'Sri Dutta Sai Manga Bharadwaja Trust',
+        name:        'Sri Datta Sai Manga Bharadwaja Trust',
         description: 'Donation',
         order_id:    orderData.razorpay_order_id,
         prefill: {

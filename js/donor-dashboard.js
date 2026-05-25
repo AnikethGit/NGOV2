@@ -536,7 +536,7 @@ function downloadReceipt(txnId) {
     </head><body>
       <div class="header">
         <h1>Sai Seva Foundation</h1>
-        <p>Sri Dutta Sai Manga Bharadwaja Trust</p>
+        <p>Sri Datta Sai Manga Bharadwaja Trust</p>
         <p>sadgurubharadwaja.org | admin@sadgurubharadwaja.org</p>
         <p style="margin-top:12px;font-size:15px;font-weight:600;">Donation Receipt</p>
       </div>
