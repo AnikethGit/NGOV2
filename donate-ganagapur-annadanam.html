@@ -1,52 +1,61 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Donate Now - Sri Dutta Sai Manga Bharadwaja</title>
+    <title>Ganagapur Annadanam - Donate - Sri Dutta Sai Manga Bharadwaja</title>
     <link rel="icon" href="images/LogoNGO.png" type="image/x-icon">
-    <meta name="description" content="Make a donation to Sai Seva Foundation and help transform lives through our feeding, education, medical, and disaster relief programs.">
+    <meta name="description" content="Donate to Ganagapur Annadanam — fund free daily meals served to devotees and the needy at our Ganagapur centre in the name of Sri Dattatreya.">
     <link rel="stylesheet" href="css/common.css">
     <link rel="stylesheet" href="css/donate.css">
     <link rel="stylesheet" href="css/theme-compatibility.css">
-<link rel="stylesheet" href="css/mobile-responsive.css">
-    <!-- Google Fonts: preconnect + font-display=swap to avoid invisible text -->
+    <link rel="stylesheet" href="css/mobile-responsive.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap"></noscript>
-
-    <!-- Font Awesome: load asynchronously — icons are non-critical -->
     <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'" crossorigin="anonymous">
     <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous"></noscript>
-
     <meta name="csrf-token" content="">
+    <style>
+        .cause-locked {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 18px 22px;
+            background: linear-gradient(135deg, #f0fafa 0%, #e8f7f7 100%);
+            border: 2px solid #01696f;
+            border-radius: 12px;
+        }
+        .cause-locked > i { font-size: 26px; color: #01696f; margin-top: 3px; flex-shrink: 0; }
+        .cause-locked strong { display: block; font-size: 16px; color: #0c4e54; margin-bottom: 5px; font-weight: 700; }
+        .cause-locked p { margin: 0; font-size: 13px; color: #556; line-height: 1.6; }
+    </style>
 </head>
 <body>
     <div id="global-header"></div>
 
-    <!-- Page Header -->
     <section class="page-header donate-header">
         <div class="container">
             <div class="page-header-content">
-                <h1>Make a Donation</h1>
-                <p>Your contribution directly impacts lives and creates lasting change in communities</p>
+                <h1>Ganagapur Annadanam</h1>
+                <p>Support free daily meals for devotees and the needy at our Ganagapur centre</p>
                 <nav class="breadcrumb">
                     <a href="index.html">Home</a>
                     <span>/</span>
-                    <span>Donate</span>
+                    <a href="donate.html">Donate</a>
+                    <span>/</span>
+                    <span>Ganagapur Annadanam</span>
                 </nav>
             </div>
         </div>
     </section>
 
-    <!-- Donation Form -->
     <section class="donation-form-section">
         <div class="container">
             <div class="donation-wrapper">
-                <!-- Donation Form -->
                 <div class="donation-form-container">
                     <div class="form-header">
                         <h2>Complete Your Donation</h2>
@@ -54,40 +63,20 @@
                     </div>
 
                     <form id="donationForm" class="donation-form">
-                        <!-- Cause Selection -->
+                        <!-- Cause (locked) -->
                         <div class="form-section">
                             <label class="section-label">
                                 <i class="fas fa-heart"></i>
-                                Choose Your Cause
+                                Donating For
                             </label>
-                            <div class="cause-selection">
-                                <button type="button" class="cause-btn active" data-cause="general-fund">
-                                    <i class="fas fa-hand-holding-heart"></i>
-                                    <span>General Fund</span>
-                                    <div class="cause-tooltip">Supports all trust activities across Shirdi and Ganagapur including annadanam, spiritual programs, and community welfare.</div>
-                                </button>
-                                <button type="button" class="cause-btn" data-cause="shirdi-annadanam">
-                                    <i class="fas fa-utensils"></i>
-                                    <span>Shirdi Annadanam</span>
-                                    <div class="cause-tooltip">Funds free daily meals served to pilgrims and the underprivileged at our Shirdi centre in the name of Sai Baba.</div>
-                                </button>
-                                <button type="button" class="cause-btn" data-cause="ganagapur-annadanam">
-                                    <i class="fas fa-bowl-food"></i>
-                                    <span>Ganagapur Annadanam</span>
-                                    <div class="cause-tooltip">Funds free daily meals served to devotees and the needy at our Ganagapur centre in the name of Sri Dattatreya.</div>
-                                </button>
-                                <button type="button" class="cause-btn" data-cause="ongole-annadanam">
-                                    <i class="fas fa-bowl-rice"></i>
-                                    <span>Ongole Annadanam</span>
-                                    <div class="cause-tooltip">Funds free daily meals served to the local community and devotees at our Ongole centre.</div>
-                                </button>
-                                <button type="button" class="cause-btn" data-cause="corpus-fund">
-                                    <i class="fas fa-landmark"></i>
-                                    <span>Corpus Fund</span>
-                                    <div class="cause-tooltip">A permanent endowment that sustains the trust's long-term mission — interest earned funds ongoing charitable activities.</div>
-                                </button>
+                            <div class="cause-locked">
+                                <i class="fas fa-bowl-food"></i>
+                                <div>
+                                    <strong>Ganagapur Annadanam</strong>
+                                    <p>Funds free daily meals served to devotees and the needy at our Ganagapur centre in the name of Sri Dattatreya.</p>
+                                </div>
                             </div>
-                            <input type="hidden" id="selected_cause" name="cause" value="general-fund">
+                            <input type="hidden" id="selected_cause" name="cause" value="ganagapur-annadanam">
                         </div>
 
                         <!-- Amount Selection -->
@@ -103,7 +92,6 @@
                                 <button type="button" class="amount-btn" data-amount="5000">₹5,000</button>
                                 <button type="button" class="amount-btn" data-amount="10000">₹10,000</button>
                             </div>
-                            
                             <div class="custom-amount">
                                 <label for="customAmount">Or enter custom amount</label>
                                 <div class="amount-input">
@@ -154,7 +142,6 @@
                                 <i class="fas fa-user"></i>
                                 Donor Information
                             </label>
-                            
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="donor_name">Full Name *</label>
@@ -165,7 +152,6 @@
                                     <input type="email" id="donor_email" name="donor_email" required>
                                 </div>
                             </div>
-
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="donor_phone">Phone Number</label>
@@ -176,26 +162,23 @@
                                     <input type="text" id="donor_pan" name="donor_pan" maxlength="10" placeholder="ABCDE1234F" style="text-transform: uppercase;">
                                 </div>
                             </div>
-
                             <div class="form-group">
                                 <label for="donor_address">Address (Optional)</label>
                                 <textarea id="donor_address" name="donor_address" rows="3" placeholder="Complete address for donation receipt"></textarea>
                             </div>
                         </div>
 
-                        <!-- Terms and Conditions -->
+                        <!-- Terms -->
                         <div class="form-section">
                             <div class="terms-section">
                                 <label class="checkbox-label">
                                     <input type="checkbox" id="terms" required>
-                                    I agree to the <a href="#terms" target="_blank">Terms and Conditions</a> and confirm that this donation is made voluntarily *
+                                    I agree to the <a href="terms.html" target="_blank">Terms and Conditions</a> and confirm that this donation is made voluntarily *
                                 </label>
-
                                 <label class="checkbox-label">
                                     <input type="checkbox" id="updates" name="updates" value="1">
                                     I would like to receive updates about the impact of my donation
                                 </label>
-
                                 <label class="checkbox-label">
                                     <input type="checkbox" id="anonymous" name="anonymous" value="1">
                                     Keep my donation anonymous
@@ -203,16 +186,11 @@
                             </div>
                         </div>
 
-                        <!-- Hidden CSRF Token -->
                         <input type="hidden" name="csrf_token" id="csrf_token" value="">
-
-                        <!-- Submit Button -->
                         <button type="submit" class="btn btn-primary btn-large donate-submit">
                             <i class="fas fa-credit-card"></i>
                             Proceed to Payment
                         </button>
-
-                        <!-- Security Note -->
                         <div class="security-note">
                             <i class="fas fa-shield-alt"></i>
                             <span>Your payment is 100% secure and encrypted. We use industry-standard security measures.</span>
@@ -224,29 +202,23 @@
                 <div class="donation-summary">
                     <div class="summary-card">
                         <h3>Donation Summary</h3>
-                        
                         <div class="summary-item">
                             <span class="label">Cause:</span>
-                            <span class="value" id="summary-cause">General Fund</span>
+                            <span class="value" id="summary-cause">Ganagapur Annadanam</span>
                         </div>
-
                         <div class="summary-item">
                             <span class="label">Amount:</span>
                             <span class="value" id="summary-amount">₹2,000</span>
                         </div>
-
                         <div class="summary-item">
                             <span class="label">Frequency:</span>
                             <span class="value" id="summary-frequency">One Time</span>
                         </div>
-
                         <div class="summary-divider"></div>
-
                         <div class="summary-total">
                             <span class="label">Total Amount:</span>
                             <span class="value" id="summary-total">₹2,000</span>
                         </div>
-
                         <div class="tax-benefit">
                             <i class="fas fa-info-circle"></i>
                             <div>
@@ -255,7 +227,6 @@
                                 <p class="tax-amount">Eligible deduction: <span id="tax-deduction">₹1,000</span></p>
                             </div>
                         </div>
-
                         <div class="payment-methods">
                             <h4>Accepted Payment Methods</h4>
                             <div class="payment-icons">
@@ -265,75 +236,58 @@
                                 <img src="images/netbanking.png" alt="Net Banking" title="Net Banking">
                             </div>
                         </div>
-
                         <div class="trust-indicators">
-                            <div class="trust-item">
-                                <i class="fas fa-certificate"></i>
-                                <span>80G Certified</span>
-                            </div>
-                            <div class="trust-item">
-                                <i class="fas fa-lock"></i>
-                                <span>Secure Payment</span>
-                            </div>
-                            <div class="trust-item">
-                                <i class="fas fa-receipt"></i>
-                                <span>Instant Receipt</span>
-                            </div>
+                            <div class="trust-item"><i class="fas fa-certificate"></i><span>80G Certified</span></div>
+                            <div class="trust-item"><i class="fas fa-lock"></i><span>Secure Payment</span></div>
+                            <div class="trust-item"><i class="fas fa-receipt"></i><span>Instant Receipt</span></div>
                         </div>
                     </div>
-
-                    <!-- Recent Donations -->
-                    <!-- (omitted for brevity, unchanged) -->
                 </div>
             </div>
         </div>
     </section>
-    
-    <!-- Donation Impact -->
+
     <section class="donation-impact">
         <div class="container">
             <div class="section-header">
                 <h2>Your Impact</h2>
                 <p>See how your donation creates real change in communities</p>
             </div>
-
             <div class="impact-examples">
                 <div class="impact-card">
                     <div class="impact-amount">₹500</div>
                     <div class="impact-description">
-                        <h3>Feed 25 Children</h3>
-                        <p>Provides nutritious meals for 25 children for one day</p>
+                        <h3>Feed 25 Devotees</h3>
+                        <p>Provides nutritious meals for 25 devotees at the Ganagapur centre for one day</p>
                         <ul>
                             <li><i class="fas fa-check"></i> Complete balanced meal</li>
-                            <li><i class="fas fa-check"></i> Nutritional supplements</li>
-                            <li><i class="fas fa-check"></i> Health monitoring</li>
+                            <li><i class="fas fa-check"></i> Served with devotion</li>
+                            <li><i class="fas fa-check"></i> Daily at the centre</li>
                         </ul>
                     </div>
                 </div>
-
                 <div class="impact-card featured">
                     <div class="impact-badge">Most Popular</div>
                     <div class="impact-amount">₹2,000</div>
                     <div class="impact-description">
-                        <h3>Support Education</h3>
-                        <p>Covers school supplies and books for 5 students for one month</p>
+                        <h3>Feed 100 Devotees</h3>
+                        <p>Covers a full day's annadanam for 100 devotees at the Ganagapur centre</p>
                         <ul>
-                            <li><i class="fas fa-check"></i> Books and stationery</li>
-                            <li><i class="fas fa-check"></i> School uniform</li>
-                            <li><i class="fas fa-check"></i> Educational support</li>
+                            <li><i class="fas fa-check"></i> Full meal service</li>
+                            <li><i class="fas fa-check"></i> Nutritious prasad</li>
+                            <li><i class="fas fa-check"></i> In Dattatreya's name</li>
                         </ul>
                     </div>
                 </div>
-
                 <div class="impact-card">
                     <div class="impact-amount">₹5,000</div>
                     <div class="impact-description">
-                        <h3>Medical Camp</h3>
-                        <p>Sponsors a complete medical checkup camp for 50 people</p>
+                        <h3>Sponsor a Day</h3>
+                        <p>Fully sponsors one complete day of annadanam for all visitors at the centre</p>
                         <ul>
-                            <li><i class="fas fa-check"></i> Health screenings</li>
-                            <li><i class="fas fa-check"></i> Free medicines</li>
-                            <li><i class="fas fa-check"></i> Specialist consultations</li>
+                            <li><i class="fas fa-check"></i> Full day's meals</li>
+                            <li><i class="fas fa-check"></i> Unlimited seva</li>
+                            <li><i class="fas fa-check"></i> Named sponsorship</li>
                         </ul>
                     </div>
                 </div>
@@ -341,59 +295,37 @@
         </div>
     </section>
 
-    <!-- Other Ways to Help -->
     <section class="other-ways">
         <div class="container">
             <div class="section-header">
                 <h2>Other Ways to Help</h2>
                 <p>Support our mission through various meaningful contributions</p>
             </div>
-
             <div class="help-options">
                 <div class="help-card">
-                    <div class="help-icon">
-                        <i class="fas fa-hands-helping"></i>
-                    </div>
+                    <div class="help-icon"><i class="fas fa-hands-helping"></i></div>
                     <h3>Volunteer Your Time</h3>
                     <p>Join our team of dedicated volunteers and directly serve communities in need.</p>
-                    <a href="#volunteer" class="btn btn-outline">Become a Volunteer</a>
+                    <a href="volunteer.html" class="btn btn-outline">Become a Volunteer</a>
                 </div>
-
                 <div class="help-card">
-                    <div class="help-icon">
-                        <i class="fas fa-box"></i>
-                    </div>
-                    <h3>Donate Goods</h3>
-                    <p>Contribute clothes, books, medical supplies, or other essential items.</p>
-                    <a href="contact.html" class="btn btn-outline">Donate Items</a>
+                    <div class="help-icon"><i class="fas fa-hand-holding-heart"></i></div>
+                    <h3>Other Causes</h3>
+                    <p>Support our Shirdi, Ongole, or Corpus Fund programmes.</p>
+                    <a href="donate.html" class="btn btn-outline">View All Causes</a>
                 </div>
-
                 <div class="help-card">
-                    <div class="help-icon">
-                        <i class="fas fa-share-alt"></i>
-                    </div>
+                    <div class="help-icon"><i class="fas fa-share-alt"></i></div>
                     <h3>Spread the Word</h3>
                     <p>Help us reach more people by sharing our mission on social media.</p>
                     <div class="share-buttons">
-                        <a href="#" class="share-btn facebook" title="Share on Facebook">
-                            <i class="fab fa-facebook-f"></i>
-                        </a>
-                        <a href="#" class="share-btn twitter" title="Share on Twitter">
-                            <i class="fab fa-twitter"></i>
-                        </a>
-                        <a href="#" class="share-btn linkedin" title="Share on LinkedIn">
-                            <i class="fab fa-linkedin-in"></i>
-                        </a>
-                        <a href="#" class="share-btn whatsapp" title="Share on WhatsApp">
-                            <i class="fab fa-whatsapp"></i>
-                        </a>
+                        <a href="#" class="share-btn facebook" title="Share on Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="share-btn twitter" title="Share on Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="share-btn whatsapp" title="Share on WhatsApp"><i class="fab fa-whatsapp"></i></a>
                     </div>
                 </div>
-
                 <div class="help-card">
-                    <div class="help-icon">
-                        <i class="fas fa-handshake"></i>
-                    </div>
+                    <div class="help-icon"><i class="fas fa-handshake"></i></div>
                     <h3>Corporate Partnership</h3>
                     <p>Partner with us for CSR initiatives and sustainable community programs.</p>
                     <a href="contact.html" class="btn btn-outline">Partner With Us</a>
@@ -402,87 +334,8 @@
         </div>
     </section>
 
-    <!-- Transparency Section -->
-    <section class="transparency">
-        <div class="container">
-            <div class="transparency-content">
-                <div class="transparency-text">
-                    <h2>Complete Transparency</h2>
-                    <p>We believe in full transparency and accountability. Every rupee donated is tracked and reported.</p>
-                    
-                    <div class="transparency-features">
-                        <div class="feature">
-                            <i class="fas fa-chart-pie"></i>
-                            <div>
-                                <h4>Fund Utilization</h4>
-                                <p>Detailed breakdown of how donations are utilized across programs</p>
-                            </div>
-                        </div>
-                        
-                        <div class="feature">
-                            <i class="fas fa-file-alt"></i>
-                            <div>
-                                <h4>Annual Reports</h4>
-                                <p>Comprehensive annual reports with impact metrics and financial statements</p>
-                            </div>
-                        </div>
-                        
-                        <div class="feature">
-                            <i class="fas fa-receipt"></i>
-                            <div>
-                                <h4>Donation Receipts</h4>
-                                <p>Instant digital receipts for all donations with tax exemption details</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="transparency-actions">
-                        <a href="#reports" class="btn btn-outline">View Reports</a>
-                        <a href="#impact" class="btn btn-outline">Impact Stories</a>
-                    </div>
-                </div>
-
-                <div class="fund-breakdown">
-                    <h3>How We Use Your Donations</h3>
-                    <div class="fund-chart">
-                        <div class="fund-item">
-                            <div class="fund-bar">
-                                <div class="fund-progress" style="width: 75%"></div>
-                            </div>
-                            <div class="fund-details">
-                                <span class="fund-label">Program Activities</span>
-                                <span class="fund-percentage">75%</span>
-                            </div>
-                        </div>
-                        
-                        <div class="fund-item">
-                            <div class="fund-bar">
-                                <div class="fund-progress" style="width: 15%"></div>
-                            </div>
-                            <div class="fund-details">
-                                <span class="fund-label">Administrative Costs</span>
-                                <span class="fund-percentage">15%</span>
-                            </div>
-                        </div>
-                        
-                        <div class="fund-item">
-                            <div class="fund-bar">
-                                <div class="fund-progress" style="width: 10%"></div>
-                            </div>
-                            <div class="fund-details">
-                                <span class="fund-label">Fundraising</span>
-                                <span class="fund-percentage">10%</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
     <div id="global-footer"></div>
 
-    <!-- Loading Overlay -->
     <div id="loadingOverlay" class="loading-overlay hidden">
         <div class="loading-content">
             <div class="spinner"></div>
@@ -491,14 +344,12 @@
         </div>
     </div>
 
-    <!-- Scripts -->
     <script src="js/components.js"></script>
     <script src="js/main.js"></script>
     <script>
-        // Load active gateway from config dynamically — do NOT hardcode here
         (function () {
             var xhr = new XMLHttpRequest();
-            xhr.open('GET', 'api/gateway-config.php', false); // sync: must resolve before donation-handler.js runs
+            xhr.open('GET', 'api/gateway-config.php', false);
             try {
                 xhr.send();
                 if (xhr.status === 200) {
@@ -506,51 +357,10 @@
                     window.ACTIVE_GATEWAY = cfg.gateway || 'razorpay';
                     if (cfg.razorpay_key_id) window.RAZORPAY_KEY_ID = cfg.razorpay_key_id;
                 }
-            } catch (e) {
-                window.ACTIVE_GATEWAY = 'razorpay'; // safe fallback
-            }
+            } catch (e) { window.ACTIVE_GATEWAY = 'razorpay'; }
         })();
     </script>
     <script src="js/donation-handler.js"></script>
-    <script>
-        // Initialize donation page
-        document.addEventListener('DOMContentLoaded', function() {
-            // Get URL parameters to pre-select cause
-            const urlParams = new URLSearchParams(window.location.search);
-            const cause = urlParams.get('cause');
-            const project = urlParams.get('project');
-            
-            if (cause) {
-                selectCause(cause);
-            } else if (project) {
-                // Map project to cause
-                const projectCauseMap = {
-                    'shirdi-feeding': 'poor-feeding',
-                    'education': 'education',
-                    'medical': 'medical'
-                };
-                if (projectCauseMap[project]) {
-                    selectCause(projectCauseMap[project]);
-                }
-            }
-        });
-
-        function selectCause(causeValue) {
-            // Remove active class from all buttons
-            document.querySelectorAll('.cause-btn').forEach(btn => {
-                btn.classList.remove('active');
-            });
-
-            // Find and activate the correct button
-            const causeBtn = document.querySelector(`[data-cause="${causeValue}"]`);
-            if (causeBtn) {
-                causeBtn.classList.add('active');
-                document.getElementById('selected_cause').value = causeValue;
-                document.getElementById('summary-cause').textContent = causeBtn.textContent.trim();
-            }
-        }
-    </script>
     <script src="js/theme-switcher.js"></script>
-
 </body>
 </html>
