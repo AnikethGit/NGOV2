@@ -66,7 +66,7 @@ class ReceiptService
     // ──────────────────────────────────────────────────────────────────────────
     public static function generateReceiptNumber(int $donationId): string
     {
-        $prefix = 'SDSMBT';          // Sri Dutta Sai Manga Bharadwaja Trust
+        $prefix = 'SDSMBT';          // Sri Datta Sai Manga Bharadwaja Trust
         $date   = date('Ymd');       // 20260414
         $seq    = str_pad($donationId, 6, '0', STR_PAD_LEFT);  // 000042
         return "{$prefix}-{$date}-{$seq}";
@@ -119,7 +119,7 @@ class ReceiptService
         <!-- Header -->
         <tr>
           <td style="background:linear-gradient(135deg,#01696f 0%,#0c4e54 100%);padding:36px 40px;text-align:center;">
-            <p style="margin:0 0 8px;font-size:13px;color:#a8d8db;letter-spacing:2px;text-transform:uppercase;">Sri Dutta Sai Manga Bharadwaja Trust</p>
+            <p style="margin:0 0 8px;font-size:13px;color:#a8d8db;letter-spacing:2px;text-transform:uppercase;">Sri Datta Sai Manga Bharadwaja Trust</p>
             <h1 style="margin:0;font-size:28px;color:#ffffff;font-weight:700;">Donation Receipt</h1>
             <p style="margin:12px 0 0;font-size:15px;color:#cdeaec;">Your generosity changes lives 🙏</p>
           </td>

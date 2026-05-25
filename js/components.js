@@ -28,10 +28,10 @@
         '    <div class="nav-container">',
 
         '      <div class="nav-logo">',
-        '        <a href="index.html" aria-label="Sri Dutta Sai Manga Bharadwaja Trust – Home">',
-        '          <img src="images/LogoNGO.png" alt="Sri Dutta Sai Manga Bharadwaja Trust logo" class="logo-img">',
+        '        <a href="index.html" aria-label="Sri Datta Sai Manga Bharadwaja Trust – Home">',
+        '          <img src="images/LogoNGO.png" alt="Sri Datta Sai Manga Bharadwaja Trust logo" class="logo-img">',
         '        </a>',
-        '        <span class="logo-text">Sri Dutta Sai Manga Bharadwaja<br>Spiritual and Social Service Trust</span>',
+        '        <span class="logo-text">Sri Datta Sai Manga Bharadwaja<br>Spiritual and Social Service Trust</span>',
         '      </div>',
 
         '      <div class="nav-menu" id="navMenu" aria-hidden="true">',
@@ -99,8 +99,8 @@
 
         '      <div class="footer-section">',
         '        <div class="footer-logo">',
-        '          <img src="images/LogoNGO.png" alt="Sri Dutta Sai Manga Bharadwaja Trust" class="logo-img">',
-        '          <span class="logo-text">Sri Dutta Sai Manga Bharadwaja<br>Spiritual and Social Service Trust</span>',
+        '          <img src="images/LogoNGO.png" alt="Sri Datta Sai Manga Bharadwaja Trust" class="logo-img">',
+        '          <span class="logo-text">Sri Datta Sai Manga Bharadwaja<br>Spiritual and Social Service Trust</span>',
         '        </div>',
         '        <p class="footer-description">',
         '          Dedicated to serving humanity with compassion and commitment.',
@@ -109,7 +109,7 @@
         '        <div class="social-links">',
         '          <a href="https://www.facebook.com/profile.php?id=61580505505543" class="social-link" aria-label="Facebook" target="_blank" rel="noopener noreferrer"><i class="fab fa-facebook-f" aria-hidden="true"></i></a>',
         '          <a href="#" class="social-link" aria-label="Twitter / X"><i class="fab fa-twitter" aria-hidden="true"></i></a>',
-        '          <a href="https://www.instagram.com/sri_dutta_sai_manga_bharadwaja/" class="social-link" aria-label="Instagram" target="_blank" rel="noopener noreferrer"><i class="fab fa-instagram" aria-hidden="true"></i></a>',
+        '          <a href="https://www.instagram.com/sri_Datta_sai_manga_bharadwaja/" class="social-link" aria-label="Instagram" target="_blank" rel="noopener noreferrer"><i class="fab fa-instagram" aria-hidden="true"></i></a>',
         '          <a href="#" class="social-link" aria-label="YouTube"><i class="fab fa-youtube" aria-hidden="true"></i></a>',
         '        </div>',
         '      </div>',
@@ -176,7 +176,7 @@
 
         '    <div class="footer-bottom">',
         '      <div class="footer-bottom-content">',
-        '        <p>&copy; <span id="footer-year">2026</span> Sri Dutta Sai Manga Bharadwaja Spiritual and Social Service Trust. All rights reserved.</p>',
+        '        <p>&copy; <span id="footer-year">2026</span> Sri Datta Sai Manga Bharadwaja Spiritual and Social Service Trust. All rights reserved.</p>',
         '        <div class="footer-bottom-links">',
         '          <a href="policy.html">Privacy Policy</a>',
         '          <a href="terms.html">Terms of Service</a>',

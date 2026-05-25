@@ -71,7 +71,7 @@ class Config {
 
     // Application Settings
     private static $app_config = [
-        'name'     => 'Sri Dutta Sai Manga Bharadwaja Trust',
+        'name'     => 'Sri Datta Sai Manga Bharadwaja Trust',
         'url'      => 'https://sadgurubharadwaja.org',
         'email'    => 'admin@sadgurubharadwaja.org',
         'phone'    => '+91 7893601789',
@@ -123,7 +123,7 @@ if (!empty($env)) {
     $appProp = $ref->getProperty('app_config');
     $appProp->setAccessible(true);
     $appProp->setValue(null, [
-        'name'     => 'Sri Dutta Sai Manga Bharadwaja Trust',
+        'name'     => 'Sri Datta Sai Manga Bharadwaja Trust',
         'url'      => $env['APP_URL']   ?? 'https://sadgurubharadwaja.org',
         'email'    => 'admin@sadgurubharadwaja.org',
         'phone'    => '+91 7893601789',
