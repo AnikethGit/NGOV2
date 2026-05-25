@@ -60,15 +60,15 @@ class PdfReceipt
         // └─────────────────────────────────────────────────────────────────┘
         $yOff = -11.0;   // ← adjust this one value to move everything up/down
 
-        $pdf->SetFont('Arial', 'B', 11);
+        $pdf->SetFont('Arial', 'B', 14);
         $pdf->SetTextColor(0, 0, 0);    // solid black
 
         // Receipt No.  px(524, 1165)
-        $pdf->SetXY(44.43, 106.42 + $yOff);
+        $pdf->SetXY(44.43, 108.42 + $yOff);
         $pdf->Cell(100, 5, $receiptNo);
 
         // Date  px(2919, 1066)
-        $pdf->SetXY(247.49, 97.37 + $yOff);
+        $pdf->SetXY(247.49, 100.37 + $yOff);
         $pdf->Cell(46, 5, $date);
 
         // Amount in words — two dotted lines.
@@ -86,39 +86,39 @@ class PdfReceipt
                 $line2 .= ($line2 === '' ? '' : ' ') . $word;
             }
         }
-        $pdf->SetXY(177.54, 112.54 + $yOff);
+        $pdf->SetXY(177.54, 113.54 + $yOff);
         $pdf->Cell(100.30, 5, $line1);
         if ($line2 !== '') {
-            $pdf->SetXY(75.03, 123.59 + $yOff);
+            $pdf->SetXY(75.03, 124.59 + $yOff);
             $pdf->Cell(185, 5, $line2);
         }
 
         // From Sri/Smt  px(1226, 1477)
-        $pdf->SetXY(103.95, 134.92 + $yOff);
+        $pdf->SetXY(103.95, 133.92 + $yOff);
         $pdf->Cell(181, 5, $name);
 
         // Address  px(1102, 1594)
-        $pdf->SetXY(93.43, 145.60 + $yOff);
+        $pdf->SetXY(93.43, 143.60 + $yOff);
         $pdf->Cell(191, 5, $address);
 
         // Aadhar / PAN No.  px(1268, 1711)
-        $pdf->SetXY(107.51, 156.29 + $yOff);
+        $pdf->SetXY(107.51, 154.29 + $yOff);
         $pdf->Cell(95, 5, $pan);
 
         // Mobile No.  px(2501, 1711)
-        $pdf->SetXY(212.05, 156.29 + $yOff);
+        $pdf->SetXY(212.05, 153.29 + $yOff);
         $pdf->Cell(80, 5, $mobile);
 
         // Towards / Cause  px(1094, 1828)
-        $pdf->SetXY(92.75, 166.98 + $yOff);
+        $pdf->SetXY(92.75, 163.98 + $yOff);
         $pdf->Cell(140, 5, $cause);
 
         // Payment method  px(2873, 1828)
-        $pdf->SetXY(243.59, 166.98 + $yOff);
+        $pdf->SetXY(243.59, 163.98 + $yOff);
         $pdf->Cell(50, 5, $payMode);
 
         // Rs. amount  px(935, 2203)  — not shifted; box position is fixed
-        $pdf->SetXY(79.27, 201.23);
+        $pdf->SetXY(79.27, 196.23 + $yOff);
         $pdf->Cell(60, 5, $amountStr);
 
         return $pdf->Output('S');
