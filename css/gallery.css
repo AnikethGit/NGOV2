@@ -249,6 +249,55 @@
 }
 .gallery-card:hover .gallery-card-overlay { opacity: 1; }
 
+/* ── Video card ────────────────────────────────────────────────────────────── */
+
+/* Always show a subtle play icon on video cards so users know it's a video */
+.gallery-card--video .gallery-card-overlay {
+    opacity: 0.85;
+    background: rgba(0, 0, 0, 0.28);
+}
+.gallery-card--video:hover .gallery-card-overlay {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+/* Circular play button */
+.gallery-play-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 50%;
+    color: #111;
+    font-size: 1.1rem;
+    padding-left: 3px; /* optical centre for play triangle */
+    transition: transform 0.2s, background 0.2s;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+}
+.gallery-card--video:hover .gallery-play-btn {
+    transform: scale(1.1);
+    background: #fff;
+}
+
+/* Small "VIDEO" badge in the top-right corner */
+.gallery-card--video::after {
+    content: 'VIDEO';
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    background: rgba(0, 0, 0, 0.65);
+    color: #fff;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 2px 6px;
+    border-radius: 4px;
+    pointer-events: none;
+    font-family: var(--font-family-base);
+}
+
 /* ── Skeleton loading ──────────────────────────────────────────────────────── */
 @keyframes gallery-shimmer {
     0%   { background-position: -400% 0; }
@@ -331,6 +380,22 @@
     transition: opacity 0.18s;
 }
 .lb-img.lb-loading { opacity: 0.25; }
+
+/* Lightbox video iframe */
+.lb-video {
+    width:  min(900px, 88vw);
+    height: min(506px, 49.5vw); /* 16:9 aspect */
+    border: none;
+    border-radius: var(--radius-base);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    background: #000;
+}
+@media (max-width: 600px) {
+    .lb-video {
+        width: 96vw;
+        height: calc(96vw * 9 / 16);
+    }
+}
 
 /* Footer: caption + counter */
 .lb-footer {
