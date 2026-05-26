@@ -4,46 +4,90 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gallery - Sri Datta Sai Manga Bharadwaja Trust</title>
+    <meta name="description" content="Photos from service activities, Annadanam events and spiritual programmes organised by Sri Datta Sai Manga Bharadwaja Spiritual and Social Service Trust.">
     <link rel="icon" href="images/LogoNGO.png" type="image/x-icon">
+
+    <!-- Core styles -->
     <link rel="stylesheet" href="css/common.css">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/theme-compatibility.css">
-    <!-- Google Fonts: preconnect + font-display=swap to avoid invisible text -->
+    <link rel="stylesheet" href="css/gallery.css">
+
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap"></noscript>
 
-    <!-- Font Awesome: load asynchronously — icons are non-critical -->
+    <!-- Font Awesome -->
     <link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" media="print" onload="this.media='all'" crossorigin="anonymous">
     <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous"></noscript>
-    <style>
-        .coming-soon-section { min-height: 60vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 4rem 1rem; }
-        .coming-soon-section .icon { font-size: 4rem; color: var(--primary, #e67e22); margin-bottom: 1.5rem; }
-        .coming-soon-section h1 { font-size: 2.5rem; margin-bottom: 1rem; }
-        .coming-soon-section p { font-size: 1.1rem; color: var(--text-secondary, #666); max-width: 500px; margin: 0 auto 2rem; }
-    </style>
 </head>
 <body>
+
+    <!-- Global header (injected by components.js) -->
     <div id="global-header"></div>
 
     <main>
-        <section class="coming-soon-section">
+
+        <!-- ── Page Hero ──────────────────────────────────────────────────── -->
+        <section class="gallery-hero">
             <div class="container">
-                <div class="icon"><i class="fas fa-images"></i></div>
-                <h1>Photo Gallery</h1>
-                <p>We are curating our gallery of service activities and spiritual events. Coming soon.</p>
-                <a href="index.html" class="btn btn-primary"><i class="fas fa-arrow-left"></i> Back to Home</a>
+                <h1><i class="fas fa-images" aria-hidden="true"></i> Photo Gallery</h1>
+                <p>Moments from our Annadanam services, spiritual programmes and community activities.</p>
             </div>
         </section>
+
+        <!-- ── Tab navigation (populated by gallery.js) ───────────────────── -->
+        <div class="gallery-tabs" id="gallery-tabs" style="display:none"
+             role="navigation" aria-label="Gallery sections"></div>
+
+        <!-- ── Gallery sections (populated by gallery.js) ─────────────────── -->
+        <div class="gallery-body">
+            <div class="container">
+                <div id="gallery-root" role="region" aria-live="polite" aria-label="Photo gallery"></div>
+            </div>
+        </div>
+
     </main>
 
+    <!-- ── Lightbox overlay ───────────────────────────────────────────────── -->
+    <div class="gallery-lightbox" id="gallery-lightbox"
+         role="dialog" aria-modal="true" aria-label="Photo viewer"
+         aria-hidden="true">
+
+        <button class="lb-close" aria-label="Close photo viewer">
+            <i class="fas fa-times" aria-hidden="true"></i>
+        </button>
+
+        <button class="lb-prev" aria-label="Previous photo">
+            <i class="fas fa-chevron-left" aria-hidden="true"></i>
+        </button>
+
+        <button class="lb-next" aria-label="Next photo">
+            <i class="fas fa-chevron-right" aria-hidden="true"></i>
+        </button>
+
+        <div class="lb-stage">
+            <img class="lb-img" src="" alt="">
+        </div>
+
+        <div class="lb-footer">
+            <span class="lb-caption"></span>
+            <span class="lb-counter"></span>
+        </div>
+
+    </div>
+
+    <!-- Global footer (injected by components.js) -->
     <div id="global-footer"></div>
 
     <script src="js/components.js"></script>
     <script src="js/main.js"></script>
+    <script src="js/gallery.js"></script>
     <script src="js/theme-switcher.js"></script>
+
 </body>
 </html>
