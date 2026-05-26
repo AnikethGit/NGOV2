@@ -38,9 +38,30 @@
         '        <a href="index.html"    class="nav-link" data-nav="index">Home</a>',
         '        <a href="about.html"   class="nav-link" data-nav="about">About</a>',
         '        <a href="services.html" class="nav-link" data-nav="services">Services</a>',
-        '        <a href="projects.html" class="nav-link" data-nav="projects">Projects</a>',
-        '        <a href="events.html"  class="nav-link" data-nav="events">Events</a>',
         '        <a href="contact.html" class="nav-link" data-nav="contact">Contact</a>',
+
+        '        <div class="nav-more" id="navMore">',
+        '          <button class="nav-more-trigger" id="nav-more-trigger"',
+        '                  aria-expanded="false" aria-haspopup="true"',
+        '                  aria-label="More pages">',
+        '            More',
+        '            <i class="fas fa-chevron-down nav-more-chevron" aria-hidden="true"></i>',
+        '          </button>',
+        '          <div class="nav-more-dropdown" id="nav-more-dropdown" role="menu" aria-hidden="true">',
+        '            <a href="projects.html" class="nav-more-item" data-nav="projects" role="menuitem">',
+        '              <i class="fas fa-project-diagram" aria-hidden="true"></i> Projects',
+        '            </a>',
+        '            <a href="events.html" class="nav-more-item" data-nav="events" role="menuitem">',
+        '              <i class="fas fa-calendar-alt" aria-hidden="true"></i> Events',
+        '            </a>',
+        '            <a href="gallery.html" class="nav-more-item" data-nav="gallery" role="menuitem">',
+        '              <i class="fas fa-images" aria-hidden="true"></i> Gallery',
+        '            </a>',
+        '            <a href="volunteer.html" class="nav-more-item" data-nav="volunteer" role="menuitem">',
+        '              <i class="fas fa-hands-helping" aria-hidden="true"></i> Volunteer',
+        '            </a>',
+        '          </div>',
+        '        </div>',
 
         '        <div class="nav-actions">',
         '          <a href="donate.html" class="btn btn-primary">Donate Now</a>',
@@ -122,6 +143,7 @@
         '          <li><a href="services.html">Our Services</a></li>',
         '          <li><a href="projects.html">Projects</a></li>',
         '          <li><a href="events.html">Events</a></li>',
+        '          <li><a href="gallery.html">Gallery</a></li>',
         '          <li><a href="contact.html">Contact</a></li>',
         '        </ul>',
         '      </div>',
@@ -330,6 +352,146 @@
         '  }',
         '  .nav-dropdown-logout { color: #FF9090; border-top-color: rgba(255,255,255,0.15); }',
         '  .nav-dropdown-logout:hover { background: rgba(255,80,80,0.15); color: #FF9090; }',
+        '}',
+
+        '/* ── nav-more (More dropdown) ─────────────────── */',
+        '.nav-more {',
+        '  position: relative;',
+        '}',
+
+        '.nav-more-trigger {',
+        '  display: inline-flex;',
+        '  align-items: center;',
+        '  gap: 5px;',
+        '  background: transparent;',
+        '  border: none;',
+        '  color: rgba(255,255,255,0.85);',
+        '  font-size: inherit;',
+        '  font-family: inherit;',
+        '  font-weight: 500;',
+        '  cursor: pointer;',
+        '  padding: 4px 0;',
+        '  letter-spacing: .02em;',
+        '  white-space: nowrap;',
+        '  transition: color .2s;',
+        '  text-decoration: none;',
+        '  position: relative;',
+        '}',
+        '.nav-more-trigger::after {',
+        '  content: "";',
+        '  position: absolute;',
+        '  bottom: -2px;',
+        '  left: 0;',
+        '  right: 0;',
+        '  height: 2px;',
+        '  background: #B8860B;',
+        '  border-radius: 2px;',
+        '  transform: scaleX(0);',
+        '  transition: transform .25s;',
+        '}',
+        '.nav-more-trigger:hover,',
+        '.nav-more-trigger.active,',
+        '.nav-more-trigger[aria-expanded="true"] {',
+        '  color: #fff;',
+        '}',
+        '.nav-more-trigger:hover::after,',
+        '.nav-more-trigger.active::after {',
+        '  transform: scaleX(1);',
+        '}',
+        '.nav-more-chevron {',
+        '  font-size: .65em;',
+        '  transition: transform .2s;',
+        '}',
+        '.nav-more-trigger[aria-expanded="true"] .nav-more-chevron {',
+        '  transform: rotate(180deg);',
+        '}',
+
+        '.nav-more-dropdown {',
+        '  position: absolute;',
+        '  top: calc(100% + 12px);',
+        '  left: 50%;',
+        '  transform: translateX(-50%) translateY(-8px);',
+        '  min-width: 185px;',
+        '  background: #fff;',
+        '  border-radius: 10px;',
+        '  box-shadow: 0 8px 28px rgba(0,0,0,0.16);',
+        '  padding: 6px 0;',
+        '  opacity: 0;',
+        '  visibility: hidden;',
+        '  transition: opacity .2s ease, transform .2s ease, visibility .2s;',
+        '  z-index: 1030;',
+        '}',
+        '.nav-more-dropdown.is-open {',
+        '  opacity: 1;',
+        '  visibility: visible;',
+        '  transform: translateX(-50%) translateY(0);',
+        '}',
+
+        '.nav-more-item {',
+        '  display: flex;',
+        '  align-items: center;',
+        '  gap: 10px;',
+        '  padding: 11px 18px;',
+        '  color: #2C2A27;',
+        '  text-decoration: none;',
+        '  font-size: .9rem;',
+        '  font-weight: 500;',
+        '  transition: background .15s, color .15s;',
+        '  line-height: 1.2;',
+        '}',
+        '.nav-more-item i { width: 16px; text-align: center; }',
+        '.nav-more-item:hover {',
+        '  background: #F5F0EA;',
+        '  color: #C96B0A;',
+        '}',
+        '.nav-more-item.active {',
+        '  color: #C96B0A;',
+        '  background: #FDF6EE;',
+        '}',
+
+        '/* Mobile: More dropdown becomes accordion inside slide-out menu */',
+        '@media (max-width: 1024px) {',
+        '  .nav-more {',
+        '    width: 100%;',
+        '  }',
+        '  .nav-more-trigger {',
+        '    width: 100%;',
+        '    padding: 16px 24px;',
+        '    justify-content: space-between;',
+        '    font-size: 1.05rem;',
+        '    color: rgba(255,255,255,0.9);',
+        '    border-bottom: 1px solid rgba(255,255,255,0.1);',
+        '  }',
+        '  .nav-more-trigger::after { display: none; }',
+        '  .nav-more-trigger:hover,',
+        '  .nav-more-trigger.active,',
+        '  .nav-more-trigger[aria-expanded="true"] {',
+        '    color: #fff;',
+        '    background: rgba(255,255,255,0.05);',
+        '  }',
+        '  .nav-more-dropdown {',
+        '    position: static;',
+        '    opacity: 1;',
+        '    visibility: visible;',
+        '    transform: none;',
+        '    box-shadow: none;',
+        '    border-radius: 0;',
+        '    background: rgba(255,255,255,0.05);',
+        '    padding: 0;',
+        '    display: none;',
+        '  }',
+        '  .nav-more-dropdown.is-open { display: block; }',
+        '  .nav-more-item {',
+        '    color: rgba(255,255,255,0.85);',
+        '    padding: 14px 24px 14px 40px;',
+        '    font-size: 1rem;',
+        '    border-bottom: 1px solid rgba(255,255,255,0.06);',
+        '  }',
+        '  .nav-more-item:hover {',
+        '    background: rgba(255,255,255,0.1);',
+        '    color: #fff;',
+        '  }',
+        '  .nav-more-item.active { color: #FFD070; background: rgba(255,208,112,0.1); }',
         '}'
     ].join('\n');
 
@@ -350,10 +512,23 @@
 
     function highlightActiveLink() {
         var key = currentPageKey();
+
+        // Main nav links
         var links = document.querySelectorAll('.nav-menu .nav-link[data-nav]');
         for (var i = 0; i < links.length; i++) {
             links[i].classList.toggle('active', links[i].getAttribute('data-nav') === key);
         }
+
+        // More dropdown items + trigger
+        var moreItems = document.querySelectorAll('.nav-more-item[data-nav]');
+        var moreTrigger = document.getElementById('nav-more-trigger');
+        var moreActive = false;
+        for (var j = 0; j < moreItems.length; j++) {
+            var isActive = moreItems[j].getAttribute('data-nav') === key;
+            moreItems[j].classList.toggle('active', isActive);
+            if (isActive) moreActive = true;
+        }
+        if (moreTrigger) moreTrigger.classList.toggle('active', moreActive);
     }
 
     function updateYear() {
@@ -367,6 +542,38 @@
         style.id = 'nav-user-menu-styles';
         style.textContent = DROPDOWN_CSS;
         document.head.appendChild(style);
+    }
+
+    // ------------------------------------------------------------------
+    // MORE DROPDOWN
+    // ------------------------------------------------------------------
+
+    function initMoreDropdown() {
+        var trigger  = document.getElementById('nav-more-trigger');
+        var dropdown = document.getElementById('nav-more-dropdown');
+        if (!trigger || !dropdown) return;
+
+        function openMore() {
+            dropdown.classList.add('is-open');
+            dropdown.setAttribute('aria-hidden', 'false');
+            trigger.setAttribute('aria-expanded', 'true');
+        }
+        function closeMore() {
+            dropdown.classList.remove('is-open');
+            dropdown.setAttribute('aria-hidden', 'true');
+            trigger.setAttribute('aria-expanded', 'false');
+        }
+
+        trigger.addEventListener('click', function (e) {
+            e.stopPropagation();
+            dropdown.classList.contains('is-open') ? closeMore() : openMore();
+        });
+        // Clicks inside the dropdown should not bubble up and close it
+        dropdown.addEventListener('click', function (e) { e.stopPropagation(); });
+        document.addEventListener('click', closeMore);
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeMore();
+        });
     }
 
     // ------------------------------------------------------------------
@@ -483,6 +690,7 @@
         // Inject dropdown CSS and start session check whenever there's a header
         if (document.getElementById('nav-user-menu')) {
             injectDropdownStyles();
+            initMoreDropdown();
             initSession();
         }
     }
