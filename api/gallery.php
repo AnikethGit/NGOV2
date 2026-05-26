@@ -79,8 +79,8 @@ function driveListImages(string $folderId, string $apiKey, bool $debug = false):
 
     do {
         $params = [
-            'q'        => "'{$folderId}' in parents and mimeType contains 'image/' and trashed = false",
-            'fields'   => 'nextPageToken,files(id,name)',
+            'q'        => "'{$folderId}' in parents and (mimeType contains 'image/' or mimeType contains 'video/') and trashed = false",
+            'fields'   => 'nextPageToken,files(id,name,mimeType)',
             'pageSize' => 500,
             'orderBy'  => 'name',
             'key'      => $apiKey,
@@ -116,14 +116,18 @@ function driveListImages(string $folderId, string $apiKey, bool $debug = false):
         if (empty($data['files'])) break;
 
         foreach ($data['files'] as $file) {
-            $id       = $file['id'];
+            $id      = $file['id'];
+            $isVideo = strpos($file['mimeType'] ?? '', 'video/') === 0;
             $images[] = [
                 'id'    => $id,
                 'name'  => pathinfo($file['name'], PATHINFO_FILENAME),
-                // thumbnail for the grid (600 px wide)
+                'type'  => $isVideo ? 'video' : 'image',
+                // thumbnail works for both images and videos (first frame)
                 'thumb' => "https://drive.google.com/thumbnail?id={$id}&sz=w600",
-                // large version for the lightbox (1600 px wide)
-                'full'  => "https://drive.google.com/thumbnail?id={$id}&sz=w1600",
+                // videos use the Drive preview embed URL; images use high-res thumbnail
+                'full'  => $isVideo
+                    ? "https://drive.google.com/file/d/{$id}/preview"
+                    : "https://drive.google.com/thumbnail?id={$id}&sz=w1600",
             ];
         }
 
@@ -142,8 +146,8 @@ function driveListImagesFallback(string $folderId, string $apiKey): array
 {
     $images = [];
     $params = [
-        'q'        => "'{$folderId}' in parents and mimeType contains 'image/' and trashed = false",
-        'fields'   => 'files(id,name)',
+        'q'        => "'{$folderId}' in parents and (mimeType contains 'image/' or mimeType contains 'video/') and trashed = false",
+        'fields'   => 'files(id,name,mimeType)',
         'pageSize' => 500,
         'orderBy'  => 'name',
         'key'      => $apiKey,
@@ -155,12 +159,16 @@ function driveListImagesFallback(string $folderId, string $apiKey): array
 
     $data = json_decode($response, true);
     foreach (($data['files'] ?? []) as $file) {
-        $id       = $file['id'];
+        $id      = $file['id'];
+        $isVideo = strpos($file['mimeType'] ?? '', 'video/') === 0;
         $images[] = [
             'id'    => $id,
             'name'  => pathinfo($file['name'], PATHINFO_FILENAME),
+            'type'  => $isVideo ? 'video' : 'image',
             'thumb' => "https://drive.google.com/thumbnail?id={$id}&sz=w600",
-            'full'  => "https://drive.google.com/thumbnail?id={$id}&sz=w1600",
+            'full'  => $isVideo
+                ? "https://drive.google.com/file/d/{$id}/preview"
+                : "https://drive.google.com/thumbnail?id={$id}&sz=w1600",
         ];
     }
     return $images;

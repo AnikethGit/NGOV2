@@ -149,6 +149,7 @@
                 allImages.push({
                     id:      img.id,
                     name:    img.name,
+                    type:    img.type || 'image',
                     full:    img.full,
                     section: folder.name,
                 });
@@ -196,17 +197,21 @@
             + '<div class="gallery-grid">';
 
         folder.images.forEach(function (img) {
-            var idx = allImages.findIndex(function (a) { return a.id === img.id; });
-            html += '<div class="gallery-card" data-lb-idx="' + idx + '"'
+            var idx     = allImages.findIndex(function (a) { return a.id === img.id; });
+            var isVideo = img.type === 'video';
+            html += '<div class="gallery-card' + (isVideo ? ' gallery-card--video' : '') + '"'
+                  + ' data-lb-idx="' + idx + '"'
                   + ' role="button" tabindex="0"'
-                  + ' aria-label="Open photo: ' + esc(img.name) + '">'
+                  + ' aria-label="' + (isVideo ? 'Play video' : 'Open photo') + ': ' + esc(img.name) + '">'
                   + '<img'
                   + ' data-src="' + img.thumb + '"'
                   + ' src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\'/%3E"'
                   + ' alt="' + esc(img.name) + '"'
                   + ' class="gallery-img">'
                   + '<div class="gallery-card-overlay" aria-hidden="true">'
-                  + '<i class="fas fa-expand-alt"></i>'
+                  + (isVideo
+                      ? '<span class="gallery-play-btn"><i class="fas fa-play"></i></span>'
+                      : '<i class="fas fa-expand-alt"></i>')
                   + '</div>'
                   + '</div>';
         });
@@ -289,12 +294,14 @@
 
         lb = {
             overlay:     overlay,
+            stage:       overlay.querySelector('.lb-stage'),
             img:         overlay.querySelector('.lb-img'),
             caption:     overlay.querySelector('.lb-caption'),
             counter:     overlay.querySelector('.lb-counter'),
             btnPrev:     overlay.querySelector('.lb-prev'),
             btnNext:     overlay.querySelector('.lb-next'),
             btnClose:    overlay.querySelector('.lb-close'),
+            video:       null,   // created on first video open
             current:     0,
             touchStartX: null,
         };
@@ -343,6 +350,8 @@
 
     function closeLightbox() {
         if (!lb) return;
+        // Stop video playback by clearing the iframe src
+        if (lb.video) { lb.video.src = ''; }
         lb.overlay.classList.remove('lb-open');
         lb.overlay.setAttribute('aria-hidden', 'true');
         document.body.classList.remove('lb-body-lock');
@@ -357,12 +366,29 @@
     function updateLightboxImage() {
         var item = allImages[lb.current];
 
-        // Reset image
-        lb.img.classList.add('lb-loading');
-        lb.img.onload  = function () { lb.img.classList.remove('lb-loading'); };
-        lb.img.onerror = function () { lb.img.classList.remove('lb-loading'); };
-        lb.img.src  = item.full;
-        lb.img.alt  = item.name || '';
+        if (item.type === 'video') {
+            // Show iframe, hide img
+            lb.img.style.display = 'none';
+            if (!lb.video) {
+                lb.video = document.createElement('iframe');
+                lb.video.className = 'lb-video';
+                lb.video.setAttribute('allowfullscreen', '');
+                lb.video.setAttribute('allow', 'autoplay');
+                lb.video.setAttribute('frameborder', '0');
+                lb.stage.appendChild(lb.video);
+            }
+            lb.video.style.display = '';
+            lb.video.src = item.full;
+        } else {
+            // Show img, hide iframe (and stop any playing video)
+            if (lb.video) { lb.video.style.display = 'none'; lb.video.src = ''; }
+            lb.img.style.display = '';
+            lb.img.classList.add('lb-loading');
+            lb.img.onload  = function () { lb.img.classList.remove('lb-loading'); };
+            lb.img.onerror = function () { lb.img.classList.remove('lb-loading'); };
+            lb.img.src = item.full;
+            lb.img.alt = item.name || '';
+        }
 
         if (lb.caption) lb.caption.textContent = item.name || '';
         if (lb.counter) lb.counter.textContent  =
