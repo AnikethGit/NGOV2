@@ -15,6 +15,9 @@ Thumbs.db
 *.cache
 /vendor/
 
+# Gallery — auto-generated Drive image cache (do not commit)
+data/gallery-cache.json
+
 # IDE
 .vscode/
 .idea/
