@@ -1,7 +1,17 @@
 [
   {
     "id": "1TFdjyD89of0Usybb9tzY3XAk9g4rpXgs",
-    "name": "Our Gallery",
-    "icon": "images"
+    "name": "Annadanam",
+    "icon": "utensils"
+  },
+  {
+    "id": "1nOoIHkMemJqckEpczuwDc_rXPIQ7lO1V",
+    "name": "Ganagapur Medical Camp",
+    "icon": "hands-helping"
+  },
+  {
+    "id": "1FDd5CXjBmuOYAp5bS8IESCfLEVUubeeh",
+    "name": "Spiritual Books Distribution",
+    "icon": "heart"
   }
 ]
