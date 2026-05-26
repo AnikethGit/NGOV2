@@ -63,8 +63,11 @@ if (!file_exists($configFile)) {
 
 $folders = json_decode(file_get_contents($configFile), true) ?: [];
 
+/* ── Debug mode: ?debug=1 shows raw Drive API responses ──────────────────── */
+$debugMode = (($_GET['debug'] ?? '') === '1');
+
 /* ── Fetch images from one Drive folder (handles pagination) ─────────────── */
-function driveListImages(string $folderId, string $apiKey): array
+function driveListImages(string $folderId, string $apiKey, bool $debug = false): array
 {
     if (!function_exists('curl_init')) {
         return driveListImagesFallback($folderId, $apiKey);
@@ -72,6 +75,7 @@ function driveListImages(string $folderId, string $apiKey): array
 
     $images    = [];
     $pageToken = null;
+    $debugLog  = [];
 
     do {
         $params = [
@@ -98,6 +102,14 @@ function driveListImages(string $folderId, string $apiKey): array
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
+        if ($debug) {
+            $debugLog[] = [
+                'folder_id' => $folderId,
+                'http_code' => $httpCode,
+                'response'  => json_decode($response, true) ?? $response,
+            ];
+        }
+
         if ($httpCode !== 200 || !$response) break;
 
         $data = json_decode($response, true);
@@ -119,6 +131,9 @@ function driveListImages(string $folderId, string $apiKey): array
 
     } while ($pageToken);
 
+    if ($debug) {
+        return ['__debug__' => $debugLog, '__images__' => $images];
+    }
     return $images;
 }
 
@@ -152,7 +167,8 @@ function driveListImagesFallback(string $folderId, string $apiKey): array
 }
 
 /* ── Build result ────────────────────────────────────────────────────────── */
-$result = [];
+$result      = [];
+$debugResult = [];
 
 foreach ($folders as $folder) {
     $folderId = trim($folder['id'] ?? '');
@@ -162,7 +178,20 @@ foreach ($folders as $folder) {
         continue;
     }
 
-    $images = driveListImages($folderId, $apiKey);
+    $raw = driveListImages($folderId, $apiKey, $debugMode);
+
+    // In debug mode the function returns an array with __debug__ and __images__ keys
+    if ($debugMode && isset($raw['__debug__'])) {
+        $debugResult[] = [
+            'folder_id'   => $folderId,
+            'folder_name' => $folder['name'] ?? '',
+            'api_calls'   => $raw['__debug__'],
+            'image_count' => count($raw['__images__']),
+        ];
+        $images = $raw['__images__'];
+    } else {
+        $images = $raw;
+    }
 
     if (!empty($images)) {
         $result[] = [
@@ -173,6 +202,15 @@ foreach ($folders as $folder) {
             'images' => $images,
         ];
     }
+}
+
+// In debug mode: return diagnostic info without caching
+if ($debugMode) {
+    echo json_encode(
+        ['debug' => true, 'api_key_set' => !empty($apiKey), 'folders_checked' => $debugResult, 'result' => $result],
+        JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT
+    );
+    exit;
 }
 
 $payload = json_encode(
