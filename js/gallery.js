@@ -179,18 +179,23 @@
     function buildSection(folder) {
         var iconClass = ICON_MAP[folder.icon] || 'fa-images';
         var sid = sectionId(folder.id);
+        var countLabel = folder.count + ' photo' + (folder.count !== 1 ? 's' : '');
 
         var html = '<section class="gallery-section" id="' + sid + '">'
-            + '<div class="gallery-section-header">'
+            // Clicking anywhere on the header toggles the section
+            + '<button class="gallery-section-header" aria-expanded="true"'
+            + ' aria-controls="' + sid + '-grid">'
             + '<h2><i class="fas ' + iconClass + '" aria-hidden="true"></i> ' + esc(folder.name) + '</h2>'
-            + '<span class="gallery-count">'
-            + folder.count + ' photo' + (folder.count !== 1 ? 's' : '')
-            + '</span>'
+            + '<div class="gallery-header-right">'
+            + '<span class="gallery-count">' + countLabel + '</span>'
+            + '<i class="fas fa-chevron-down gallery-toggle-chevron" aria-hidden="true"></i>'
             + '</div>'
+            + '</button>'
+            // Wrap the grid so we can animate its height
+            + '<div class="gallery-grid-wrap" id="' + sid + '-grid">'
             + '<div class="gallery-grid">';
 
         folder.images.forEach(function (img) {
-            // Find the index in allImages for lightbox navigation
             var idx = allImages.findIndex(function (a) { return a.id === img.id; });
             html += '<div class="gallery-card" data-lb-idx="' + idx + '"'
                   + ' role="button" tabindex="0"'
@@ -206,8 +211,20 @@
                   + '</div>';
         });
 
-        html += '</div></section>';
+        html += '</div></div></section>';
         return html;
+    }
+
+    // ── Section expand / collapse ─────────────────────────────────────────────
+
+    function wireToggle() {
+        document.querySelectorAll('.gallery-section-header').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var section   = btn.closest('.gallery-section');
+                var collapsed = section.classList.toggle('gallery-section--collapsed');
+                btn.setAttribute('aria-expanded', String(!collapsed));
+            });
+        });
     }
 
     function sectionId(folderId) {
@@ -226,6 +243,7 @@
                 img.removeAttribute('data-src');
             });
             wireCards();
+            wireToggle();
             return;
         }
 
@@ -243,6 +261,7 @@
 
         imgs.forEach(function (img) { observer.observe(img); });
         wireCards();
+        wireToggle();
     }
 
     // ── Card click → open lightbox ────────────────────────────────────────────
