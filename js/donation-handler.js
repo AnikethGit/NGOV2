@@ -79,7 +79,7 @@ function updateSummary() {
     const causeBtn = document.querySelector(`[data-cause="${cause}"]`);
     if (causeBtn) {
         const el = document.getElementById('summary-cause');
-        if (el) el.textContent = causeBtn.textContent.trim();
+        if (el) el.textContent = (causeBtn.querySelector('span') || causeBtn).textContent.trim();
     }
 
     const fmt = n => Number(n).toLocaleString('en-IN');
