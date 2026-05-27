@@ -546,7 +546,7 @@
             if (causeBtn) {
                 causeBtn.classList.add('active');
                 document.getElementById('selected_cause').value = causeValue;
-                document.getElementById('summary-cause').textContent = causeBtn.textContent.trim();
+                document.getElementById('summary-cause').textContent = (causeBtn.querySelector('span') || causeBtn).textContent.trim();
             }
         }
     </script>
