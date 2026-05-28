@@ -496,6 +496,160 @@
     ].join('\n');
 
     // ------------------------------------------------------------------
+    // POSTER POPUP
+    // ------------------------------------------------------------------
+    var POSTER_HTML = [
+        '<div id="poster-popup" role="dialog" aria-modal="true" aria-label="Welcome" aria-hidden="true">',
+        '  <div class="poster-backdrop"></div>',
+        '  <div class="poster-box">',
+        '    <button class="poster-close" aria-label="Close poster">&times;</button>',
+        '    <img src="images/Poster.jpeg" alt="Poster" class="poster-img">',
+        '  </div>',
+        '</div>'
+    ].join('\n');
+
+    var POSTER_CSS = [
+        '/* ── Poster popup ───────────────────────────────── */',
+        '#poster-popup {',
+        '  position: fixed;',
+        '  inset: 0;',
+        '  z-index: 3000;',
+        '  display: flex;',
+        '  align-items: center;',
+        '  justify-content: center;',
+        '  padding: 1rem;',
+        '  box-sizing: border-box;',
+        '  visibility: hidden;',
+        '  pointer-events: none;',
+        '}',
+        '#poster-popup.poster-open {',
+        '  visibility: visible;',
+        '  pointer-events: auto;',
+        '}',
+
+        '.poster-backdrop {',
+        '  position: absolute;',
+        '  inset: 0;',
+        '  background: rgba(0,0,0,0.78);',
+        '  opacity: 0;',
+        '  transition: opacity 0.35s ease;',
+        '}',
+        '#poster-popup.poster-open .poster-backdrop {',
+        '  opacity: 1;',
+        '}',
+
+        '.poster-box {',
+        '  position: relative;',
+        '  z-index: 1;',
+        '  max-width: min(540px, 94vw);',
+        '  max-height: 92vh;',
+        '  display: flex;',
+        '  align-items: center;',
+        '  justify-content: center;',
+        '  opacity: 0;',
+        '  transform: scale(0.9);',
+        '  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.16,1,0.3,1);',
+        '}',
+        '#poster-popup.poster-open .poster-box {',
+        '  opacity: 1;',
+        '  transform: scale(1);',
+        '}',
+
+        '.poster-img {',
+        '  display: block;',
+        '  width: 100%;',
+        '  max-height: 88vh;',
+        '  object-fit: contain;',
+        '  border-radius: 10px;',
+        '  box-shadow: 0 24px 64px rgba(0,0,0,0.55);',
+        '}',
+
+        '.poster-close {',
+        '  position: absolute;',
+        '  top: -14px;',
+        '  right: -14px;',
+        '  width: 36px;',
+        '  height: 36px;',
+        '  border-radius: 50%;',
+        '  background: #fff;',
+        '  border: none;',
+        '  color: #111;',
+        '  font-size: 1.3rem;',
+        '  line-height: 1;',
+        '  cursor: pointer;',
+        '  display: flex;',
+        '  align-items: center;',
+        '  justify-content: center;',
+        '  box-shadow: 0 4px 14px rgba(0,0,0,0.35);',
+        '  transition: background 0.18s, transform 0.18s;',
+        '  z-index: 2;',
+        '}',
+        '.poster-close:hover {',
+        '  background: #f0f0f0;',
+        '  transform: scale(1.1);',
+        '}',
+        '.poster-close:focus-visible {',
+        '  outline: 2px solid #01696f;',
+        '  outline-offset: 2px;',
+        '}'
+    ].join('\n');
+
+    function initPosterPopup() {
+        // Homepage only
+        var page = window.location.pathname.split('/').pop();
+        if (page !== '' && page !== 'index.html') return;
+
+        // Show only once per browser session
+        if (sessionStorage.getItem('poster_seen')) return;
+
+        // Inject HTML + CSS
+        document.body.insertAdjacentHTML('beforeend', POSTER_HTML);
+        var style = document.createElement('style');
+        style.id = 'poster-popup-styles';
+        style.textContent = POSTER_CSS;
+        document.head.appendChild(style);
+
+        var popup   = document.getElementById('poster-popup');
+        var backdrop = popup.querySelector('.poster-backdrop');
+        var box      = popup.querySelector('.poster-box');
+        var closeBtn = popup.querySelector('.poster-close');
+
+        function openPopup() {
+            popup.classList.add('poster-open');
+            popup.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+            closeBtn.focus();
+        }
+
+        function closePopup() {
+            popup.classList.remove('poster-open');
+            popup.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+            sessionStorage.setItem('poster_seen', '1');
+        }
+
+        // Close on backdrop click (not on the image/box itself)
+        backdrop.addEventListener('click', closePopup);
+
+        // Close on X button
+        closeBtn.addEventListener('click', closePopup);
+
+        // Close on Escape key
+        document.addEventListener('keydown', function handler(e) {
+            if (e.key === 'Escape' && popup.classList.contains('poster-open')) {
+                closePopup();
+                document.removeEventListener('keydown', handler);
+            }
+        });
+
+        // Clicks inside the box should NOT bubble to backdrop
+        box.addEventListener('click', function (e) { e.stopPropagation(); });
+
+        // Show after a short delay so the page settles first
+        setTimeout(openPopup, 500);
+    }
+
+    // ------------------------------------------------------------------
     // HELPERS
     // ------------------------------------------------------------------
 
@@ -693,6 +847,9 @@
             initMoreDropdown();
             initSession();
         }
+
+        // Poster popup — once per session
+        initPosterPopup();
     }
 
     // Script is at end of <body>, so placeholders already exist in the DOM.
