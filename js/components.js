@@ -562,6 +562,13 @@
         '  object-fit: contain;',
         '  border-radius: 10px;',
         '  box-shadow: 0 24px 64px rgba(0,0,0,0.55);',
+        '  cursor: zoom-in;',
+        '  transition: transform 0.35s cubic-bezier(0.16,1,0.3,1);',
+        '  transform-origin: center center;',
+        '}',
+        '.poster-img.poster-zoomed {',
+        '  transform: scale(1.85);',
+        '  cursor: zoom-out;',
         '}',
 
         '.poster-close {',
@@ -644,6 +651,13 @@
 
         // Clicks inside the box should NOT bubble to backdrop
         box.addEventListener('click', function (e) { e.stopPropagation(); });
+
+        // Double-click toggles zoom on the poster image
+        var img = popup.querySelector('.poster-img');
+        img.addEventListener('dblclick', function (e) {
+            e.stopPropagation();
+            img.classList.toggle('poster-zoomed');
+        });
 
         // Show after a short delay so the page settles first
         setTimeout(openPopup, 500);
