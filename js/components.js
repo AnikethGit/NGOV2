@@ -595,6 +595,10 @@
     ].join('\n');
 
     function initPosterPopup() {
+        // Homepage only
+        var page = window.location.pathname.split('/').pop();
+        if (page !== '' && page !== 'index.html') return;
+
         // Show only once per browser session
         if (sessionStorage.getItem('poster_seen')) return;
 
