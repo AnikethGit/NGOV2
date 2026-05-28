@@ -598,6 +598,34 @@
         '.poster-close:focus-visible {',
         '  outline: 2px solid #01696f;',
         '  outline-offset: 2px;',
+        '}',
+
+        '/* ── Mobile optimisations ────────────────────────── */',
+        '@media (max-width: 600px) {',
+        '  #poster-popup { padding: 0.35rem; }',
+
+        '  .poster-box {',
+        '    max-width: 99vw;',
+        '    max-height: 96vh;',
+        '  }',
+
+        '  .poster-img {',
+        '    max-height: 88vh;',
+        '    border-radius: 7px;',
+        '  }',
+
+        '  /* Zoom is less aggressive on small screens */',
+        '  .poster-img.poster-zoomed { transform: scale(1.45); }',
+
+        '  /* Move close button inside the image corner so it stays on-screen */',
+        '  .poster-close {',
+        '    top: 8px;',
+        '    right: 8px;',
+        '    width: 44px;',
+        '    height: 44px;',
+        '    font-size: 1.5rem;',
+        '    background: rgba(255,255,255,0.92);',
+        '  }',
         '}'
     ].join('\n');
 
