@@ -67,6 +67,49 @@ function initializeDonationForm() {
         r.addEventListener('change', updateSummary)
     );
 
+    // ── ID type toggle (PAN / Aadhaar) ────────────────────────────────────
+    document.querySelectorAll('.id-type-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('.id-type-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            const type  = this.getAttribute('data-id-type');
+            const input = document.getElementById('donor_pan');
+            const hint  = document.getElementById('id-format-hint');
+
+            document.getElementById('donor_id_type').value = type;
+
+            if (type === 'pan') {
+                input.maxLength           = 10;
+                input.placeholder         = 'ABCDE1234F';
+                input.style.textTransform = 'uppercase';
+                if (hint) hint.textContent = '10-character PAN (e.g. ABCDE1234F)';
+            } else {
+                input.maxLength           = 12;
+                input.placeholder         = '123456789012';
+                input.style.textTransform = 'none';
+                if (hint) hint.textContent = '12-digit Aadhaar number (digits only)';
+            }
+            input.value = '';
+            input.focus();
+        });
+    });
+
+    // Auto-uppercase PAN while typing; strip non-digits for Aadhaar
+    const idInput = document.getElementById('donor_pan');
+    if (idInput) {
+        idInput.addEventListener('input', function () {
+            const type = document.getElementById('donor_id_type')?.value || 'pan';
+            if (type === 'pan') {
+                const pos = this.selectionStart;
+                this.value = this.value.toUpperCase();
+                this.setSelectionRange(pos, pos);
+            } else {
+                this.value = this.value.replace(/\D/g, '');
+            }
+        });
+    }
+
     form.addEventListener('submit', handleDonationSubmit);
 }
 
@@ -316,20 +359,28 @@ function loadScript(src) {
 function validateDonationForm(form) {
     const name   = form.querySelector('#donor_name')?.value.trim();
     const email  = form.querySelector('#donor_email')?.value.trim();
+    const phone  = form.querySelector('#donor_phone')?.value.trim();
+    const idType = form.querySelector('#donor_id_type')?.value || 'pan';
+    const idNum  = form.querySelector('#donor_pan')?.value.trim();
     const amount = parseFloat(form.querySelector('#donation_amount')?.value);
     const terms  = form.querySelector('#terms')?.checked;
 
-    if (!name)                          { showNotification('Please enter your full name', 'error');                return false; }
-    if (!email || !isValidEmail(email)) { showNotification('Please enter a valid email address', 'error');        return false; }
-    if (!amount || amount < 1)          { showNotification('Please select or enter a donation amount', 'error'); return false; }
-    if (amount > 1000000)               { showNotification('Maximum donation amount is \u20B910,00,000', 'error'); return false; }
-    if (!terms)                         { showNotification('Please accept the terms and conditions', 'error');    return false; }
+    if (!name)                              { showNotification('Please enter your full name', 'error'); return false; }
+    if (email && !isValidEmail(email))      { showNotification('Please enter a valid email address', 'error'); return false; }
+    if (!phone || !isValidPhone(phone))     { showNotification('Please enter a valid 10-digit mobile number', 'error'); return false; }
+    if (!idNum)                             { showNotification('Please enter your ' + (idType === 'aadhaar' ? 'Aadhaar' : 'PAN') + ' number', 'error'); return false; }
+    if (idType === 'pan'     && !isValidPAN(idNum))     { showNotification('Invalid PAN \u2014 expected format: ABCDE1234F', 'error'); return false; }
+    if (idType === 'aadhaar' && !isValidAadhaar(idNum)) { showNotification('Invalid Aadhaar \u2014 must be exactly 12 digits', 'error'); return false; }
+    if (!amount || amount < 1)              { showNotification('Please select or enter a donation amount', 'error'); return false; }
+    if (amount > 1000000)                   { showNotification('Maximum donation amount is \u20B910,00,000', 'error'); return false; }
+    if (!terms)                             { showNotification('Please accept the terms and conditions', 'error'); return false; }
     return true;
 }
 
-function isValidEmail(email) {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
+function isValidEmail(email)   { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
+function isValidPhone(phone)   { const p = phone.replace(/\D/g, ''); return p.length === 10 && /^[6-9]/.test(p); }
+function isValidPAN(pan)       { return /^[A-Z]{5}[0-9]{4}[A-Z]$/.test(pan.toUpperCase()); }
+function isValidAadhaar(num)   { return /^\d{12}$/.test(num.replace(/\s/g, '')); }
 
 // ── UI helpers ────────────────────────────────────────────────────────────────
 function showLoadingOverlay() {

@@ -161,19 +161,27 @@
                                     <input type="text" id="donor_name" name="donor_name" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="donor_email">Email Address *</label>
-                                    <input type="email" id="donor_email" name="donor_email" required>
+                                    <label for="donor_email">Email Address <span class="field-optional">(optional)</span></label>
+                                    <input type="email" id="donor_email" name="donor_email" placeholder="you@example.com">
                                 </div>
                             </div>
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="donor_phone">Phone Number</label>
-                                    <input type="tel" id="donor_phone" name="donor_phone" maxlength="10" placeholder="10-digit mobile number">
+                                    <label for="donor_phone">Phone Number * <span class="field-hint">WhatsApp confirmation will be sent here</span></label>
+                                    <input type="tel" id="donor_phone" name="donor_phone" maxlength="10" placeholder="10-digit mobile number" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="donor_pan">PAN Number (for 80G certificate)</label>
-                                    <input type="text" id="donor_pan" name="donor_pan" maxlength="10" placeholder="ABCDE1234F" style="text-transform: uppercase;">
+                                    <label>ID Proof * <span class="field-hint">required for 80G certificate</span></label>
+                                    <div class="id-type-toggle">
+                                        <button type="button" class="id-type-btn active" data-id-type="pan">PAN</button>
+                                        <button type="button" class="id-type-btn" data-id-type="aadhaar">Aadhaar</button>
+                                    </div>
+                                    <input type="hidden" id="donor_id_type" name="donor_id_type" value="pan">
+                                    <input type="text" id="donor_pan" name="donor_pan"
+                                           maxlength="10" placeholder="ABCDE1234F"
+                                           style="text-transform:uppercase;" required autocomplete="off">
+                                    <small class="id-hint" id="id-format-hint">10-character PAN (e.g. ABCDE1234F)</small>
                                 </div>
                             </div>
 

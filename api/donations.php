@@ -123,6 +123,8 @@ try {
     $donorName    = Security::sanitize($_POST['donor_name']    ?? '');
     $donorEmail   = Security::sanitize($_POST['donor_email']   ?? '');
     $donorPhone   = Security::sanitize($_POST['donor_phone']   ?? '');
+    $donorIdType  = in_array($_POST['donor_id_type'] ?? 'pan', ['pan', 'aadhaar'])
+                        ? $_POST['donor_id_type'] : 'pan';
     $donorPan     = strtoupper(Security::sanitize($_POST['donor_pan'] ?? ''));
     $donorAddress = Security::sanitize($_POST['donor_address'] ?? '');
     $amount       = floatval($_POST['amount'] ?? 0);
@@ -132,12 +134,14 @@ try {
     $wantsUpdates = isset($_POST['updates'])   ? 1 : 0;
 
     // Validation
-    if (empty($donorName))                        throw new Exception('Donor name is required');
-    if (!Security::validateEmail($donorEmail))    throw new Exception('Valid email address is required');
-    if ($amount < 1)                              throw new Exception('Donation amount must be at least ₹1');
-    if ($amount > 1000000)                        throw new Exception('Maximum donation amount is ₹10,00,000');
-    if ($donorPhone && !Security::validatePhone($donorPhone)) throw new Exception('Invalid phone number');
-    if ($donorPan   && !Security::validatePAN($donorPan))     throw new Exception('Invalid PAN number format');
+    if (empty($donorName))                                     throw new Exception('Donor name is required');
+    if ($donorEmail && !Security::validateEmail($donorEmail))  throw new Exception('Please enter a valid email address');
+    if (empty($donorPhone) || !Security::validatePhone($donorPhone)) throw new Exception('Valid 10-digit phone number is required');
+    if ($amount < 1)                                           throw new Exception('Donation amount must be at least ₹1');
+    if ($amount > 1000000)                                     throw new Exception('Maximum donation amount is ₹10,00,000');
+    if (empty($donorPan))                                      throw new Exception('PAN or Aadhaar number is required');
+    if ($donorIdType === 'pan'     && !Security::validatePAN($donorPan))     throw new Exception('Invalid PAN number format (e.g. ABCDE1234F)');
+    if ($donorIdType === 'aadhaar' && !Security::validateAadhaar($donorPan)) throw new Exception('Invalid Aadhaar number (must be 12 digits)');
 
     $validCauses = ['general-fund', 'shirdi-annadanam', 'ganagapur-annadanam', 'ongole-annadanam', 'corpus-fund'];
     if (!in_array($cause, $validCauses)) $cause = 'general-fund';
