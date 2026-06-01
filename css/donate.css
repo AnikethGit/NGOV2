@@ -48,4 +48,33 @@
     margin-top: 0.3rem;
 }
 
+/* ── Mobile: ID toggle + field labels ─────────────────────────────────────── */
+@media (max-width: 640px) {
+    /* Stretch toggle to match the input width below it */
+    .id-type-toggle {
+        display: flex;
+        width: 100%;
+    }
+    /* Equal-width, taller touch targets */
+    .id-type-btn {
+        flex: 1;
+        padding: 0.55rem 0.5rem;
+        font-size: var(--font-size-xs);
+        min-height: 40px;
+        text-align: center;
+    }
+    /* Wrap the WhatsApp hint onto its own line cleanly */
+    .field-hint {
+        display: block;
+        margin-top: 3px;
+    }
+}
+
+@media (max-width: 380px) {
+    .id-type-btn {
+        font-size: 0.7rem;
+        padding: 0.5rem 0.25rem;
+    }
+}
+
 @media (max-width: 1024px){.donation-wrapper{grid-template-columns: 1fr;gap: var(--space-32)}.donation-summary{order: -1}.summary-card{position: static}.transparency-content{grid-template-columns: 1fr;gap: var(--space-32)}}@media (max-width: 768px){.impact-examples{grid-template-columns: 1fr}.impact-card.featured{transform: none}.cause-selection{grid-template-columns: repeat(2, 1fr)}.amount-selection{grid-template-columns: repeat(3, 1fr)}.frequency-selection{grid-template-columns: 1fr}.help-options{grid-template-columns: 1fr}.transparency-actions{flex-direction: column;align-items: stretch}}@media (max-width: 480px){.cause-selection{grid-template-columns: 1fr}.amount-selection{grid-template-columns: repeat(2, 1fr)}.donation-form{padding: var(--space-16)}.form-header{padding: var(--space-16)}.summary-card h3{padding: var(--space-16)}.summary-card > div:not(:first-child){padding: 0 var(--space-16)}.tax-benefit{margin: var(--space-16) var(--space-16);padding: var(--space-12)}.payment-methods{padding: var(--space-16)}.trust-indicators{padding: var(--space-16)}.donation-feed{padding: var(--space-16)}.transparency-features .feature{flex-direction: column;text-align: center;gap: var(--space-12)}.transparency-features .feature i{align-self: center}.fund-breakdown{padding: var(--space-20)}.help-card{padding: var(--space-24)}.share-buttons{gap: var(--space-6)}.share-btn{width: 45px;height: 45px}}
