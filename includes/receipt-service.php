@@ -41,12 +41,17 @@ class ReceiptService
             $donation['donor_pan']     = $donation['donor_pan']     ?? $user['pan_number'] ?? '';
             $donation['donor_address'] = $donation['donor_address'] ?? $user['address']    ?? '';
 
-            // 3. Send email
+            // 3. Send email (if donor provided one)
             if (!empty($donation['donor_email'])) {
                 self::sendEmail($donation);
             }
 
-            // 4. Send SMS
+            // 4. Send WhatsApp receipt (always, phone is now required)
+            if (!empty($donation['donor_phone'])) {
+                self::sendWhatsApp($donation);
+            }
+
+            // 5. Send SMS fallback
             if (!empty($donation['donor_phone'])) {
                 self::sendSms($donation);
             }
@@ -96,7 +101,10 @@ class ReceiptService
         $rawMethod    = $d['payment_method'] ?? 'Online';
         $payMode      = htmlspecialchars(($gateway === 'razorpay') ? 'Online: Razorpay' : $rawMethod);
         $date         = date('d M Y, h:i A', strtotime($d['updated_at'] ?? $d['created_at'] ?? 'now'));
-        $pan          = !empty($d['donor_pan']) ? htmlspecialchars($d['donor_pan']) : 'Not provided';
+        $rawId    = $d['donor_pan'] ?? '';
+        // Auto-detect: 12 all-digit chars = Aadhaar, otherwise PAN
+        $idLabel  = preg_match('/^\d{12}$/', preg_replace('/\s/', '', $rawId)) ? 'Aadhaar Number' : 'PAN Number';
+        $pan      = !empty($rawId) ? htmlspecialchars($rawId) : 'Not provided';
         $dashboardUrl = rtrim($appUrl, '/') . '/donor-dashboard.html';
 
         $subject = self::encodeSubject("Donation Receipt #{$receipt} — {$appName}");
@@ -166,7 +174,7 @@ class ReceiptService
                 <td style="padding:10px 20px;font-size:14px;font-weight:600;color:#1a1a1a;border-bottom:1px solid #e0f0ef;">{$date}</td>
               </tr>
               <tr>
-                <td style="padding:10px 20px;font-size:14px;color:#666;">PAN Number</td>
+                <td style="padding:10px 20px;font-size:14px;color:#666;">{$idLabel}</td>
                 <td style="padding:10px 20px;font-size:14px;font-weight:600;color:#1a1a1a;">{$pan}</td>
               </tr>
             </table>
@@ -285,6 +293,168 @@ HTML;
         if (!mail($adminMail, $adminSubject, chunk_split(base64_encode($adminBody)), $adminHeaders)) {
             error_log("ReceiptService: admin notification email failed for receipt {$receipt}");
         }
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // WhatsApp  via Meta Cloud API
+    // Docs: https://developers.facebook.com/docs/whatsapp/cloud-api
+    //
+    // Add to .env:
+    //   WHATSAPP_PHONE_NUMBER_ID=<from Meta Developer Console>
+    //   WHATSAPP_ACCESS_TOKEN=<permanent System User token>
+    //   WHATSAPP_TEMPLATE_NAME=donation_receipt   (your approved template name)
+    //
+    // Template to create in Meta Business Manager (category: UTILITY):
+    //   Header : DOCUMENT  (receives the PDF receipt)
+    //   Body   : Dear {{1}}, your donation of {{2}} to Sri Datta Sai Manga
+    //            Bharadwaja Trust is confirmed! 🙏
+    //            🧾 Receipt No: {{3}}
+    //            💳 Transaction ID: {{4}}
+    //            🎯 Cause: {{5}}
+    //            📅 Date: {{6}}
+    //            Your 80G certificate will be issued within 7 working days.
+    //   Footer : Sri Datta Sai Manga Bharadwaja Trust
+    //
+    // If the template has no DOCUMENT header, remove the header component block
+    // below and set WHATSAPP_TEMPLATE_NAME to a body-only template name.
+    // ──────────────────────────────────────────────────────────────────────────
+    private static function sendWhatsApp(array $d): void
+    {
+        $envPath     = __DIR__ . '/../.env';
+        $env         = function_exists('load_env_file') ? load_env_file($envPath) : [];
+        $phoneNumId  = trim($env['WHATSAPP_PHONE_NUMBER_ID'] ?? WHATSAPP_PHONE_NUMBER_ID);
+        $accessToken = trim($env['WHATSAPP_ACCESS_TOKEN']    ?? WHATSAPP_ACCESS_TOKEN);
+        $template    = trim($env['WHATSAPP_TEMPLATE_NAME']   ?? WHATSAPP_TEMPLATE_NAME);
+
+        if (empty($phoneNumId) || empty($accessToken)) {
+            error_log('ReceiptService: WhatsApp not configured — skipped.');
+            return;
+        }
+
+        // Normalise to 10-digit Indian number, then prepend country code
+        $phone = preg_replace('/[^0-9]/', '', $d['donor_phone'] ?? '');
+        if (strlen($phone) === 12 && substr($phone, 0, 2) === '91') {
+            $phone = substr($phone, 2);
+        }
+        if (strlen($phone) !== 10) {
+            error_log("ReceiptService WhatsApp: invalid phone '{$d['donor_phone']}' — skipped.");
+            return;
+        }
+        $waPhone = '91' . $phone;
+
+        // Body parameter values
+        $amount  = '₹' . number_format((float)$d['amount'], 2);
+        $receipt = $d['receipt_number'];
+        $txn     = $d['transaction_id'];
+        $cause   = ucwords(str_replace('-', ' ', $d['cause'] ?? 'General'));
+        $date    = date('d M Y, h:i A', strtotime($d['updated_at'] ?? $d['created_at'] ?? 'now'));
+
+        // Try to generate PDF and upload as WhatsApp media
+        $components  = [];
+        $pdfFilename = 'DonationReceipt-' . preg_replace('/[^A-Za-z0-9\-]/', '', $receipt) . '.pdf';
+        try {
+            require_once __DIR__ . '/PdfReceipt.php';
+            $pdfContent = PdfReceipt::generate($d);
+            $mediaId    = self::uploadWhatsAppMedia($pdfContent, $pdfFilename, $phoneNumId, $accessToken);
+            if ($mediaId) {
+                $components[] = [
+                    'type'       => 'header',
+                    'parameters' => [[
+                        'type'     => 'document',
+                        'document' => ['id' => $mediaId, 'filename' => $pdfFilename],
+                    ]],
+                ];
+            }
+        } catch (Throwable $e) {
+            error_log('ReceiptService WhatsApp: PDF upload skipped — ' . $e->getMessage());
+        }
+
+        $components[] = [
+            'type'       => 'body',
+            'parameters' => [
+                ['type' => 'text', 'text' => $d['donor_name']],
+                ['type' => 'text', 'text' => $amount],
+                ['type' => 'text', 'text' => $receipt],
+                ['type' => 'text', 'text' => $txn],
+                ['type' => 'text', 'text' => $cause],
+                ['type' => 'text', 'text' => $date],
+            ],
+        ];
+
+        $payload = json_encode([
+            'messaging_product' => 'whatsapp',
+            'recipient_type'    => 'individual',
+            'to'                => $waPhone,
+            'type'              => 'template',
+            'template'          => [
+                'name'       => $template,
+                'language'   => ['code' => 'en_US'],
+                'components' => $components,
+            ],
+        ], JSON_UNESCAPED_UNICODE);
+
+        $url = "https://graph.facebook.com/v19.0/{$phoneNumId}/messages";
+        $ch  = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => $payload,
+            CURLOPT_HTTPHEADER     => [
+                'Authorization: Bearer ' . $accessToken,
+                'Content-Type: application/json',
+            ],
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_TIMEOUT        => 20,
+        ]);
+        $raw     = curl_exec($ch);
+        $curlErr = curl_error($ch);
+        curl_close($ch);
+
+        if ($curlErr) {
+            error_log("ReceiptService WhatsApp cURL error: {$curlErr}");
+            return;
+        }
+        $resp = json_decode($raw, true);
+        if (!empty($resp['messages'][0]['id'])) {
+            error_log("ReceiptService: WhatsApp sent to {$waPhone} for receipt {$receipt}");
+        } else {
+            error_log("ReceiptService: WhatsApp failed for {$waPhone}: {$raw}");
+        }
+    }
+
+    // Upload PDF to Meta media endpoint; returns media_id string or null on failure
+    private static function uploadWhatsAppMedia(string $pdf, string $filename, string $phoneNumId, string $token): ?string
+    {
+        $boundary = '----WA' . md5(uniqid('', true));
+        $body  = "--{$boundary}\r\n"
+               . "Content-Disposition: form-data; name=\"messaging_product\"\r\n\r\nwhatsapp\r\n"
+               . "--{$boundary}\r\n"
+               . "Content-Disposition: form-data; name=\"file\"; filename=\"{$filename}\"\r\n"
+               . "Content-Type: application/pdf\r\n\r\n"
+               . $pdf . "\r\n"
+               . "--{$boundary}--\r\n";
+
+        $ch = curl_init("https://graph.facebook.com/v19.0/{$phoneNumId}/media");
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST           => true,
+            CURLOPT_POSTFIELDS     => $body,
+            CURLOPT_HTTPHEADER     => [
+                'Authorization: Bearer ' . $token,
+                'Content-Type: multipart/form-data; boundary=' . $boundary,
+            ],
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_TIMEOUT        => 30,
+        ]);
+        $raw = curl_exec($ch);
+        curl_close($ch);
+
+        $resp = json_decode($raw, true);
+        if (!empty($resp['id'])) {
+            return $resp['id'];
+        }
+        error_log('ReceiptService WhatsApp media upload failed: ' . $raw);
+        return null;
     }
 
     // ──────────────────────────────────────────────────────────────────────────

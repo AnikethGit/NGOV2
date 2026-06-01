@@ -180,6 +180,17 @@ define('RAZORPAY_KEY_ID',       $env['RAZORPAY_KEY_ID']       ?? '');
 define('RAZORPAY_KEY_SECRET',   $env['RAZORPAY_KEY_SECRET']   ?? '');
 define('RAZORPAY_WEBHOOK_SECRET',$env['RAZORPAY_WEBHOOK_SECRET'] ?? '');
 
+// ============================================================
+// WhatsApp Cloud API (Meta)
+// Add these three keys to your .env file:
+//   WHATSAPP_PHONE_NUMBER_ID=your_phone_number_id
+//   WHATSAPP_ACCESS_TOKEN=your_permanent_access_token
+//   WHATSAPP_TEMPLATE_NAME=donation_receipt
+// ============================================================
+define('WHATSAPP_PHONE_NUMBER_ID', $env['WHATSAPP_PHONE_NUMBER_ID'] ?? '');
+define('WHATSAPP_ACCESS_TOKEN',    $env['WHATSAPP_ACCESS_TOKEN']    ?? '');
+define('WHATSAPP_TEMPLATE_NAME',   $env['WHATSAPP_TEMPLATE_NAME']   ?? 'donation_receipt');
+
 // Set timezone
 date_default_timezone_set(Config::app('timezone'));
 ?>

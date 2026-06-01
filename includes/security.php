@@ -105,6 +105,11 @@ class Security {
         return (bool) preg_match('/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/', strtoupper($pan));
     }
 
+    public static function validateAadhaar($aadhaar): bool {
+        $aadhaar = preg_replace('/[\s\-]/', '', $aadhaar);
+        return (bool) preg_match('/^\d{12}$/', $aadhaar);
+    }
+
     // ────────────────────────────────────────────────────────────────
     // Token / password utilities
     // ────────────────────────────────────────────────────────────────
